@@ -1,0 +1,8 @@
+html { background-color: #111111; color: #888888; height: 100%; }
+body { font-family: monospace; margin: 0; width: 100%; }
+a { color: #FF7E00; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+table { margin: 1em; }
+table td { padding: 0 0.4em; }
+table tr:hover td { background-color: #222222; }

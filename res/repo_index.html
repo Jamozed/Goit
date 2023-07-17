@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<head>
+	<meta charset="UTF-8">
+	<title>Repositories</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" type="text/css" href="/static/style.css">
+</head>
+<body>
+	<table>
+		<thead>
+			<tr>
+				<td><b>Name</b></td>
+				<td><b>Description</b></td>
+				<td><b>Owner</b></td>
+				<td><b>Visibility</b></td>
+				<td><b>Last Commit</b></td>
+			</tr>
+		</thead>
+		<tbody>
+		{{range .Repos}}
+			<tr>
+				<td><a href="/{{.Name}}/">{{.Name}}</a></td>
+				<td>{{.Description}}</td>
+				<td>{{.Owner}}</td>
+				<td>{{.Visibility}}</td>
+				<td>{{.LastCommit}}</td>
+			</tr>
+		{{end}}
+		</tbody>
+	</table>
+</body>
