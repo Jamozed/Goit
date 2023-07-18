@@ -12,6 +12,8 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+var db *sql.DB
+
 type Goit struct {
 	db *sql.DB
 }
@@ -23,6 +25,7 @@ func InitGoit() (g *Goit, err error) {
 	if g.db, err = sql.Open("sqlite3", "./goit.db"); err != nil {
 		return nil, fmt.Errorf("[SQL:open] %w", err)
 	}
+	db = g.db
 
 	if _, err = g.db.Exec(
 		`CREATE TABLE IF NOT EXISTS users (

@@ -22,31 +22,32 @@ func main() {
 		defer g.Close()
 	}
 
-	mx := mux.NewRouter()
-	mx.StrictSlash(true)
+	h := mux.NewRouter()
+	h.StrictSlash(true)
 
-	mx.Path("/").HandlerFunc(g.HandleIndex)
-	mx.Path("/user/login").Methods("GET", "POST").HandlerFunc(g.HandleUserLogin)
-	mx.Path("/user/logout").Methods("GET", "POST").HandlerFunc(g.HandleUserLogout)
-	// mx.Path("/user/settings").Methods("GET").HandlerFunc()
-	mx.Path("/repo/create").Methods("GET", "POST").HandlerFunc(g.HandleRepoCreate)
-	// mx.Path("/repo/delete").Methods("POST").HandlerFunc()
-	// mx.Path("/admin/settings").Methods("GET").HandlerFunc()
-	mx.Path("/admin/user").Methods("GET").HandlerFunc(g.HandleAdminUserIndex)
-	// mx.Path("/admin/repos").Methods("GET").HandlerFunc()
-	mx.Path("/admin/user/create").Methods("GET", "POST").HandlerFunc(g.HandleAdminUserCreate)
-	// mx.Path("/admin/user/edit").Methods("GET", "POST").HandlerFunc()
+	h.Path("/").HandlerFunc(g.HandleIndex)
+	h.Path("/user/login").Methods("GET", "POST").HandlerFunc(g.HandleUserLogin)
+	h.Path("/user/logout").Methods("GET", "POST").HandlerFunc(g.HandleUserLogout)
+	// h.Path("/user/settings").Methods("GET").HandlerFunc()
+	h.Path("/repo/create").Methods("GET", "POST").HandlerFunc(g.HandleRepoCreate)
+	// h.Path("/repo/delete").Methods("POST").HandlerFunc()
+	// h.Path("/admin/settings").Methods("GET").HandlerFunc()
+	h.Path("/admin/user").Methods("GET").HandlerFunc(g.HandleAdminUserIndex)
+	// h.Path("/admin/repos").Methods("GET").HandlerFunc()
+	h.Path("/admin/user/create").Methods("GET", "POST").HandlerFunc(g.HandleAdminUserCreate)
+	// h.Path("/admin/user/edit").Methods("GET", "POST").HandlerFunc()
 
-	rm := mx.Path("/{repo}/").Subrouter()
-	// rm.Path("/").Methods("GET").HandlerFunc()
-	// rm.Path("/log").Methods("GET").HandlerFunc()
-	// rm.Path("/tree").Methods("GET").HandlerFunc()
-	// rm.Path("/refs").Methods("GET").HandlerFunc()
+	h.Path("/{repo}/").Methods(http.MethodGet).HandlerFunc(g.HandleRepoLog)
+	h.Path("/{repo}/log").Methods(http.MethodGet).HandlerFunc(g.HandleRepoLog)
+	// h.Path("/{repo}/tree").Methods(http.MethodGet).HandlerFunc(g.HandleRepoTree)
+	// h.Path("/{repo}/refs").Methods(http.MethodGet).HandlerFunc(g.HandleRepoRefs)
+	h.Path("/{repo}/info/refs").Methods(http.MethodGet).HandlerFunc(goit.HandleInfoRefs)
+	h.Path("/{repo}/git-upload-pack").Methods(http.MethodPost).HandlerFunc(goit.HandleUploadPack)
+	h.Path("/{repo}/git-receive-pack").Methods(http.MethodPost).HandlerFunc(goit.HandleReceivePack)
 
-	mx.Path("/static/style.css").Methods(http.MethodGet).HandlerFunc(handleStyle)
+	h.Path("/static/style.css").Methods(http.MethodGet).HandlerFunc(handleStyle)
 
-	mx.PathPrefix("/").HandlerFunc(http.NotFound)
-	rm.PathPrefix("/").HandlerFunc(http.NotFound)
+	h.PathPrefix("/").HandlerFunc(http.NotFound)
 
 	/* Create a ticker to periodically cleanup expired sessions */
 	tick := time.NewTicker(1 * time.Hour)
@@ -56,14 +57,14 @@ func main() {
 		}
 	}()
 
-	if err := http.ListenAndServe(":8080", logHttp(mx)); err != nil {
+	if err := http.ListenAndServe(":8080", logHttp(h)); err != nil {
 		log.Fatalln("[HTTP]", err)
 	}
 }
 
 func logHttp(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Println("[HTTP]", r.RemoteAddr, r.Method, r.URL)
+		log.Println("[HTTP]", r.RemoteAddr, r.Method, r.URL.String())
 		handler.ServeHTTP(w, r)
 	})
 }

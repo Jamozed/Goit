@@ -11,8 +11,12 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/Jamozed/Goit/res"
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/gorilla/mux"
 )
 
 type Repo struct {
@@ -28,11 +32,13 @@ type Repo struct {
 var (
 	repoIndex  *template.Template
 	repoCreate *template.Template
+	repoLog    *template.Template
 )
 
 func init() {
 	repoIndex = template.Must(template.New("repo_index").Parse(res.RepoIndex))
 	repoCreate = template.Must(template.New("repo_create").Parse(res.RepoCreate))
+	repoLog = template.Must(template.New("repo_log").Parse(res.RepoLog))
 }
 
 func (g *Goit) HandleIndex(w http.ResponseWriter, r *http.Request) {
@@ -101,6 +107,47 @@ func (g *Goit) HandleRepoCreate(w http.ResponseWriter, r *http.Request) {
 	} else /* GET */ {
 		repoCreate.Execute(w, nil)
 	}
+}
+
+func (g *Goit) HandleRepoLog(w http.ResponseWriter, r *http.Request) {
+	reponame := mux.Vars(r)["repo"]
+
+	type row struct{ Date, Message, Author string }
+	commits := []row{}
+
+	if gr, err := git.PlainOpen("./" + reponame + ".git"); err != nil {
+		log.Println("[Repo:Open]", err.Error())
+		http.Error(w, "500 internal server error", http.StatusInternalServerError)
+	} else if ref, err := gr.Head(); err != nil {
+		log.Println("[Repo:Head]", err.Error())
+		http.Error(w, "500 internal server error", http.StatusInternalServerError)
+	} else if iter, err := gr.Log(&git.LogOptions{From: ref.Hash()}); err != nil {
+		log.Println("[Repo:Log]", err.Error())
+		http.Error(w, "500 internal server error", http.StatusInternalServerError)
+	} else if err := iter.ForEach(func(c *object.Commit) error {
+		commits = append(commits, row{c.Author.When.UTC().Format(time.RFC3339), c.Message, c.Author.Name})
+		return nil
+	}); err != nil {
+		log.Println("[Repo:Log]", err.Error())
+		http.Error(w, "500 internal server error", http.StatusInternalServerError)
+	}
+
+	repoLog.Execute(w, struct{ Commits []row }{commits})
+}
+
+func GetRepoByName(db *sql.DB, name string) (*Repo, error) {
+	r := &Repo{}
+
+	err := db.QueryRow(
+		"SELECT id, owner_id, name, name_lower, description, default_branch, is_private FROM repos WHERE name = ?", name,
+	).Scan(&r.Id, &r.OwnerId, &r.Name, &r.NameLower, &r.Description, &r.DefaultBranch, &r.IsPrivate)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	}
+
+	return r, nil
 }
 
 func RepoExists(db *sql.DB, name string) (bool, error) {

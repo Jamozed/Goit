@@ -11,6 +11,9 @@ var UserLogin string
 //go:embed repo_create.html
 var RepoCreate string
 
+//go:embed repo_log.html
+var RepoLog string
+
 //go:embed user_create.html
 var UserCreate string
 

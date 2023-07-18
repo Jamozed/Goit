@@ -24,6 +24,12 @@ func SliceContains[T comparable](s []T, e T) bool {
 	return false
 }
 
+func PanicIf(cond bool, v any) {
+	if cond {
+		panic(v)
+	}
+}
+
 /* Return the named cookie or nil if not found. */
 func Cookie(r *http.Request, name string) *http.Cookie {
 	if c, err := r.Cookie(name); err != nil {

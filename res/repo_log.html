@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<head>
+	<meta charset="UTF-8">
+	<title>Repositories</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" type="text/css" href="/static/style.css">
+</head>
+<body>
+	<table>
+		<thead>
+			<tr>
+				<td><b>Date</b></td>
+				<td><b>Message</b></td>
+				<td><b>Author</b></td>
+			</tr>
+		</thead>
+		<tbody>
+		{{range .Commits}}
+			<tr>
+				<td>{{.Date}}</a></td>
+				<td>{{.Message}}</td>
+				<td>{{.Author}}</td>
+			</tr>
+		{{end}}
+		</tbody>
+	</table>
+</body>
