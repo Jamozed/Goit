@@ -25,38 +25,42 @@
 			</td>
 		</tr>
 	</table><hr>
-	<h2>Branches</h2>
-	<table>
-		<thead>
-			<tr>
-				<td><b>Name</b></td>
-				<td><b>Hash</b></td>
-			</tr>
-		</thead>
-		<tbody>
-		{{range .Branches}}
-			<tr>
-				<td>{{.Name}}</a></td>
-				<td>{{.Hash}}</td>
-			</tr>
-		{{end}}
-		</tbody>
-	</table>
-	<h2>Tags</h2>
-	<table>
-		<thead>
-			<tr>
-				<td><b>Name</b></td>
-				<td><b>Hash</b></td>
-			</tr>
-		</thead>
-		<tbody>
-		{{range .Tags}}
-			<tr>
-				<td>{{.Name}}</a></td>
-				<td>{{.Hash}}</td>
-			</tr>
-		{{end}}
-		</tbody>
-	</table>
+	{{if .Branches}}
+		<h2>Branches</h2>
+		<table>
+			<thead>
+				<tr>
+					<td><b>Name</b></td>
+					<td><b>Hash</b></td>
+				</tr>
+			</thead>
+			<tbody>
+			{{range .Branches}}
+				<tr>
+					<td>{{.Name}}</a></td>
+					<td>{{.Hash}}</td>
+				</tr>
+			{{end}}
+			</tbody>
+		</table>
+	{{end}}
+	{{if .Tags}}
+		<h2>Tags</h2>
+		<table>
+			<thead>
+				<tr>
+					<td><b>Name</b></td>
+					<td><b>Hash</b></td>
+				</tr>
+			</thead>
+			<tbody>
+			{{range .Tags}}
+				<tr>
+					<td>{{.Name}}</a></td>
+					<td>{{.Hash}}</td>
+				</tr>
+			{{end}}
+			</tbody>
+		</table>
+	{{end}}
 </body>

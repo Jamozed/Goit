@@ -126,9 +126,11 @@ func (g *Goit) HandleRepoLog(w http.ResponseWriter, r *http.Request) {
 		HttpError(w, http.StatusInternalServerError)
 		return
 	} else if ref, err := gr.Head(); err != nil {
-		log.Println("[Repo:Log]", err.Error())
-		HttpError(w, http.StatusInternalServerError)
-		return
+		if !errors.Is(err, plumbing.ErrReferenceNotFound) {
+			log.Println("[Repo:Log]", err.Error())
+			HttpError(w, http.StatusInternalServerError)
+			return
+		}
 	} else if iter, err := gr.Log(&git.LogOptions{From: ref.Hash()}); err != nil {
 		log.Println("[Repo:Log]", err.Error())
 		HttpError(w, http.StatusInternalServerError)

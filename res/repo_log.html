@@ -25,22 +25,26 @@
 			</td>
 		</tr>
 	</table><hr>
-	<table>
-		<thead>
-			<tr>
-				<td><b>Date</b></td>
-				<td><b>Message</b></td>
-				<td><b>Author</b></td>
-			</tr>
-		</thead>
-		<tbody>
-		{{range .Commits}}
-			<tr>
-				<td>{{.Date}}</a></td>
-				<td>{{.Message}}</td>
-				<td>{{.Author}}</td>
-			</tr>
-		{{end}}
-		</tbody>
-	</table>
+	{{if .Commits}}
+		<table>
+			<thead>
+				<tr>
+					<td><b>Date</b></td>
+					<td><b>Message</b></td>
+					<td><b>Author</b></td>
+				</tr>
+			</thead>
+			<tbody>
+			{{range .Commits}}
+				<tr>
+					<td>{{.Date}}</a></td>
+					<td>{{.Message}}</td>
+					<td>{{.Author}}</td>
+				</tr>
+			{{end}}
+			</tbody>
+		</table>
+	{{else}}
+		<span>No commits</span>
+	{{end}}
 </body>
