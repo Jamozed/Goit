@@ -7,6 +7,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/Jamozed/Goit/res"
@@ -37,17 +38,18 @@ func main() {
 	h.Path("/admin/user/create").Methods("GET", "POST").HandlerFunc(g.HandleAdminUserCreate)
 	// h.Path("/admin/user/edit").Methods("GET", "POST").HandlerFunc()
 
-	h.Path("/{repo}/").Methods(http.MethodGet).HandlerFunc(g.HandleRepoLog)
+	h.Path("/{repo:.+(?:\\.git)$}").Methods(http.MethodGet).HandlerFunc(redirectDotGit)
+	h.Path("/{repo}").Methods(http.MethodGet).HandlerFunc(g.HandleRepoLog)
 	h.Path("/{repo}/log").Methods(http.MethodGet).HandlerFunc(g.HandleRepoLog)
-	// h.Path("/{repo}/tree").Methods(http.MethodGet).HandlerFunc(g.HandleRepoTree)
-	// h.Path("/{repo}/refs").Methods(http.MethodGet).HandlerFunc(g.HandleRepoRefs)
+	h.Path("/{repo}/tree").Methods(http.MethodGet).HandlerFunc(g.HandleRepoTree)
+	h.Path("/{repo}/refs").Methods(http.MethodGet).HandlerFunc(g.HandleRepoRefs)
 	h.Path("/{repo}/info/refs").Methods(http.MethodGet).HandlerFunc(goit.HandleInfoRefs)
 	h.Path("/{repo}/git-upload-pack").Methods(http.MethodPost).HandlerFunc(goit.HandleUploadPack)
 	h.Path("/{repo}/git-receive-pack").Methods(http.MethodPost).HandlerFunc(goit.HandleReceivePack)
 
 	h.Path("/static/style.css").Methods(http.MethodGet).HandlerFunc(handleStyle)
 
-	h.PathPrefix("/").HandlerFunc(http.NotFound)
+	h.PathPrefix("/").HandlerFunc(goit.HttpNotFound)
 
 	/* Create a ticker to periodically cleanup expired sessions */
 	tick := time.NewTicker(1 * time.Hour)
@@ -74,4 +76,8 @@ func handleStyle(w http.ResponseWriter, r *http.Request) {
 	if _, err := w.Write([]byte(res.Style)); err != nil {
 		log.Println("[handleStyle]", err.Error())
 	}
+}
+
+func redirectDotGit(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, strings.TrimSuffix(r.URL.Path, ".git"), http.StatusMovedPermanently)
 }

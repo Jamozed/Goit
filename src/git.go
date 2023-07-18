@@ -40,7 +40,7 @@ func HandleInfoRefs(w http.ResponseWriter, r *http.Request) {
 	refs, _, err := c.Run(nil, nil)
 	if err != nil {
 		log.Println("[Git]", err.Error())
-		http.Error(w, "500 Internal Server Error", http.StatusInternalServerError)
+		HttpError(w, http.StatusInternalServerError)
 		return
 	}
 
@@ -83,28 +83,28 @@ func httpBase(w http.ResponseWriter, r *http.Request, service string) *Repo {
 	case "git-receive-pack":
 		isPull = false
 	default:
-		http.Error(w, "404 Not Found", http.StatusNotFound)
+		HttpError(w, http.StatusNotFound)
 		return nil
 	}
 
 	if r.Header.Get("Git-Protocol") != "version=2" {
-		http.Error(w, "403 Forbidden", http.StatusForbidden)
+		HttpError(w, http.StatusForbidden)
 		return nil
 	}
 
 	repo, err := GetRepoByName(db, reponame)
 	if err != nil {
-		http.Error(w, "500 Internal Server Error", http.StatusInternalServerError)
+		HttpError(w, http.StatusInternalServerError)
 		return nil
 	} else if repo == nil {
-		http.Error(w, "404 Not Found", http.StatusNotFound)
+		HttpError(w, http.StatusNotFound)
 		return nil
 	}
 
 	/* Require authentication other than for public pull */
 	if repo.IsPrivate || !isPull {
 		/* TODO authentcate */
-		http.Error(w, "401 Unauthorized", http.StatusUnauthorized)
+		HttpError(w, http.StatusUnauthorized)
 		return nil
 	}
 
@@ -120,7 +120,7 @@ func serviceRPC(w http.ResponseWriter, r *http.Request, service string, repo *Re
 
 	if r.Header.Get("Content-Type") != "application/x-"+service+"-request" {
 		log.Println("[GitRPC]", "Content-Type mismatch")
-		http.Error(w, "401 Unauthorized", http.StatusUnauthorized)
+		HttpError(w, http.StatusUnauthorized)
 		return
 	}
 
@@ -128,7 +128,7 @@ func serviceRPC(w http.ResponseWriter, r *http.Request, service string, repo *Re
 	if r.Header.Get("Content-Encoding") == "gzip" {
 		if b, err := gzip.NewReader(r.Body); err != nil {
 			log.Println("[GitRPC]", err.Error())
-			http.Error(w, "500 Internal Server Error", http.StatusInternalServerError)
+			HttpError(w, http.StatusInternalServerError)
 			return
 		} else {
 			body = b
@@ -145,7 +145,7 @@ func serviceRPC(w http.ResponseWriter, r *http.Request, service string, repo *Re
 
 	if _, _, err := c.Run(body, w); err != nil {
 		log.Println("[GitRPC]", err.Error())
-		http.Error(w, "500 Internal Server Error", http.StatusInternalServerError)
+		HttpError(w, http.StatusInternalServerError)
 		return
 	}
 }

@@ -31,14 +31,9 @@ type User struct {
 var (
 	reserved []string = []string{"admin", "repo", "static", "user"}
 
-	userLogin  *template.Template
-	userCreate *template.Template
+	userLogin  *template.Template = template.Must(template.New("user_login").Parse(res.UserLogin))
+	userCreate *template.Template = template.Must(template.New("user_create").Parse(res.UserCreate))
 )
-
-func init() {
-	userLogin = template.Must(template.New("user_login").Parse(res.UserLogin))
-	userCreate = template.Must(template.New("user_create").Parse(res.UserCreate))
-}
 
 func (g *Goit) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 	if ok, _ := AuthHttp(r); ok {
@@ -57,7 +52,7 @@ func (g *Goit) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 			data.Msg = "Username cannot be empty"
 		} else if exists, err := g.UserExists(username); err != nil {
 			log.Println("[User:Login:Exists]", err.Error())
-			http.Error(w, "500 internal server error", http.StatusInternalServerError)
+			HttpError(w, http.StatusInternalServerError)
 			return
 		} else if !exists {
 			data.Msg = "Invalid credentials"
@@ -65,7 +60,7 @@ func (g *Goit) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 			"SELECT id, name, pass, pass_algo, salt FROM users WHERE name = ?", username,
 		).Scan(&u.Id, &u.Name, &u.Pass, &u.PassAlgo, &u.Salt); err != nil {
 			log.Println("[User:Login:SELECT]", err.Error())
-			http.Error(w, "500 internal server error", http.StatusInternalServerError)
+			HttpError(w, http.StatusInternalServerError)
 			return
 		} else if !bytes.Equal(Hash(password, u.Salt), u.Pass) {
 			data.Msg = "Invalid credentials"
@@ -73,7 +68,7 @@ func (g *Goit) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 			expiry := time.Now().Add(15 * time.Minute)
 			if s, err := NewSession(u.Id, expiry); err != nil {
 				log.Println("[User:Login:Session]", err.Error())
-				http.Error(w, "500 internal server error", http.StatusInternalServerError)
+				HttpError(w, http.StatusInternalServerError)
 				return
 			} else {
 				http.SetCookie(w, &http.Cookie{Name: "session", Value: s, Path: "/", Expires: expiry})

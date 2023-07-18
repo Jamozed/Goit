@@ -24,20 +24,20 @@ func init() {
 
 func (g *Goit) HandleAdminUserIndex(w http.ResponseWriter, r *http.Request) {
 	if ok, uid := AuthHttp(r); !ok {
-		http.NotFound(w, r)
+		HttpError(w, http.StatusNotFound)
 		return
 	} else if user, err := g.GetUser(uid); err != nil {
 		log.Println("[Admin:User:Create:Auth]", err.Error())
-		http.NotFound(w, r)
+		HttpError(w, http.StatusNotFound)
 		return
 	} else if !user.IsAdmin {
-		http.NotFound(w, r)
+		HttpError(w, http.StatusNotFound)
 		return
 	}
 
 	if rows, err := g.db.Query("SELECT id, name, name_full, is_admin FROM users"); err != nil {
 		log.Println("[Admin:User:Index:SELECT]", err.Error())
-		http.Error(w, "500 internal server error", http.StatusInternalServerError)
+		HttpError(w, http.StatusInternalServerError)
 	} else {
 		defer rows.Close()
 
@@ -56,7 +56,7 @@ func (g *Goit) HandleAdminUserIndex(w http.ResponseWriter, r *http.Request) {
 
 		if err := rows.Err(); err != nil {
 			log.Println("[Admin:User:Index:SELECT:Err]", err.Error())
-			http.Error(w, "500 internal server error", http.StatusInternalServerError)
+			HttpError(w, http.StatusInternalServerError)
 		} else {
 			adminUserIndex.Execute(w, struct{ Users []row }{users})
 		}
@@ -65,14 +65,14 @@ func (g *Goit) HandleAdminUserIndex(w http.ResponseWriter, r *http.Request) {
 
 func (g *Goit) HandleAdminUserCreate(w http.ResponseWriter, r *http.Request) {
 	if ok, uid := AuthHttp(r); !ok {
-		http.NotFound(w, r)
+		HttpError(w, http.StatusNotFound)
 		return
 	} else if user, err := g.GetUser(uid); err != nil {
 		log.Println("[Admin:User:Create:Auth]", err.Error())
-		http.NotFound(w, r)
+		HttpError(w, http.StatusNotFound)
 		return
 	} else if !user.IsAdmin {
-		http.NotFound(w, r)
+		HttpError(w, http.StatusNotFound)
 		return
 	}
 
@@ -90,20 +90,20 @@ func (g *Goit) HandleAdminUserCreate(w http.ResponseWriter, r *http.Request) {
 			data.Msg = "Username \"" + username + "\" is reserved"
 		} else if exists, err := g.UserExists(username); err != nil {
 			log.Println("[Admin:User:Create:Exists]", err.Error())
-			http.Error(w, "500 internal server error", http.StatusInternalServerError)
+			HttpError(w, http.StatusInternalServerError)
 			return
 		} else if exists {
 			data.Msg = "Username \"" + username + "\" is taken"
 		} else if salt, err := Salt(); err != nil {
 			log.Println("[Admin:User:Create:Salt]", err.Error())
-			http.Error(w, "500 internal server error", http.StatusInternalServerError)
+			HttpError(w, http.StatusInternalServerError)
 			return
 		} else if _, err := g.db.Exec(
 			"INSERT INTO users (name, name_full, pass, pass_algo, salt, is_admin) VALUES (?, ?, ?, ?, ?, ?)",
 			username, fullname, Hash(password, salt), "argon2", salt, admin,
 		); err != nil {
 			log.Println("[Admin:User:Create:INSERT]", err.Error())
-			http.Error(w, "500 internal server error", http.StatusInternalServerError)
+			HttpError(w, http.StatusInternalServerError)
 			return
 		} else {
 			data.Msg = "User \"" + username + "\" created successfully"
