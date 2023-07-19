@@ -27,6 +27,12 @@ type GitCommand struct {
 
 func HandleInfoRefs(w http.ResponseWriter, r *http.Request) {
 	service := r.FormValue("service")
+
+	if service == "git-upload-pack" && r.Header.Get("Git-Protocol") != "version=2" {
+		HttpError(w, http.StatusForbidden)
+		return
+	}
+
 	repo := httpBase(w, r, service)
 	if repo == nil {
 		return
@@ -56,6 +62,11 @@ func HandleInfoRefs(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleUploadPack(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("Git-Protocol") != "version=2" {
+		HttpError(w, http.StatusForbidden)
+		return
+	}
+
 	repo := httpBase(w, r, "git-upload-pack")
 	if repo == nil {
 		return
@@ -87,11 +98,6 @@ func httpBase(w http.ResponseWriter, r *http.Request, service string) *Repo {
 		return nil
 	}
 
-	if r.Header.Get("Git-Protocol") != "version=2" {
-		HttpError(w, http.StatusForbidden)
-		return nil
-	}
-
 	repo, err := GetRepoByName(db, reponame)
 	if err != nil {
 		HttpError(w, http.StatusInternalServerError)
@@ -104,8 +110,8 @@ func httpBase(w http.ResponseWriter, r *http.Request, service string) *Repo {
 	/* Require authentication other than for public pull */
 	if repo.IsPrivate || !isPull {
 		/* TODO authentcate */
-		HttpError(w, http.StatusUnauthorized)
-		return nil
+		// HttpError(w, http.StatusUnauthorized)
+		// return nil
 	}
 
 	return repo
@@ -137,8 +143,11 @@ func serviceRPC(w http.ResponseWriter, r *http.Request, service string, repo *Re
 
 	c := NewCommand(strings.TrimPrefix(service, "git-"), "--stateless-rpc", ".")
 	c.AddEnv(os.Environ()...)
-	c.AddEnv("GIT_PROTOCOL=version=2")
 	c.dir = "./" + repo.Name + ".git"
+
+	if p := r.Header.Get("Git-Protocol"); p == "version=2" {
+		c.AddEnv("GIT_PROTOCOL=version=2")
+	}
 
 	w.Header().Add("Content-Type", "application/x-"+service+"-result")
 	w.WriteHeader(http.StatusOK)

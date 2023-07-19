@@ -35,7 +35,7 @@ var (
 	userCreate *template.Template = template.Must(template.New("user_create").Parse(res.UserCreate))
 )
 
-func (g *Goit) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
+func HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 	if ok, _ := AuthHttp(r); ok {
 		http.Redirect(w, r, "/", http.StatusFound)
 		return
@@ -50,13 +50,13 @@ func (g *Goit) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 
 		if username == "" {
 			data.Msg = "Username cannot be empty"
-		} else if exists, err := g.UserExists(username); err != nil {
+		} else if exists, err := UserExists(username); err != nil {
 			log.Println("[User:Login:Exists]", err.Error())
 			HttpError(w, http.StatusInternalServerError)
 			return
 		} else if !exists {
 			data.Msg = "Invalid credentials"
-		} else if err := g.db.QueryRow(
+		} else if err := db.QueryRow(
 			"SELECT id, name, pass, pass_algo, salt FROM users WHERE name = ?", username,
 		).Scan(&u.Id, &u.Name, &u.Pass, &u.PassAlgo, &u.Salt); err != nil {
 			log.Println("[User:Login:SELECT]", err.Error())
@@ -81,16 +81,16 @@ func (g *Goit) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 	userLogin.Execute(w, data)
 }
 
-func (g *Goit) HandleUserLogout(w http.ResponseWriter, r *http.Request) {
+func HandleUserLogout(w http.ResponseWriter, r *http.Request) {
 	EndSession(SessionCookie(r))
 	http.SetCookie(w, &http.Cookie{Name: "session", Path: "/", MaxAge: -1})
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 
-func (g *Goit) GetUser(id uint64) (*User, error) {
+func GetUser(id uint64) (*User, error) {
 	u := User{}
 
-	if err := g.db.QueryRow(
+	if err := db.QueryRow(
 		"SELECT id, name, name_full, is_admin FROM users WHERE id = ?", id,
 	).Scan(&u.Id, &u.Name, &u.NameFull, &u.IsAdmin); err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
@@ -103,8 +103,8 @@ func (g *Goit) GetUser(id uint64) (*User, error) {
 	}
 }
 
-func (g *Goit) UserExists(name string) (bool, error) {
-	if err := g.db.QueryRow("SELECT name FROM users WHERE name = ?", strings.ToLower(name)).Scan(&name); err != nil {
+func UserExists(name string) (bool, error) {
+	if err := db.QueryRow("SELECT name FROM users WHERE name = ?", strings.ToLower(name)).Scan(&name); err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			return false, err
 		} else {

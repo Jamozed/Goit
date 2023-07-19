@@ -7,44 +7,57 @@
 	<link rel="icon" type="image/png" href="/static/favicon.png">
 </head>
 <body>
-	<table>
-		<tr><td><h1>{{.Name}}</h1></td></tr>
-		<tr><td><span>{{.Description}}</span></td></tr>
-		<tr><td>git clone <a href="{{.Url}}">{{.Url}}</a></td></tr>
-		<tr>
-			<td>
-				<a href="/{{.Name}}/log">Log</a>
-				| <a href="/{{.Name}}/tree">Tree</a>
-				| <a href="/{{.Name}}/refs">Refs</a>
-				{{if .HasReadme}}
-					| <a href="">README</a>
-				{{end}}
-				{{if .HasLicence}}
-					| <a href="">LICENCE</a>
-				{{end}}
-			</td>
-		</tr>
-	</table><hr>
-	{{if .Commits}}
+	<header>
 		<table>
-			<thead>
-				<tr>
-					<td><b>Date</b></td>
-					<td><b>Message</b></td>
-					<td><b>Author</b></td>
-				</tr>
-			</thead>
-			<tbody>
-			{{range .Commits}}
-				<tr>
-					<td>{{.Date}}</a></td>
-					<td>{{.Message}}</td>
-					<td>{{.Author}}</td>
-				</tr>
-			{{end}}
-			</tbody>
+			<tr>
+				<td rowspan="2"><a href="/"><img style="max-height: 22px;" src=""></a></td>
+				<td><h1>{{.Name}}</h1></td>
+			</tr>
+			<tr>
+				<td>{{.Description}}</td>
+			</tr>
+			<tr>
+				<td></td>
+				<td>git clone <a href="{{.Url}}">{{.Url}}</a></td>
+			</tr>
+			<tr>
+				<td></td>
+				<td>
+					<a href="/{{.Name}}/log">Log</a>
+					| <a href="/{{.Name}}/tree">Tree</a>
+					| <a href="/{{.Name}}/refs">Refs</a>
+					{{if .HasReadme}}
+						| <a href="">README</a>
+					{{end}}
+					{{if .HasLicence}}
+						| <a href="">LICENCE</a>
+					{{end}}
+				</td>
+			</tr>
 		</table>
-	{{else}}
-		<span>No commits</span>
-	{{end}}
+	</header><hr>
+	<main>
+		{{if .Commits}}
+			<table>
+				<thead>
+					<tr>
+						<td><b>Date</b></td>
+						<td><b>Message</b></td>
+						<td><b>Author</b></td>
+					</tr>
+				</thead>
+				<tbody>
+				{{range .Commits}}
+					<tr>
+						<td>{{.Date}}</a></td>
+						<td>{{.Message}}</td>
+						<td>{{.Author}}</td>
+					</tr>
+				{{end}}
+				</tbody>
+			</table>
+		{{else}}
+			<span>No commits</span>
+		{{end}}
+	</main>
 </body>

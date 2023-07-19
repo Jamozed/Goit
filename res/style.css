@@ -7,4 +7,6 @@ h1, h2 { font-size: 1em; margin: 0; }
 hr { border: 0; height: 1em; margin: 0; }
 
 table td { padding: 0 0.4em; }
-table tr:hover td { background-color: #222222; }
+table td:empty::after { content: "\00a0"; }
+
+main table tr:hover td { background-color: #222222; }

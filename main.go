@@ -16,33 +16,30 @@ import (
 )
 
 func main() {
-	g, err := goit.InitGoit()
-	if err != nil {
+	if err := goit.InitGoit("./goit.json"); err != nil {
 		log.Fatalln("[InitGoit]", err.Error())
-	} else {
-		defer g.Close()
 	}
 
 	h := mux.NewRouter()
 	h.StrictSlash(true)
 
-	h.Path("/").HandlerFunc(g.HandleIndex)
-	h.Path("/user/login").Methods("GET", "POST").HandlerFunc(g.HandleUserLogin)
-	h.Path("/user/logout").Methods("GET", "POST").HandlerFunc(g.HandleUserLogout)
+	h.Path("/").HandlerFunc(goit.HandleIndex)
+	h.Path("/user/login").Methods("GET", "POST").HandlerFunc(goit.HandleUserLogin)
+	h.Path("/user/logout").Methods("GET", "POST").HandlerFunc(goit.HandleUserLogout)
 	// h.Path("/user/settings").Methods("GET").HandlerFunc()
-	h.Path("/repo/create").Methods("GET", "POST").HandlerFunc(g.HandleRepoCreate)
+	h.Path("/repo/create").Methods("GET", "POST").HandlerFunc(goit.HandleRepoCreate)
 	// h.Path("/repo/delete").Methods("POST").HandlerFunc()
 	// h.Path("/admin/settings").Methods("GET").HandlerFunc()
-	h.Path("/admin/user").Methods("GET").HandlerFunc(g.HandleAdminUserIndex)
+	h.Path("/admin/user").Methods("GET").HandlerFunc(goit.HandleAdminUserIndex)
 	// h.Path("/admin/repos").Methods("GET").HandlerFunc()
-	h.Path("/admin/user/create").Methods("GET", "POST").HandlerFunc(g.HandleAdminUserCreate)
+	h.Path("/admin/user/create").Methods("GET", "POST").HandlerFunc(goit.HandleAdminUserCreate)
 	// h.Path("/admin/user/edit").Methods("GET", "POST").HandlerFunc()
 
 	h.Path("/{repo:.+(?:\\.git)$}").Methods(http.MethodGet).HandlerFunc(redirectDotGit)
-	h.Path("/{repo}").Methods(http.MethodGet).HandlerFunc(g.HandleRepoLog)
-	h.Path("/{repo}/log").Methods(http.MethodGet).HandlerFunc(g.HandleRepoLog)
-	h.Path("/{repo}/tree").Methods(http.MethodGet).HandlerFunc(g.HandleRepoTree)
-	h.Path("/{repo}/refs").Methods(http.MethodGet).HandlerFunc(g.HandleRepoRefs)
+	h.Path("/{repo}").Methods(http.MethodGet).HandlerFunc(goit.HandleRepoLog)
+	h.Path("/{repo}/log").Methods(http.MethodGet).HandlerFunc(goit.HandleRepoLog)
+	h.Path("/{repo}/tree").Methods(http.MethodGet).HandlerFunc(goit.HandleRepoTree)
+	h.Path("/{repo}/refs").Methods(http.MethodGet).HandlerFunc(goit.HandleRepoRefs)
 	h.Path("/{repo}/info/refs").Methods(http.MethodGet).HandlerFunc(goit.HandleInfoRefs)
 	h.Path("/{repo}/git-upload-pack").Methods(http.MethodPost).HandlerFunc(goit.HandleUploadPack)
 	h.Path("/{repo}/git-receive-pack").Methods(http.MethodPost).HandlerFunc(goit.HandleReceivePack)
@@ -67,6 +64,7 @@ func main() {
 func logHttp(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.Println("[HTTP]", r.RemoteAddr, r.Method, r.URL.String())
+		// log.Println("[HTTP]", r.Header)
 		handler.ServeHTTP(w, r)
 	})
 }
@@ -74,7 +72,7 @@ func logHttp(handler http.Handler) http.Handler {
 func handleStyle(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "text/css")
 	if _, err := w.Write([]byte(res.Style)); err != nil {
-		log.Println("[handleStyle]", err.Error())
+		log.Println("[Style]", err.Error())
 	}
 }
 

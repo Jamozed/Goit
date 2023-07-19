@@ -6,28 +6,49 @@ package goit
 
 import (
 	"database/sql"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
+	"os"
+	"path"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
-var db *sql.DB
-
-type Goit struct {
-	db *sql.DB
+type Config struct {
+	DataPath string `json:"data_path"`
+	HttpAddr string `json:"http_addr"`
+	HttpPort string `json:"http_port"`
+	GitPath  string `json:"git_path"`
 }
 
+var config = Config{
+	DataPath: ".",
+	HttpAddr: "",
+	HttpPort: "8080",
+	GitPath:  "git",
+}
+
+var db *sql.DB
+
 /* Initialise Goit. */
-func InitGoit() (g *Goit, err error) {
-	g = &Goit{}
-
-	if g.db, err = sql.Open("sqlite3", "./goit.db"); err != nil {
-		return nil, fmt.Errorf("[SQL:open] %w", err)
+func InitGoit(conf string) (err error) {
+	if dat, err := os.ReadFile(conf); err != nil {
+		if !errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("[Config] %w", err)
+		}
+	} else if dat != nil {
+		if json.Unmarshal(dat, &config); err != nil {
+			return fmt.Errorf("[Config] %w", err)
+		}
 	}
-	db = g.db
 
-	if _, err = g.db.Exec(
+	if db, err = sql.Open("sqlite3", path.Join(config.DataPath, "goit.db")); err != nil {
+		return fmt.Errorf("[Database] %w", err)
+	}
+
+	if _, err = db.Exec(
 		`CREATE TABLE IF NOT EXISTS users (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			name TEXT UNIQUE NOT NULL,
@@ -38,10 +59,10 @@ func InitGoit() (g *Goit, err error) {
 			is_admin BOOLEAN NOT NULL
 		)`,
 	); err != nil {
-		return nil, fmt.Errorf("[CREATE:users] %w", err)
+		return fmt.Errorf("[CREATE:users] %w", err)
 	}
 
-	if _, err = g.db.Exec(
+	if _, err = db.Exec(
 		`CREATE TABLE IF NOT EXISTS repos (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			owner_id INTEGER NOT NULL,
@@ -52,18 +73,18 @@ func InitGoit() (g *Goit, err error) {
 			is_private BOOLEAN NOT NULL
 		)`,
 	); err != nil {
-		return nil, fmt.Errorf("[CREATE:repos] %w", err)
+		return fmt.Errorf("[CREATE:repos] %w", err)
 	}
 
 	/* Create an admin user if one does not exist */
-	if exists, err := g.UserExists("admin"); err != nil {
+	if exists, err := UserExists("admin"); err != nil {
 		log.Println("[admin:Exists]", err.Error())
 		err = nil /* ignored */
 	} else if !exists {
 		if salt, err := Salt(); err != nil {
 			log.Println("[admin:Salt]", err.Error())
 			err = nil /* ignored */
-		} else if _, err = g.db.Exec(
+		} else if _, err = db.Exec(
 			"INSERT INTO users (id, name, name_full, pass, pass_algo, salt, is_admin) VALUES (?, ?, ?, ?, ?, ?, ?)",
 			0, "admin", "Administrator", Hash("admin", salt), "argon2", salt, true,
 		); err != nil {
@@ -72,9 +93,9 @@ func InitGoit() (g *Goit, err error) {
 		}
 	}
 
-	return g, nil
+	return nil
 }
 
-func (g *Goit) Close() error {
-	return g.db.Close()
+func GetRepoPath(username, reponame string) string {
+	return path.Join(config.DataPath, "repos", username, reponame+".git")
 }

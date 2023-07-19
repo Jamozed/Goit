@@ -38,10 +38,10 @@ var (
 	repoRefs   *template.Template = template.Must(template.New("repo_refs").Parse(res.RepoRefs))
 )
 
-func (g *Goit) HandleIndex(w http.ResponseWriter, r *http.Request) {
+func HandleIndex(w http.ResponseWriter, r *http.Request) {
 	authOk, uid := AuthHttp(r)
 
-	if rows, err := g.db.Query("SELECT id, owner_id, name, description, is_private FROM repos"); err != nil {
+	if rows, err := db.Query("SELECT id, owner_id, name, description, is_private FROM repos"); err != nil {
 		log.Println("[Index:SELECT]", err.Error())
 		HttpError(w, http.StatusInternalServerError)
 	} else {
@@ -56,7 +56,7 @@ func (g *Goit) HandleIndex(w http.ResponseWriter, r *http.Request) {
 			if err := rows.Scan(&r.Id, &r.OwnerId, &r.Name, &r.Description, &r.IsPrivate); err != nil {
 				log.Println("[Index:SELECT:Scan]", err.Error())
 			} else if !r.IsPrivate || (authOk && uid == r.OwnerId) {
-				owner, err := g.GetUser(r.OwnerId)
+				owner, err := GetUser(r.OwnerId)
 				if err != nil {
 					log.Println("[Index:SELECT:UserName]", err.Error())
 				}
@@ -74,14 +74,14 @@ func (g *Goit) HandleIndex(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (g *Goit) HandleRepoCreate(w http.ResponseWriter, r *http.Request) {
+func HandleRepoCreate(w http.ResponseWriter, r *http.Request) {
 	if ok, uid := AuthHttp(r); !ok {
 		HttpError(w, http.StatusUnauthorized)
 	} else if r.Method == http.MethodPost {
 		name := r.FormValue("reponame")
 		private := r.FormValue("visibility") == "private"
 
-		if taken, err := RepoExists(g.db, name); err != nil {
+		if taken, err := RepoExists(db, name); err != nil {
 			log.Println("[RepoCreate:RepoExists]", err.Error())
 			HttpError(w, http.StatusInternalServerError)
 		} else if taken {
@@ -89,7 +89,7 @@ func (g *Goit) HandleRepoCreate(w http.ResponseWriter, r *http.Request) {
 		} else if SliceContains[string](reserved, name) {
 			repoCreate.Execute(w, struct{ Msg string }{"Reponame is reserved"})
 		} else {
-			if _, err := g.db.Exec(
+			if _, err := db.Exec(
 				`INSERT INTO repos (
 					owner_id, name, name_lower, description, default_branch, is_private
 				) VALUES (?, ?, ?, ?, ?, ?)`,
@@ -106,7 +106,7 @@ func (g *Goit) HandleRepoCreate(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (g *Goit) HandleRepoLog(w http.ResponseWriter, r *http.Request) {
+func HandleRepoLog(w http.ResponseWriter, r *http.Request) {
 	reponame := mux.Vars(r)["repo"]
 
 	repo, err := GetRepoByName(db, reponame)
@@ -153,11 +153,11 @@ func (g *Goit) HandleRepoLog(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (g *Goit) HandleRepoTree(w http.ResponseWriter, r *http.Request) {
+func HandleRepoTree(w http.ResponseWriter, r *http.Request) {
 	HttpError(w, http.StatusNoContent)
 }
 
-func (g *Goit) HandleRepoRefs(w http.ResponseWriter, r *http.Request) {
+func HandleRepoRefs(w http.ResponseWriter, r *http.Request) {
 	reponame := mux.Vars(r)["repo"]
 
 	repo, err := GetRepoByName(db, reponame)

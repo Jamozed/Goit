@@ -4,7 +4,9 @@
 
 package goit
 
-import "net/http"
+import (
+	"net/http"
+)
 
 func If[T any](cond bool, a, b T) T {
 	if cond {
