@@ -7,13 +7,11 @@ package goit
 import (
 	"database/sql"
 	"errors"
-	"html/template"
 	"log"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/Jamozed/Goit/res"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
@@ -29,14 +27,6 @@ type Repo struct {
 	DefaultBranch string
 	IsPrivate     bool
 }
-
-var (
-	repoIndex  *template.Template = template.Must(template.New("repo_index").Parse(res.RepoIndex))
-	repoCreate *template.Template = template.Must(template.New("repo_create").Parse(res.RepoCreate))
-	repoLog    *template.Template = template.Must(template.New("repo_log").Parse(res.RepoLog))
-	repoTree   *template.Template = template.Must(template.New("repo_tree").Parse(res.RepoTree))
-	repoRefs   *template.Template = template.Must(template.New("repo_refs").Parse(res.RepoRefs))
-)
 
 func HandleIndex(w http.ResponseWriter, r *http.Request) {
 	authOk, uid := AuthHttp(r)
@@ -68,8 +58,11 @@ func HandleIndex(w http.ResponseWriter, r *http.Request) {
 		if err := rows.Err(); err != nil {
 			log.Println("[Index:SELECT:Err]", err.Error())
 			HttpError(w, http.StatusInternalServerError)
-		} else {
-			repoIndex.Execute(w, struct{ Repos []row }{repos})
+		} else if err := tmpl.ExecuteTemplate(w, "repo_index", struct {
+			Title string
+			Repos []row
+		}{"Repositories", repos}); err != nil {
+			log.Println("[Repo:Index]", err.Error())
 		}
 	}
 }
@@ -85,9 +78,9 @@ func HandleRepoCreate(w http.ResponseWriter, r *http.Request) {
 			log.Println("[RepoCreate:RepoExists]", err.Error())
 			HttpError(w, http.StatusInternalServerError)
 		} else if taken {
-			repoCreate.Execute(w, struct{ Msg string }{"Reponame is taken"})
+			tmpl.ExecuteTemplate(w, "repo_create", struct{ Msg string }{"Reponame is taken"})
 		} else if SliceContains[string](reserved, name) {
-			repoCreate.Execute(w, struct{ Msg string }{"Reponame is reserved"})
+			tmpl.ExecuteTemplate(w, "repo_create", struct{ Msg string }{"Reponame is reserved"})
 		} else {
 			if _, err := db.Exec(
 				`INSERT INTO repos (
@@ -102,7 +95,7 @@ func HandleRepoCreate(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	} else /* GET */ {
-		repoCreate.Execute(w, nil)
+		tmpl.ExecuteTemplate(w, "repo_create", nil)
 	}
 }
 
@@ -121,7 +114,7 @@ func HandleRepoLog(w http.ResponseWriter, r *http.Request) {
 	type row struct{ Date, Message, Author string }
 	commits := []row{}
 
-	if gr, err := git.PlainOpen("./" + reponame + ".git"); err != nil {
+	if gr, err := git.PlainOpen(GetRepoPath(reponame)); err != nil {
 		log.Println("[Repo:Log]", err.Error())
 		HttpError(w, http.StatusInternalServerError)
 		return
@@ -144,11 +137,13 @@ func HandleRepoLog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := repoLog.Execute(w, struct {
-		Name, Description, Url string
-		HasReadme, HasLicence  bool
-		Commits                []row
-	}{reponame, repo.Description, r.URL.Host + "/" + repo.Name + ".git", false, false, commits}); err != nil {
+	if err := tmpl.ExecuteTemplate(w, "repo_log", struct {
+		Title, Name, Description, Url string
+		HasReadme, HasLicence         bool
+		Commits                       []row
+	}{
+		"Log", reponame, repo.Description, r.URL.Host + "/" + repo.Name + ".git", false, false, commits,
+	}); err != nil {
 		log.Println("[Repo:Log]", err.Error())
 	}
 }
@@ -174,7 +169,7 @@ func HandleRepoRefs(w http.ResponseWriter, r *http.Request) {
 	bras := []bra{}
 	tags := []tag{}
 
-	if gr, err := git.PlainOpen("./" + reponame + ".git"); err != nil {
+	if gr, err := git.PlainOpen(GetRepoPath(reponame)); err != nil {
 		log.Println("[Repo:Refs]", err.Error())
 		HttpError(w, http.StatusInternalServerError)
 		return
@@ -202,12 +197,14 @@ func HandleRepoRefs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := repoRefs.Execute(w, struct {
-		Name, Description, Url string
-		HasReadme, HasLicence  bool
-		Branches               []bra
-		Tags                   []tag
-	}{reponame, repo.Description, r.URL.Host + "/" + repo.Name + ".git", false, false, bras, tags}); err != nil {
+	if err := tmpl.ExecuteTemplate(w, "repo_refs", struct {
+		Title, Name, Description, Url string
+		HasReadme, HasLicence         bool
+		Branches                      []bra
+		Tags                          []tag
+	}{
+		"Refs", reponame, repo.Description, r.URL.Host + "/" + repo.Name + ".git", false, false, bras, tags,
+	}); err != nil {
 		log.Println("[Repo:Refs]", err.Error())
 	}
 }

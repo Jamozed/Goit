@@ -45,6 +45,7 @@ func main() {
 	h.Path("/{repo}/git-receive-pack").Methods(http.MethodPost).HandlerFunc(goit.HandleReceivePack)
 
 	h.Path("/static/style.css").Methods(http.MethodGet).HandlerFunc(handleStyle)
+	h.Path("/static/favicon.png").Methods(http.MethodGet).HandlerFunc(handleFavicon)
 
 	h.PathPrefix("/").HandlerFunc(goit.HttpNotFound)
 
@@ -70,9 +71,20 @@ func logHttp(handler http.Handler) http.Handler {
 }
 
 func handleStyle(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("Content-Type", "text/css")
+	w.Header().Set("Content-Type", "text/css")
 	if _, err := w.Write([]byte(res.Style)); err != nil {
 		log.Println("[Style]", err.Error())
+	}
+}
+
+func handleFavicon(w http.ResponseWriter, r *http.Request) {
+	if goit.Favicon == nil {
+		goit.HttpError(w, http.StatusNotFound)
+	} else {
+		w.Header().Set("Content-Type", "image/png")
+		if _, err := w.Write(goit.Favicon); err != nil {
+			log.Println("[Favicon]", err.Error())
+		}
 	}
 }
 

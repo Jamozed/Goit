@@ -1,0 +1,29 @@
+<table>
+	<tr>
+		<td rowspan="2"><a href="/">
+			<img style="max-height: 24px;" src="/static/favicon.png">
+		</a></td>
+		<td><h1>{{.Name}}</h1></td>
+	</tr>
+	<tr>
+		<td>{{.Description}}</td>
+	</tr>
+	<tr>
+		<td></td>
+		<td>git clone <a href="{{.Url}}">{{.Url}}</a></td>
+	</tr>
+	<tr>
+		<td></td>
+		<td>
+			<a href="/{{.Name}}/log">Log</a>
+			| <a href="/{{.Name}}/tree">Tree</a>
+			| <a href="/{{.Name}}/refs">Refs</a>
+			{{if .HasReadme}}
+				| <a href="">README</a>
+			{{end}}
+			{{if .HasLicence}}
+				| <a href="">LICENCE</a>
+			{{end}}
+		</td>
+	</tr>
+</table>

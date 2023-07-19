@@ -1,30 +1,8 @@
 <!DOCTYPE html>
-<head>
-	<meta charset="UTF-8">
-	<title>Refs</title>
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<link rel="stylesheet" type="text/css" href="/static/style.css">
-	<link rel="icon" type="image/png" href="/static/favicon.png">
-</head>
+<head>{{template "base/head" .}}</head>
 <body>
-	<table>
-		<tr><td><h1>{{.Name}}</h1></td></tr>
-		<tr><td><span>{{.Description}}</span></td></tr>
-		<tr><td>git clone <a href="{{.Url}}">{{.Url}}</a></td></tr>
-		<tr>
-			<td>
-				<a href="/{{.Name}}/log">Log</a>
-				| <a href="/{{.Name}}/tree">Tree</a>
-				| <a href="/{{.Name}}/refs">Refs</a>
-				{{if .HasReadme}}
-					| <a href="">README</a>
-				{{end}}
-				{{if .HasLicence}}
-					| <a href="">LICENCE</a>
-				{{end}}
-			</td>
-		</tr>
-	</table><hr>
+	<header>{{template "base/repo_header" .}}</header><hr>
+	<main>
 	{{if .Branches}}
 		<h2>Branches</h2>
 		<table>
@@ -63,4 +41,5 @@
 			</tbody>
 		</table>
 	{{end}}
+	</main>
 </body>

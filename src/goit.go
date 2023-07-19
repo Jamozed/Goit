@@ -31,6 +31,7 @@ var config = Config{
 }
 
 var db *sql.DB
+var Favicon []byte
 
 /* Initialise Goit. */
 func InitGoit(conf string) (err error) {
@@ -42,6 +43,14 @@ func InitGoit(conf string) (err error) {
 		if json.Unmarshal(dat, &config); err != nil {
 			return fmt.Errorf("[Config] %w", err)
 		}
+	}
+
+	if dat, err := os.ReadFile(path.Join(config.DataPath, "favicon.png")); err != nil {
+		if !errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("[Config] %w", err)
+		}
+	} else {
+		Favicon = dat
 	}
 
 	if db, err = sql.Open("sqlite3", path.Join(config.DataPath, "goit.db")); err != nil {
@@ -96,6 +105,6 @@ func InitGoit(conf string) (err error) {
 	return nil
 }
 
-func GetRepoPath(username, reponame string) string {
-	return path.Join(config.DataPath, "repos", username, reponame+".git")
+func GetRepoPath(name string) string {
+	return path.Join(config.DataPath, "repos", name+".git")
 }
