@@ -18,7 +18,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type GitCommand struct {
+type gitCommand struct {
 	prog string
 	args []string
 	dir  string
@@ -28,24 +28,19 @@ type GitCommand struct {
 func HandleInfoRefs(w http.ResponseWriter, r *http.Request) {
 	service := r.FormValue("service")
 
-	if service == "git-upload-pack" && r.Header.Get("Git-Protocol") != "version=2" {
-		HttpError(w, http.StatusForbidden)
-		return
-	}
-
-	repo := httpBase(w, r, service)
+	repo := gitHttpBase(w, r, service)
 	if repo == nil {
 		return
 	}
 
-	c := NewCommand(strings.TrimPrefix(service, "git-"), "--stateless-rpc", "--advertise-refs", ".")
-	c.AddEnv(os.Environ()...)
-	c.AddEnv("GIT_PROTOCOL=version=2")
-	c.dir = "./" + repo.Name + ".git"
+	c := newCommand(strings.TrimPrefix(service, "git-"), "--stateless-rpc", "--advertise-refs", ".")
+	c.addEnv(os.Environ()...)
+	c.addEnv("GIT_PROTOCOL=version=2")
+	c.dir = GetRepoPath(repo.Name)
 
-	refs, _, err := c.Run(nil, nil)
+	refs, _, err := c.run(nil, nil)
 	if err != nil {
-		log.Println("[Git]", err.Error())
+		log.Println("[Git HTTP]", err.Error())
 		HttpError(w, http.StatusInternalServerError)
 		return
 	}
@@ -62,70 +57,95 @@ func HandleInfoRefs(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleUploadPack(w http.ResponseWriter, r *http.Request) {
-	if r.Header.Get("Git-Protocol") != "version=2" {
-		HttpError(w, http.StatusForbidden)
-		return
-	}
+	const service = "git-upload-pack"
 
-	repo := httpBase(w, r, "git-upload-pack")
+	repo := gitHttpBase(w, r, service)
 	if repo == nil {
 		return
 	}
 
-	serviceRPC(w, r, "git-upload-pack", repo)
+	gitHttpRpc(w, r, service, repo)
 }
 
 func HandleReceivePack(w http.ResponseWriter, r *http.Request) {
-	repo := httpBase(w, r, "git-receive-pack")
+	const service = "git-receive-pack"
+
+	repo := gitHttpBase(w, r, service)
 	if repo == nil {
 		return
 	}
 
-	serviceRPC(w, r, "git-receive-pack", repo)
+	gitHttpRpc(w, r, service, repo)
 }
 
-func httpBase(w http.ResponseWriter, r *http.Request, service string) *Repo {
+func gitHttpBase(w http.ResponseWriter, r *http.Request, service string) *Repo {
 	reponame := mux.Vars(r)["repo"]
 
-	var isPull bool
-	switch service {
-	case "git-upload-pack":
-		isPull = true
-	case "git-receive-pack":
-		isPull = false
-	default:
-		HttpError(w, http.StatusNotFound)
+	/* Check that the Git service and protocol version are supported */
+	if service != "git-upload-pack" && service != "git-receive-pack" {
+		w.WriteHeader(http.StatusForbidden)
+		return nil
+	}
+	if service == "git-upload-pack" && r.Header.Get("Git-Protocol") != "version=2" {
+		w.WriteHeader(http.StatusForbidden)
 		return nil
 	}
 
+	/* Load the repository from the database */
 	repo, err := GetRepoByName(db, reponame)
 	if err != nil {
-		HttpError(w, http.StatusInternalServerError)
-		return nil
-	} else if repo == nil {
-		HttpError(w, http.StatusNotFound)
+		log.Println("[Git HTTP]", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
 		return nil
 	}
 
 	/* Require authentication other than for public pull */
-	if repo.IsPrivate || !isPull {
-		/* TODO authentcate */
-		// HttpError(w, http.StatusUnauthorized)
-		// return nil
+	if repo == nil || repo.IsPrivate || service == "git-receive-pack" {
+		username, password, ok := r.BasicAuth()
+		if !ok {
+			w.Header().Set("WWW-Authenticate", "Basic realm=\"git\"")
+			w.WriteHeader(http.StatusUnauthorized)
+			return nil
+		}
+
+		user, err := GetUserByName(username)
+		if err != nil {
+			log.Println("[Git HTTP]", err.Error())
+			w.WriteHeader(http.StatusInternalServerError)
+			return nil
+		}
+
+		/* If the user doesn't exist or has invalid credentials */
+		if user == nil || !bytes.Equal(Hash(password, user.Salt), user.Pass) {
+			w.Header().Set("WWW-Authenticate", "Basic realm=\"git\"")
+			w.WriteHeader(http.StatusUnauthorized)
+			return nil
+		}
+
+		/* If the repo doesn't exist or isn't owned by the user */
+		if repo == nil || user.Id != repo.OwnerId {
+			w.WriteHeader(http.StatusNotFound)
+			return nil
+		}
+	}
+
+	if repo == nil {
+		w.WriteHeader(http.StatusNotFound)
+		return nil
 	}
 
 	return repo
 }
 
-func serviceRPC(w http.ResponseWriter, r *http.Request, service string, repo *Repo) {
+func gitHttpRpc(w http.ResponseWriter, r *http.Request, service string, repo *Repo) {
 	defer func() {
 		if err := r.Body.Close(); err != nil {
-			log.Println("[GitRPC]", err.Error())
+			log.Println("[Git RPC]", err.Error())
 		}
 	}()
 
 	if r.Header.Get("Content-Type") != "application/x-"+service+"-request" {
-		log.Println("[GitRPC]", "Content-Type mismatch")
+		log.Println("[Git RPC]", "Content-Type mismatch")
 		HttpError(w, http.StatusUnauthorized)
 		return
 	}
@@ -133,7 +153,7 @@ func serviceRPC(w http.ResponseWriter, r *http.Request, service string, repo *Re
 	body := r.Body
 	if r.Header.Get("Content-Encoding") == "gzip" {
 		if b, err := gzip.NewReader(r.Body); err != nil {
-			log.Println("[GitRPC]", err.Error())
+			log.Println("[Git RPC]", err.Error())
 			HttpError(w, http.StatusInternalServerError)
 			return
 		} else {
@@ -141,19 +161,19 @@ func serviceRPC(w http.ResponseWriter, r *http.Request, service string, repo *Re
 		}
 	}
 
-	c := NewCommand(strings.TrimPrefix(service, "git-"), "--stateless-rpc", ".")
-	c.AddEnv(os.Environ()...)
-	c.dir = "./" + repo.Name + ".git"
+	c := newCommand(strings.TrimPrefix(service, "git-"), "--stateless-rpc", ".")
+	c.addEnv(os.Environ()...)
+	c.dir = GetRepoPath(repo.Name)
 
 	if p := r.Header.Get("Git-Protocol"); p == "version=2" {
-		c.AddEnv("GIT_PROTOCOL=version=2")
+		c.addEnv("GIT_PROTOCOL=version=2")
 	}
 
 	w.Header().Add("Content-Type", "application/x-"+service+"-result")
 	w.WriteHeader(http.StatusOK)
 
-	if _, _, err := c.Run(body, w); err != nil {
-		log.Println("[GitRPC]", err.Error())
+	if _, _, err := c.run(body, w); err != nil {
+		log.Println("[Git RPC]", err.Error())
 		HttpError(w, http.StatusInternalServerError)
 		return
 	}
@@ -168,19 +188,15 @@ func pktLine(str string) []byte {
 
 func pktFlush() []byte { return []byte("0000") }
 
-func NewCommand(args ...string) *GitCommand {
-	return &GitCommand{prog: "git", args: args}
+func newCommand(args ...string) *gitCommand {
+	return &gitCommand{prog: "git", args: args}
 }
 
-func (C *GitCommand) AddArgs(args ...string) {
-	C.args = append(C.args, args...)
-}
-
-func (C *GitCommand) AddEnv(env ...string) {
+func (C *gitCommand) addEnv(env ...string) {
 	C.env = append(C.env, env...)
 }
 
-func (C *GitCommand) Run(in io.Reader, out io.Writer) ([]byte, []byte, error) {
+func (C *gitCommand) run(in io.Reader, out io.Writer) ([]byte, []byte, error) {
 	c := exec.Command(C.prog, C.args...)
 	c.Dir = C.dir
 	c.Env = C.env

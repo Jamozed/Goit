@@ -57,7 +57,7 @@ func main() {
 		}
 	}()
 
-	if err := http.ListenAndServe(":8080", logHttp(h)); err != nil {
+	if err := http.ListenAndServe(goit.Conf.HttpAddr+":"+goit.Conf.HttpPort, logHttp(h)); err != nil {
 		log.Fatalln("[HTTP]", err)
 	}
 }

@@ -103,6 +103,21 @@ func GetUser(id uint64) (*User, error) {
 	}
 }
 
+func GetUserByName(name string) (*User, error) {
+	u := &User{}
+
+	err := db.QueryRow(
+		"SELECT id, name, name_full, pass, pass_algo, salt, is_admin FROM users WHERE name = ?", strings.ToLower(name),
+	).Scan(&u.Id, &u.Name, &u.NameFull, &u.Pass, &u.PassAlgo, &u.Salt, &u.IsAdmin)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	}
+
+	return u, nil
+}
+
 func UserExists(name string) (bool, error) {
 	if err := db.QueryRow("SELECT name FROM users WHERE name = ?", strings.ToLower(name)).Scan(&name); err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {

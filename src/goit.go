@@ -23,7 +23,7 @@ type Config struct {
 	GitPath  string `json:"git_path"`
 }
 
-var config = Config{
+var Conf = Config{
 	DataPath: ".",
 	HttpAddr: "",
 	HttpPort: "8080",
@@ -40,12 +40,12 @@ func InitGoit(conf string) (err error) {
 			return fmt.Errorf("[Config] %w", err)
 		}
 	} else if dat != nil {
-		if json.Unmarshal(dat, &config); err != nil {
+		if json.Unmarshal(dat, &Conf); err != nil {
 			return fmt.Errorf("[Config] %w", err)
 		}
 	}
 
-	if dat, err := os.ReadFile(path.Join(config.DataPath, "favicon.png")); err != nil {
+	if dat, err := os.ReadFile(path.Join(Conf.DataPath, "favicon.png")); err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
 			return fmt.Errorf("[Config] %w", err)
 		}
@@ -53,7 +53,7 @@ func InitGoit(conf string) (err error) {
 		Favicon = dat
 	}
 
-	if db, err = sql.Open("sqlite3", path.Join(config.DataPath, "goit.db")); err != nil {
+	if db, err = sql.Open("sqlite3", path.Join(Conf.DataPath, "goit.db")); err != nil {
 		return fmt.Errorf("[Database] %w", err)
 	}
 
@@ -106,5 +106,5 @@ func InitGoit(conf string) (err error) {
 }
 
 func GetRepoPath(name string) string {
-	return path.Join(config.DataPath, "repos", name+".git")
+	return path.Join(Conf.DataPath, "repos", name+".git")
 }
