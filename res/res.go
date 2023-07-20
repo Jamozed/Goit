@@ -2,19 +2,31 @@ package res
 
 import _ "embed"
 
-//go:embed error.html.tmpl
+//go:embed error.html
 var Error string
 
-//go:embed base/head.html.tmpl
+//go:embed base/head.html
 var BaseHead string
 
-//go:embed base/repo_header.html.tmpl
+//go:embed admin/users.html
+var AdminUsers string
+
+//go:embed admin/user_create.html
+var AdminUserCreate string
+
+//go:embed admin/user_edit.html
+var AdminUserEdit string
+
+//go:embed admin/repos.html
+var AdminRepos string
+
+//go:embed repo/header.html
 var RepoHeader string
 
 //go:embed repo_index.html
 var RepoIndex string
 
-//go:embed user_login.html
+//go:embed user/login.html
 var UserLogin string
 
 //go:embed repo_create.html
@@ -28,12 +40,6 @@ var RepoTree string
 
 //go:embed repo_refs.html
 var RepoRefs string
-
-//go:embed user_create.html
-var UserCreate string
-
-//go:embed admin_user_index.html
-var AdminUserIndex string
 
 //go:embed style.css
 var Style string

@@ -1,8 +1,8 @@
-// util.go
+// util/util.go
 // Copyright (C) 2023, Jakob Wakeling
 // All rights reserved.
 
-package goit
+package util
 
 import (
 	"net/http"
@@ -24,12 +24,6 @@ func SliceContains[T comparable](s []T, e T) bool {
 	}
 
 	return false
-}
-
-func PanicIf(cond bool, v any) {
-	if cond {
-		panic(v)
-	}
 }
 
 /* Return the named cookie or nil if not found. */

@@ -1,13 +1,7 @@
 <!DOCTYPE html>
-<head>
-	<meta charset="UTF-8">
-	<title>Create User</title>
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<link rel="stylesheet" type="text/css" href="/static/style.css">
-	<link rel="icon" type="image/png" href="/static/favicon.png">
-</head>
+<head>{{template "base/head" .}}</head>
 <body>
-	<h1>Create User</h1>
+	<h1>{{.Title}}</h1>
 	<form action="/admin/user/create" method="post">
 		<label for="username">Username:</label>
 		<input type="text" name="username"><br>
@@ -19,5 +13,5 @@
 		<input type="checkbox" name="admin" value="true"><br>
 		<input type="submit" value="Create">
 	</form>
-	<p>{{.Msg}}</p>
+	<span>{{.Message}}</span>
 </body>

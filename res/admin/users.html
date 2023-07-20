@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<head>{{template "base/head" .}}</head>
+<body>
+	<header>
+		<table>
+			<tr>
+				<td><img src = "/static/favicon.png" style="max-height: 24px"></td>
+				<td><h1>{{.Title}}</h1></td>
+			</tr>
+		</table>
+	</header>
+	<main>
+		<table>
+			<thead>
+				<tr>
+					<td><b>ID</b></td>
+					<td><b>Name</b></td>
+					<td><b>Full Name</b></td>
+					<td><b>Admin</b></td>
+					<td></td>
+				</tr>
+			</thead>
+			<tbody>
+			{{range .Users}}
+				<tr>
+					<td>{{.Id}}</td>
+					<td><a href="/?user={{.Name}}">{{.Name}}</a></td>
+					<td>{{.FullName}}</td>
+					<td>{{.IsAdmin}}</td>
+					<td><a href="/admin/user/edit?user={{.Id}}">edit</a></td>
+				</tr>
+			{{end}}
+			</tbody>
+		</table>
+	</main>
+</body>

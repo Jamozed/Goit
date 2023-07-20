@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Jamozed/Goit/src/util"
 	"golang.org/x/crypto/argon2"
 )
 
@@ -66,7 +67,7 @@ func Auth(s string) (bool, uint64) {
 }
 
 func AuthHttp(r *http.Request) (bool, uint64) {
-	if c := Cookie(r, "session"); c != nil {
+	if c := util.Cookie(r, "session"); c != nil {
 		return Auth(c.Value)
 	}
 
@@ -74,7 +75,7 @@ func AuthHttp(r *http.Request) (bool, uint64) {
 }
 
 func SessionCookie(r *http.Request) string {
-	if c := Cookie(r, "session"); c != nil {
+	if c := util.Cookie(r, "session"); c != nil {
 		return c.Value
 	}
 

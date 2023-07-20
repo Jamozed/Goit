@@ -9,31 +9,23 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"html/template"
 	"log"
 	"net/http"
 	"strings"
 	"time"
-
-	"github.com/Jamozed/Goit/res"
 )
 
 type User struct {
 	Id       uint64
 	Name     string
-	NameFull string
+	FullName string
 	Pass     []byte
 	PassAlgo string
 	Salt     []byte
 	IsAdmin  bool
 }
 
-var (
-	reserved []string = []string{"admin", "repo", "static", "user"}
-
-	userLogin  *template.Template = template.Must(template.New("user_login").Parse(res.UserLogin))
-	userCreate *template.Template = template.Must(template.New("user_create").Parse(res.UserCreate))
-)
+var reserved []string = []string{"admin", "repo", "static", "user"}
 
 func HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 	if ok, _ := AuthHttp(r); ok {
@@ -41,7 +33,7 @@ func HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := struct{ Msg string }{""}
+	data := struct{ Title, Message string }{"Login", ""}
 
 	if r.Method == http.MethodPost {
 		u := User{}
@@ -49,13 +41,13 @@ func HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 		password := r.FormValue("password")
 
 		if username == "" {
-			data.Msg = "Username cannot be empty"
+			data.Message = "Username cannot be empty"
 		} else if exists, err := UserExists(username); err != nil {
 			log.Println("[User:Login:Exists]", err.Error())
 			HttpError(w, http.StatusInternalServerError)
 			return
 		} else if !exists {
-			data.Msg = "Invalid credentials"
+			data.Message = "Invalid credentials"
 		} else if err := db.QueryRow(
 			"SELECT id, name, pass, pass_algo, salt FROM users WHERE name = ?", username,
 		).Scan(&u.Id, &u.Name, &u.Pass, &u.PassAlgo, &u.Salt); err != nil {
@@ -63,7 +55,7 @@ func HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 			HttpError(w, http.StatusInternalServerError)
 			return
 		} else if !bytes.Equal(Hash(password, u.Salt), u.Pass) {
-			data.Msg = "Invalid credentials"
+			data.Message = "Invalid credentials"
 		} else {
 			expiry := time.Now().Add(15 * time.Minute)
 			if s, err := NewSession(u.Id, expiry); err != nil {
@@ -78,7 +70,7 @@ func HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	userLogin.Execute(w, data)
+	tmpl.ExecuteTemplate(w, "user_login", data)
 }
 
 func HandleUserLogout(w http.ResponseWriter, r *http.Request) {
@@ -92,7 +84,7 @@ func GetUser(id uint64) (*User, error) {
 
 	if err := db.QueryRow(
 		"SELECT id, name, name_full, is_admin FROM users WHERE id = ?", id,
-	).Scan(&u.Id, &u.Name, &u.NameFull, &u.IsAdmin); err != nil {
+	).Scan(&u.Id, &u.Name, &u.FullName, &u.IsAdmin); err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("[SELECT:user] %w", err)
 		} else {
@@ -108,7 +100,7 @@ func GetUserByName(name string) (*User, error) {
 
 	err := db.QueryRow(
 		"SELECT id, name, name_full, pass, pass_algo, salt, is_admin FROM users WHERE name = ?", strings.ToLower(name),
-	).Scan(&u.Id, &u.Name, &u.NameFull, &u.Pass, &u.PassAlgo, &u.Salt, &u.IsAdmin)
+	).Scan(&u.Id, &u.Name, &u.FullName, &u.Pass, &u.PassAlgo, &u.Salt, &u.IsAdmin)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	} else if err != nil {

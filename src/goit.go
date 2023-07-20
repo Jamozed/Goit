@@ -13,6 +13,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/adrg/xdg"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -24,7 +25,7 @@ type Config struct {
 }
 
 var Conf = Config{
-	DataPath: ".",
+	DataPath: path.Join(xdg.DataHome, "goit"),
 	HttpAddr: "",
 	HttpPort: "8080",
 	GitPath:  "git",
@@ -33,8 +34,7 @@ var Conf = Config{
 var db *sql.DB
 var Favicon []byte
 
-/* Initialise Goit. */
-func InitGoit(conf string) (err error) {
+func Goit(conf string) (err error) {
 	if dat, err := os.ReadFile(conf); err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
 			return fmt.Errorf("[Config] %w", err)
@@ -45,10 +45,13 @@ func InitGoit(conf string) (err error) {
 		}
 	}
 
+	log.Println("[Config] using data path:", Conf.DataPath)
+	if err := os.MkdirAll(Conf.DataPath, 0o777); err != nil {
+		return fmt.Errorf("[Config] %w", err)
+	}
+
 	if dat, err := os.ReadFile(path.Join(Conf.DataPath, "favicon.png")); err != nil {
-		if !errors.Is(err, os.ErrNotExist) {
-			return fmt.Errorf("[Config] %w", err)
-		}
+		log.Println("[Favicon]", err.Error())
 	} else {
 		Favicon = dat
 	}
@@ -82,27 +85,36 @@ func InitGoit(conf string) (err error) {
 			is_private BOOLEAN NOT NULL
 		)`,
 	); err != nil {
-		return fmt.Errorf("[CREATE:repos] %w", err)
+		return fmt.Errorf("[CREATE repos] %w", err)
 	}
 
 	/* Create an admin user if one does not exist */
 	if exists, err := UserExists("admin"); err != nil {
-		log.Println("[admin:Exists]", err.Error())
+		log.Println("[admin Exists]", err.Error())
 		err = nil /* ignored */
 	} else if !exists {
 		if salt, err := Salt(); err != nil {
-			log.Println("[admin:Salt]", err.Error())
+			log.Println("[admin Salt]", err.Error())
 			err = nil /* ignored */
 		} else if _, err = db.Exec(
 			"INSERT INTO users (id, name, name_full, pass, pass_algo, salt, is_admin) VALUES (?, ?, ?, ?, ?, ?, ?)",
 			0, "admin", "Administrator", Hash("admin", salt), "argon2", salt, true,
 		); err != nil {
-			log.Println("[admin:INSERT]", err.Error())
+			log.Println("[admin INSERT]", err.Error())
 			err = nil /* ignored */
 		}
 	}
 
 	return nil
+}
+
+func GetConfPath() string {
+	if p, err := xdg.SearchConfigFile(path.Join("goit", "goit.json")); err != nil {
+		log.Println("[Config]", err.Error())
+		return ""
+	} else {
+		return p
+	}
 }
 
 func GetRepoPath(name string) string {

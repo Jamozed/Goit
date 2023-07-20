@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Jamozed/Goit/src/util"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
@@ -51,7 +52,7 @@ func HandleIndex(w http.ResponseWriter, r *http.Request) {
 					log.Println("[Index:SELECT:UserName]", err.Error())
 				}
 
-				repos = append(repos, row{r.Name, "", owner.Name, If(r.IsPrivate, "private", "public"), ""})
+				repos = append(repos, row{r.Name, "", owner.Name, util.If(r.IsPrivate, "private", "public"), ""})
 			}
 		}
 
@@ -79,7 +80,7 @@ func HandleRepoCreate(w http.ResponseWriter, r *http.Request) {
 			HttpError(w, http.StatusInternalServerError)
 		} else if taken {
 			tmpl.ExecuteTemplate(w, "repo_create", struct{ Msg string }{"Reponame is taken"})
-		} else if SliceContains[string](reserved, name) {
+		} else if util.SliceContains[string](reserved, name) {
 			tmpl.ExecuteTemplate(w, "repo_create", struct{ Msg string }{"Reponame is reserved"})
 		} else {
 			if _, err := db.Exec(
@@ -139,10 +140,10 @@ func HandleRepoLog(w http.ResponseWriter, r *http.Request) {
 
 	if err := tmpl.ExecuteTemplate(w, "repo_log", struct {
 		Title, Name, Description, Url string
-		HasReadme, HasLicence         bool
+		Readme, Licence               string
 		Commits                       []row
 	}{
-		"Log", reponame, repo.Description, r.URL.Host + "/" + repo.Name + ".git", false, false, commits,
+		"Log", reponame, repo.Description, r.URL.Host + "/" + repo.Name + ".git", "", "", commits,
 	}); err != nil {
 		log.Println("[Repo:Log]", err.Error())
 	}
@@ -199,11 +200,11 @@ func HandleRepoRefs(w http.ResponseWriter, r *http.Request) {
 
 	if err := tmpl.ExecuteTemplate(w, "repo_refs", struct {
 		Title, Name, Description, Url string
-		HasReadme, HasLicence         bool
+		Readme, Licence               string
 		Branches                      []bra
 		Tags                          []tag
 	}{
-		"Refs", reponame, repo.Description, r.URL.Host + "/" + repo.Name + ".git", false, false, bras, tags,
+		"Refs", reponame, repo.Description, r.URL.Host + "/" + repo.Name + ".git", "", "", bras, tags,
 	}); err != nil {
 		log.Println("[Repo:Refs]", err.Error())
 	}

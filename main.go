@@ -16,8 +16,8 @@ import (
 )
 
 func main() {
-	if err := goit.InitGoit("./goit.json"); err != nil {
-		log.Fatalln("[InitGoit]", err.Error())
+	if err := goit.Goit(goit.GetConfPath()); err != nil {
+		log.Fatalln(err.Error())
 	}
 
 	h := mux.NewRouter()
@@ -30,10 +30,10 @@ func main() {
 	h.Path("/repo/create").Methods("GET", "POST").HandlerFunc(goit.HandleRepoCreate)
 	// h.Path("/repo/delete").Methods("POST").HandlerFunc()
 	// h.Path("/admin/settings").Methods("GET").HandlerFunc()
-	h.Path("/admin/user").Methods("GET").HandlerFunc(goit.HandleAdminUserIndex)
-	// h.Path("/admin/repos").Methods("GET").HandlerFunc()
+	h.Path("/admin/users").Methods("GET").HandlerFunc(goit.HandleAdminUsers)
 	h.Path("/admin/user/create").Methods("GET", "POST").HandlerFunc(goit.HandleAdminUserCreate)
-	// h.Path("/admin/user/edit").Methods("GET", "POST").HandlerFunc()
+	h.Path("/admin/user/edit").Methods("GET", "POST").HandlerFunc(goit.HandleAdminUserEdit)
+	h.Path("/admin/repos").Methods("GET").HandlerFunc(goit.HandleAdminRepos)
 
 	h.Path("/{repo:.+(?:\\.git)$}").Methods(http.MethodGet).HandlerFunc(redirectDotGit)
 	h.Path("/{repo}").Methods(http.MethodGet).HandlerFunc(goit.HandleRepoLog)

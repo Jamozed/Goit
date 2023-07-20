@@ -180,7 +180,6 @@ func gitHttpRpc(w http.ResponseWriter, r *http.Request, service string, repo *Re
 }
 
 func pktLine(str string) []byte {
-	PanicIf(len(str) > 65516, "pktLine: Payload exceeds maximum length")
 	s := strconv.FormatUint(uint64(len(str)+4), 16)
 	s = strings.Repeat("0", 4-len(s)%4) + s
 	return []byte(s + str)

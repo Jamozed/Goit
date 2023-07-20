@@ -1,11 +1,6 @@
 <!DOCTYPE html>
-<head>
-	<meta charset="UTF-8">
-	<title>Login</title>
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<link rel="stylesheet" type="text/css" href="/static/style.css">
-	<link rel="icon" type="image/png" href="/static/favicon.png">
-</head>
+<head>{{template "base/head" .}}</head>
+<body>
 <body>
 	<h1>Login</h1>
 	<form action="/user/login" method="post">
@@ -15,5 +10,5 @@
 		<input type="password" name="password"><br>
 		<input type="submit" value="Login">
 	</form>
-	<p>{{.Msg}}</p>
+	<p>{{.Message}}</p>
 </body>

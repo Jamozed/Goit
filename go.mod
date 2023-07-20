@@ -3,6 +3,7 @@ module github.com/Jamozed/Goit
 go 1.20
 
 require (
+	github.com/adrg/xdg v0.4.0
 	github.com/go-git/go-git/v5 v5.7.0
 	github.com/gorilla/mux v1.8.0
 	github.com/mattn/go-sqlite3 v1.14.17

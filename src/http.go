@@ -15,10 +15,15 @@ import (
 var tmpl = template.Must(template.New("error").Parse(res.Error))
 
 func init() {
-	tmpl.Option("missingkey=zero")
-
 	template.Must(tmpl.New("base/head").Parse(res.BaseHead))
+
+	template.Must(tmpl.New("admin/users").Parse(res.AdminUsers))
+	template.Must(tmpl.New("admin/user_create").Parse(res.AdminUserCreate))
+	template.Must(tmpl.New("admin/user_edit").Parse(res.AdminUserEdit))
+	template.Must(tmpl.New("admin/repos").Parse(res.AdminRepos))
+
 	template.Must(tmpl.New("base/repo_header").Parse(res.RepoHeader))
+	template.Must(tmpl.New("user_login").Parse(res.UserLogin))
 
 	template.Must(tmpl.New("repo_index").Parse(res.RepoIndex))
 	template.Must(tmpl.New("repo_create").Parse(res.RepoCreate))
