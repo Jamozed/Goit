@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/Jamozed/Goit/src/util"
+	"github.com/dustin/go-humanize"
 )
 
 func HandleAdminUsers(w http.ResponseWriter, r *http.Request) {
@@ -198,7 +199,7 @@ func HandleAdminRepos(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		Title string
 		Repos []row
-	}{Title: "Repos"}
+	}{Title: "Repositories"}
 
 	for rows.Next() {
 		d := Repo{}
@@ -213,8 +214,13 @@ func HandleAdminRepos(w http.ResponseWriter, r *http.Request) {
 			log.Println("[/admin/repos]", err.Error())
 		}
 
+		size, err := RepoSize(d.Name)
+		if err != nil {
+			log.Println("[/admin/repos]", err.Error())
+		}
+
 		data.Repos = append(data.Repos, row{
-			fmt.Sprint(d.Id), user.Name, d.Name, util.If(d.IsPrivate, "private", "public"), "",
+			fmt.Sprint(d.Id), user.Name, d.Name, util.If(d.IsPrivate, "private", "public"), humanize.IBytes(size),
 		})
 	}
 

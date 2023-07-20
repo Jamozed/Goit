@@ -108,7 +108,7 @@ func Goit(conf string) (err error) {
 	return nil
 }
 
-func GetConfPath() string {
+func ConfPath() string {
 	if p, err := xdg.SearchConfigFile(path.Join("goit", "goit.json")); err != nil {
 		log.Println("[Config]", err.Error())
 		return ""
@@ -117,6 +117,6 @@ func GetConfPath() string {
 	}
 }
 
-func GetRepoPath(name string) string {
+func RepoPath(name string) string {
 	return path.Join(Conf.DataPath, "repos", name+".git")
 }

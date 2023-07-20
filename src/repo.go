@@ -9,6 +9,8 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -115,7 +117,7 @@ func HandleRepoLog(w http.ResponseWriter, r *http.Request) {
 	type row struct{ Date, Message, Author string }
 	commits := []row{}
 
-	if gr, err := git.PlainOpen(GetRepoPath(reponame)); err != nil {
+	if gr, err := git.PlainOpen(RepoPath(reponame)); err != nil {
 		log.Println("[Repo:Log]", err.Error())
 		HttpError(w, http.StatusInternalServerError)
 		return
@@ -170,7 +172,7 @@ func HandleRepoRefs(w http.ResponseWriter, r *http.Request) {
 	bras := []bra{}
 	tags := []tag{}
 
-	if gr, err := git.PlainOpen(GetRepoPath(reponame)); err != nil {
+	if gr, err := git.PlainOpen(RepoPath(reponame)); err != nil {
 		log.Println("[Repo:Refs]", err.Error())
 		HttpError(w, http.StatusInternalServerError)
 		return
@@ -237,4 +239,36 @@ func RepoExists(db *sql.DB, name string) (bool, error) {
 	} else {
 		return true, nil
 	}
+}
+
+func RepoSize(name string) (uint64, error) {
+	var size int64
+
+	err := filepath.WalkDir(RepoPath(name), func(_ string, d os.DirEntry, err error) error {
+		if err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				return nil
+			} else {
+				return err
+			}
+		}
+
+		if d.IsDir() {
+			return nil
+		}
+
+		f, err := d.Info()
+		if err != nil {
+			return err
+		}
+
+		/* Only count the size of regular files */
+		if (f.Mode() & (os.ModeSymlink | os.ModeDevice | os.ModeNamedPipe | os.ModeSocket | os.ModeCharDevice | os.ModeIrregular)) == 0 {
+			size += f.Size()
+		}
+
+		return nil
+	})
+
+	return uint64(size), err
 }

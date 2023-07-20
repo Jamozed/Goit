@@ -16,7 +16,7 @@ import (
 )
 
 func main() {
-	if err := goit.Goit(goit.GetConfPath()); err != nil {
+	if err := goit.Goit(goit.ConfPath()); err != nil {
 		log.Fatalln(err.Error())
 	}
 

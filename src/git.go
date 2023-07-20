@@ -36,7 +36,7 @@ func HandleInfoRefs(w http.ResponseWriter, r *http.Request) {
 	c := newCommand(strings.TrimPrefix(service, "git-"), "--stateless-rpc", "--advertise-refs", ".")
 	c.addEnv(os.Environ()...)
 	c.addEnv("GIT_PROTOCOL=version=2")
-	c.dir = GetRepoPath(repo.Name)
+	c.dir = RepoPath(repo.Name)
 
 	refs, _, err := c.run(nil, nil)
 	if err != nil {
@@ -163,7 +163,7 @@ func gitHttpRpc(w http.ResponseWriter, r *http.Request, service string, repo *Re
 
 	c := newCommand(strings.TrimPrefix(service, "git-"), "--stateless-rpc", ".")
 	c.addEnv(os.Environ()...)
-	c.dir = GetRepoPath(repo.Name)
+	c.dir = RepoPath(repo.Name)
 
 	if p := r.Header.Get("Git-Protocol"); p == "version=2" {
 		c.addEnv("GIT_PROTOCOL=version=2")
