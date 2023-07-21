@@ -5,8 +5,14 @@ import _ "embed"
 //go:embed error.html
 var Error string
 
+//go:embed index.html
+var Index string
+
 //go:embed base/head.html
 var BaseHead string
+
+//go:embed base/header.html
+var BaseHeader string
 
 //go:embed admin/users.html
 var AdminUsers string
@@ -20,11 +26,11 @@ var AdminUserEdit string
 //go:embed admin/repos.html
 var AdminRepos string
 
+//go:embed admin/repo_edit.html
+var AdminRepoEdit string
+
 //go:embed repo/header.html
 var RepoHeader string
-
-//go:embed repo_index.html
-var RepoIndex string
 
 //go:embed user/login.html
 var UserLogin string

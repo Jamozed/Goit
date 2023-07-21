@@ -15,17 +15,19 @@ import (
 var tmpl = template.Must(template.New("error").Parse(res.Error))
 
 func init() {
+	template.Must(tmpl.New("index").Parse(res.Index))
 	template.Must(tmpl.New("base/head").Parse(res.BaseHead))
+	template.Must(tmpl.New("base/header").Parse(res.BaseHeader))
 
 	template.Must(tmpl.New("admin/users").Parse(res.AdminUsers))
-	template.Must(tmpl.New("admin/user_create").Parse(res.AdminUserCreate))
-	template.Must(tmpl.New("admin/user_edit").Parse(res.AdminUserEdit))
+	template.Must(tmpl.New("admin/user/create").Parse(res.AdminUserCreate))
+	template.Must(tmpl.New("admin/user/edit").Parse(res.AdminUserEdit))
 	template.Must(tmpl.New("admin/repos").Parse(res.AdminRepos))
+	template.Must(tmpl.New("admin/repo/edit").Parse(res.AdminRepoEdit))
 
 	template.Must(tmpl.New("base/repo_header").Parse(res.RepoHeader))
 	template.Must(tmpl.New("user_login").Parse(res.UserLogin))
 
-	template.Must(tmpl.New("repo_index").Parse(res.RepoIndex))
 	template.Must(tmpl.New("repo_create").Parse(res.RepoCreate))
 
 	template.Must(tmpl.New("repo_log").Parse(res.RepoLog))

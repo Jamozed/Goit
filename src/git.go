@@ -92,7 +92,7 @@ func gitHttpBase(w http.ResponseWriter, r *http.Request, service string) *Repo {
 	}
 
 	/* Load the repository from the database */
-	repo, err := GetRepoByName(db, reponame)
+	repo, err := GetRepoByName(reponame)
 	if err != nil {
 		log.Println("[Git HTTP]", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)

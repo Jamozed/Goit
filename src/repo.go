@@ -25,47 +25,51 @@ type Repo struct {
 	Id            uint64
 	OwnerId       uint64
 	Name          string
-	NameLower     string
 	Description   string
 	DefaultBranch string
 	IsPrivate     bool
 }
 
 func HandleIndex(w http.ResponseWriter, r *http.Request) {
-	authOk, uid := AuthHttp(r)
+	auth, admin, uid := AuthHttpAdmin(r)
 
 	if rows, err := db.Query("SELECT id, owner_id, name, description, is_private FROM repos"); err != nil {
-		log.Println("[Index:SELECT]", err.Error())
+		log.Println("[/]", err.Error())
 		HttpError(w, http.StatusInternalServerError)
 	} else {
 		defer rows.Close()
 
 		type row struct{ Name, Description, Owner, Visibility, LastCommit string }
-		repos := []row{}
+		data := struct {
+			Title       string
+			Admin, Auth bool
+			Repos       []row
+		}{Title: "Repositories", Admin: admin, Auth: auth}
 
 		for rows.Next() {
-			r := Repo{}
-
-			if err := rows.Scan(&r.Id, &r.OwnerId, &r.Name, &r.Description, &r.IsPrivate); err != nil {
-				log.Println("[Index:SELECT:Scan]", err.Error())
-			} else if !r.IsPrivate || (authOk && uid == r.OwnerId) {
-				owner, err := GetUser(r.OwnerId)
+			d := Repo{}
+			if err := rows.Scan(&d.Id, &d.OwnerId, &d.Name, &d.Description, &d.IsPrivate); err != nil {
+				log.Println("[/]", err.Error())
+			} else if !d.IsPrivate || (auth && uid == d.OwnerId) {
+				owner, err := GetUser(d.OwnerId)
 				if err != nil {
-					log.Println("[Index:SELECT:UserName]", err.Error())
+					log.Println("[/]", err.Error())
 				}
 
-				repos = append(repos, row{r.Name, "", owner.Name, util.If(r.IsPrivate, "private", "public"), ""})
+				data.Repos = append(data.Repos, row{
+					d.Name, d.Description, owner.Name, util.If(d.IsPrivate, "private", "public"), "",
+				})
 			}
 		}
 
 		if err := rows.Err(); err != nil {
-			log.Println("[Index:SELECT:Err]", err.Error())
+			log.Println("[/]", err.Error())
 			HttpError(w, http.StatusInternalServerError)
-		} else if err := tmpl.ExecuteTemplate(w, "repo_index", struct {
-			Title string
-			Repos []row
-		}{"Repositories", repos}); err != nil {
-			log.Println("[Repo:Index]", err.Error())
+			return
+		}
+
+		if err := tmpl.ExecuteTemplate(w, "index", data); err != nil {
+			log.Println("[/]", err.Error())
 		}
 	}
 }
@@ -77,7 +81,7 @@ func HandleRepoCreate(w http.ResponseWriter, r *http.Request) {
 		name := r.FormValue("reponame")
 		private := r.FormValue("visibility") == "private"
 
-		if taken, err := RepoExists(db, name); err != nil {
+		if taken, err := RepoExists(name); err != nil {
 			log.Println("[RepoCreate:RepoExists]", err.Error())
 			HttpError(w, http.StatusInternalServerError)
 		} else if taken {
@@ -105,7 +109,7 @@ func HandleRepoCreate(w http.ResponseWriter, r *http.Request) {
 func HandleRepoLog(w http.ResponseWriter, r *http.Request) {
 	reponame := mux.Vars(r)["repo"]
 
-	repo, err := GetRepoByName(db, reponame)
+	repo, err := GetRepoByName(reponame)
 	if err != nil {
 		HttpError(w, http.StatusInternalServerError)
 		return
@@ -158,7 +162,7 @@ func HandleRepoTree(w http.ResponseWriter, r *http.Request) {
 func HandleRepoRefs(w http.ResponseWriter, r *http.Request) {
 	reponame := mux.Vars(r)["repo"]
 
-	repo, err := GetRepoByName(db, reponame)
+	repo, err := GetRepoByName(reponame)
 	if err != nil {
 		HttpError(w, http.StatusInternalServerError)
 		return
@@ -212,12 +216,28 @@ func HandleRepoRefs(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func GetRepoByName(db *sql.DB, name string) (*Repo, error) {
+func GetRepo(id uint64) (*Repo, error) {
+	r := &Repo{}
+
+	if err := db.QueryRow(
+		"SELECT id, owner_id, name, description, default_branch, is_private FROM repos WHERE id = ?", id,
+	).Scan(&r.Id, &r.OwnerId, &r.Name, &r.Description, &r.DefaultBranch, &r.IsPrivate); err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		} else {
+			return nil, nil
+		}
+	} else {
+		return r, nil
+	}
+}
+
+func GetRepoByName(name string) (*Repo, error) {
 	r := &Repo{}
 
 	err := db.QueryRow(
-		"SELECT id, owner_id, name, name_lower, description, default_branch, is_private FROM repos WHERE name = ?", name,
-	).Scan(&r.Id, &r.OwnerId, &r.Name, &r.NameLower, &r.Description, &r.DefaultBranch, &r.IsPrivate)
+		"SELECT id, owner_id, name, description, default_branch, is_private FROM repos WHERE name = ?", name,
+	).Scan(&r.Id, &r.OwnerId, &r.Name, &r.Description, &r.DefaultBranch, &r.IsPrivate)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	} else if err != nil {
@@ -227,7 +247,7 @@ func GetRepoByName(db *sql.DB, name string) (*Repo, error) {
 	return r, nil
 }
 
-func RepoExists(db *sql.DB, name string) (bool, error) {
+func RepoExists(name string) (bool, error) {
 	if err := db.QueryRow(
 		"SELECT name FROM repos WHERE name_lower = ?", strings.ToLower(name),
 	).Scan(&name); err != nil {

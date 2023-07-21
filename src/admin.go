@@ -16,7 +16,7 @@ import (
 )
 
 func HandleAdminUsers(w http.ResponseWriter, r *http.Request) {
-	if !authHttpAdmin(r) {
+	if _, admin, _ := AuthHttpAdmin(r); !admin {
 		HttpError(w, http.StatusNotFound)
 		return
 	}
@@ -61,7 +61,7 @@ func HandleAdminUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleAdminUserCreate(w http.ResponseWriter, r *http.Request) {
-	if !authHttpAdmin(r) {
+	if _, admin, _ := AuthHttpAdmin(r); !admin {
 		HttpError(w, http.StatusNotFound)
 		return
 	}
@@ -100,13 +100,13 @@ func HandleAdminUserCreate(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if err := tmpl.ExecuteTemplate(w, "admin/user_create", data); err != nil {
+	if err := tmpl.ExecuteTemplate(w, "admin/user/create", data); err != nil {
 		log.Println("[/admin/user/create]", err.Error())
 	}
 }
 
 func HandleAdminUserEdit(w http.ResponseWriter, r *http.Request) {
-	if !authHttpAdmin(r) {
+	if _, admin, _ := AuthHttpAdmin(r); !admin {
 		HttpError(w, http.StatusNotFound)
 		return
 	}
@@ -130,7 +130,7 @@ func HandleAdminUserEdit(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		Title, Id, Name, FullName, Message string
 		IsAdmin                            bool
-	}{Title: "Edit User ", Id: fmt.Sprint(user.Id), Name: user.Name, FullName: user.FullName, IsAdmin: user.IsAdmin}
+	}{Title: "Edit User", Id: fmt.Sprint(user.Id), Name: user.Name, FullName: user.FullName, IsAdmin: user.IsAdmin}
 
 	if r.Method == http.MethodPost {
 		data.Name = strings.ToLower(r.FormValue("username"))
@@ -175,13 +175,13 @@ func HandleAdminUserEdit(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if err := tmpl.ExecuteTemplate(w, "admin/user_edit", data); err != nil {
+	if err := tmpl.ExecuteTemplate(w, "admin/user/edit", data); err != nil {
 		log.Println("[/admin/user/edit]", err.Error())
 	}
 }
 
 func HandleAdminRepos(w http.ResponseWriter, r *http.Request) {
-	if !authHttpAdmin(r) {
+	if _, admin, _ := AuthHttpAdmin(r); !admin {
 		HttpError(w, http.StatusNotFound)
 		return
 	}
@@ -235,12 +235,72 @@ func HandleAdminRepos(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func authHttpAdmin(r *http.Request) bool {
-	if ok, uid := AuthHttp(r); ok {
-		if user, err := GetUser(uid); err == nil && user.IsAdmin {
-			return true
+func HandleAdminRepoEdit(w http.ResponseWriter, r *http.Request) {
+	if _, admin, _ := AuthHttpAdmin(r); !admin {
+		HttpError(w, http.StatusNotFound)
+		return
+	}
+
+	id, err := strconv.ParseUint(r.URL.Query().Get("repo"), 10, 64)
+	if err != nil {
+		HttpError(w, http.StatusNotFound)
+		return
+	}
+
+	repo, err := GetRepo(id)
+	if err != nil {
+		log.Println("[/admin/repo/edit]", err.Error())
+		HttpError(w, http.StatusInternalServerError)
+		return
+	} else if repo == nil {
+		HttpError(w, http.StatusNotFound)
+		return
+	}
+
+	data := struct {
+		Title, Id, Owner, Name, Description, Message string
+		IsPrivate                                    bool
+	}{
+		Title: "Edit Repository", Id: fmt.Sprint(repo.Id), Name: repo.Name, Description: repo.Description,
+		IsPrivate: repo.IsPrivate,
+	}
+
+	owner, err := GetUser(repo.OwnerId)
+	if err != nil {
+		log.Println("[/admin/repo/edit]", err.Error())
+		data.Owner = fmt.Sprint(repo.OwnerId)
+	} else {
+		data.Owner = owner.Name
+	}
+
+	if r.Method == http.MethodPost {
+		data.Name = r.FormValue("reponame")
+		data.Description = r.FormValue("description")
+		data.IsPrivate = r.FormValue("visibility") == "private"
+
+		if data.Name == "" {
+			data.Message = "Name cannot be empty"
+		} else if util.SliceContains(reserved, data.Name) {
+			data.Message = "Name \"" + data.Name + "\" is reserved"
+		} else if exists, err := RepoExists(data.Name); err != nil {
+			log.Println("[/admin/repo/edit]", err.Error())
+			HttpError(w, http.StatusInternalServerError)
+			return
+		} else if exists && data.Name != repo.Name {
+			data.Message = "Name \"" + data.Name + "\" is taken"
+		} else if _, err := db.Exec(
+			"UPDATE repos SET name = ?, name_lower = ?, description = ?, is_private = ? WHERE id = ?",
+			data.Name, strings.ToLower(data.Name), data.Description, data.IsPrivate, repo.Id,
+		); err != nil {
+			log.Println("[/admin/repo/edit]", err.Error())
+			HttpError(w, http.StatusInternalServerError)
+			return
+		} else {
+			data.Message = "Repository \"" + repo.Name + "\" updated successfully"
 		}
 	}
 
-	return false
+	if err := tmpl.ExecuteTemplate(w, "admin/repo/edit", data); err != nil {
+		log.Println("[/admin/repo/edit]", err.Error())
+	}
 }

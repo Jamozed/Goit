@@ -74,6 +74,18 @@ func AuthHttp(r *http.Request) (bool, uint64) {
 	return false, math.MaxUint64
 }
 
+func AuthHttpAdmin(r *http.Request) (auth bool, admin bool, uid uint64) {
+	if ok, uid := AuthHttp(r); ok {
+		if user, err := GetUser(uid); err == nil && user.IsAdmin {
+			return true, true, uid
+		}
+
+		return true, false, uid
+	}
+
+	return false, false, math.MaxUint64
+}
+
 func SessionCookie(r *http.Request) string {
 	if c := util.Cookie(r, "session"); c != nil {
 		return c.Value
