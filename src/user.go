@@ -16,7 +16,7 @@ import (
 )
 
 type User struct {
-	Id       uint64
+	Id       int64
 	Name     string
 	FullName string
 	Pass     []byte
@@ -28,7 +28,7 @@ type User struct {
 var reserved []string = []string{"admin", "repo", "static", "user"}
 
 func HandleUserLogin(w http.ResponseWriter, r *http.Request) {
-	if ok, _ := AuthHttp(r); ok {
+	if ok, _ := AuthCookie(r); ok {
 		http.Redirect(w, r, "/", http.StatusFound)
 		return
 	}
@@ -56,30 +56,30 @@ func HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 			return
 		} else if !bytes.Equal(Hash(password, u.Salt), u.Pass) {
 			data.Message = "Invalid credentials"
+		} else if s, err := NewSession(u.Id, r.RemoteAddr, time.Now().Add(15*time.Minute)); err != nil {
+			log.Println("[User:Login:Session]", err.Error())
+			HttpError(w, http.StatusInternalServerError)
+			return
 		} else {
-			expiry := time.Now().Add(15 * time.Minute)
-			if s, err := NewSession(u.Id, expiry); err != nil {
-				log.Println("[User:Login:Session]", err.Error())
-				HttpError(w, http.StatusInternalServerError)
-				return
-			} else {
-				http.SetCookie(w, &http.Cookie{Name: "session", Value: s, Path: "/", Expires: expiry})
-				http.Redirect(w, r, "/", http.StatusFound)
-				return
-			}
+			SetSessionCookie(w, u.Id, s)
+			http.Redirect(w, r, "/", http.StatusFound)
+			return
 		}
 	}
 
-	tmpl.ExecuteTemplate(w, "user_login", data)
+	if err := tmpl.ExecuteTemplate(w, "user_login", data); err != nil {
+		log.Println("[/user/login]", err.Error())
+	}
 }
 
 func HandleUserLogout(w http.ResponseWriter, r *http.Request) {
-	EndSession(SessionCookie(r))
-	http.SetCookie(w, &http.Cookie{Name: "session", Path: "/", MaxAge: -1})
+	id, s := GetSessionCookie(r)
+	EndSession(id, s.Token)
+	EndSessionCookie(w)
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 
-func GetUser(id uint64) (*User, error) {
+func GetUser(id int64) (*User, error) {
 	u := User{}
 
 	if err := db.QueryRow(

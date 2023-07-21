@@ -15,8 +15,19 @@ import (
 	"github.com/dustin/go-humanize"
 )
 
+func HandleAdminIndex(w http.ResponseWriter, r *http.Request) {
+	if _, admin, _ := AuthCookieAdmin(r); !admin {
+		HttpError(w, http.StatusNotFound)
+		return
+	}
+
+	if err := tmpl.ExecuteTemplate(w, "admin/index", struct{ Title string }{"Admin"}); err != nil {
+		log.Println("[/admin/index]", err.Error())
+	}
+}
+
 func HandleAdminUsers(w http.ResponseWriter, r *http.Request) {
-	if _, admin, _ := AuthHttpAdmin(r); !admin {
+	if _, admin, _ := AuthCookieAdmin(r); !admin {
 		HttpError(w, http.StatusNotFound)
 		return
 	}
@@ -34,7 +45,7 @@ func HandleAdminUsers(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		Title string
 		Users []row
-	}{Title: "Users"}
+	}{Title: "Admin - Users"}
 
 	for rows.Next() {
 		d := User{}
@@ -61,12 +72,12 @@ func HandleAdminUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleAdminUserCreate(w http.ResponseWriter, r *http.Request) {
-	if _, admin, _ := AuthHttpAdmin(r); !admin {
+	if _, admin, _ := AuthCookieAdmin(r); !admin {
 		HttpError(w, http.StatusNotFound)
 		return
 	}
 
-	data := struct{ Title, Message string }{"Create User", ""}
+	data := struct{ Title, Message string }{"Admin - Create User", ""}
 
 	if r.Method == http.MethodPost {
 		username := strings.ToLower(r.FormValue("username"))
@@ -106,12 +117,12 @@ func HandleAdminUserCreate(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleAdminUserEdit(w http.ResponseWriter, r *http.Request) {
-	if _, admin, _ := AuthHttpAdmin(r); !admin {
+	if _, admin, _ := AuthCookieAdmin(r); !admin {
 		HttpError(w, http.StatusNotFound)
 		return
 	}
 
-	id, err := strconv.ParseUint(r.URL.Query().Get("user"), 10, 64)
+	id, err := strconv.ParseInt(r.URL.Query().Get("user"), 10, 64)
 	if err != nil {
 		HttpError(w, http.StatusNotFound)
 		return
@@ -130,7 +141,10 @@ func HandleAdminUserEdit(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		Title, Id, Name, FullName, Message string
 		IsAdmin                            bool
-	}{Title: "Edit User", Id: fmt.Sprint(user.Id), Name: user.Name, FullName: user.FullName, IsAdmin: user.IsAdmin}
+	}{
+		Title: "Admin - Edit User", Id: fmt.Sprint(user.Id), Name: user.Name, FullName: user.FullName,
+		IsAdmin: user.IsAdmin,
+	}
 
 	if r.Method == http.MethodPost {
 		data.Name = strings.ToLower(r.FormValue("username"))
@@ -181,7 +195,7 @@ func HandleAdminUserEdit(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleAdminRepos(w http.ResponseWriter, r *http.Request) {
-	if _, admin, _ := AuthHttpAdmin(r); !admin {
+	if _, admin, _ := AuthCookieAdmin(r); !admin {
 		HttpError(w, http.StatusNotFound)
 		return
 	}
@@ -199,7 +213,7 @@ func HandleAdminRepos(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		Title string
 		Repos []row
-	}{Title: "Repositories"}
+	}{Title: "Admin - Repositories"}
 
 	for rows.Next() {
 		d := Repo{}
@@ -236,12 +250,12 @@ func HandleAdminRepos(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleAdminRepoEdit(w http.ResponseWriter, r *http.Request) {
-	if _, admin, _ := AuthHttpAdmin(r); !admin {
+	if _, admin, _ := AuthCookieAdmin(r); !admin {
 		HttpError(w, http.StatusNotFound)
 		return
 	}
 
-	id, err := strconv.ParseUint(r.URL.Query().Get("repo"), 10, 64)
+	id, err := strconv.ParseInt(r.URL.Query().Get("repo"), 10, 64)
 	if err != nil {
 		HttpError(w, http.StatusNotFound)
 		return
@@ -261,7 +275,7 @@ func HandleAdminRepoEdit(w http.ResponseWriter, r *http.Request) {
 		Title, Id, Owner, Name, Description, Message string
 		IsPrivate                                    bool
 	}{
-		Title: "Edit Repository", Id: fmt.Sprint(repo.Id), Name: repo.Name, Description: repo.Description,
+		Title: "Admin - Edit Repository", Id: fmt.Sprint(repo.Id), Name: repo.Name, Description: repo.Description,
 		IsPrivate: repo.IsPrivate,
 	}
 

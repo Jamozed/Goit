@@ -9,20 +9,112 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log"
-	"math"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Jamozed/Goit/src/util"
 	"golang.org/x/crypto/argon2"
 )
 
-type session struct {
-	id     uint64
-	expiry time.Time
+type Session struct {
+	Token, Ip string
+	Expiry    time.Time
 }
 
-var sessions = map[string]session{}
+var Sessions = map[int64]map[string]Session{}
+
+func NewSession(uid int64, ip string, expiry time.Time) (Session, error) {
+	b := make([]byte, 24)
+	if _, err := rand.Read(b); err != nil {
+		return Session{}, err
+	}
+
+	if Sessions[uid] == nil {
+		Sessions[uid] = map[string]Session{}
+	}
+
+	t := base64.StdEncoding.EncodeToString(b)
+	Sessions[uid][t] = Session{t, ip, expiry}
+	return Sessions[uid][t], nil
+}
+
+func EndSession(id int64, token string) {
+	delete(Sessions[id], token)
+	if len(Sessions[id]) == 0 {
+		delete(Sessions, id)
+	}
+}
+
+func CleanupSessions() {
+	var n uint64 = 0
+
+	for k, v := range Sessions {
+		for k1, v1 := range v {
+			if v1.Expiry.Before(time.Now()) {
+				EndSession(k, k1)
+				n += 1
+			}
+		}
+	}
+
+	if n > 0 {
+		log.Println("[Cleanup] cleaned up", n, "expired sessions")
+	}
+}
+
+func SetSessionCookie(w http.ResponseWriter, uid int64, s Session) {
+	http.SetCookie(w, &http.Cookie{
+		Name: "session", Value: fmt.Sprint(uid) + "." + s.Token, Path: "/", Expires: s.Expiry,
+	})
+}
+
+func GetSessionCookie(r *http.Request) (int64, Session) {
+	if c := util.Cookie(r, "session"); c != nil {
+		ss := strings.SplitN(c.Value, ".", 2)
+		if len(ss) != 2 {
+			return -1, Session{}
+		}
+
+		id, err := strconv.ParseInt(ss[0], 10, 64)
+		if err != nil {
+			return -1, Session{}
+		}
+
+		return id, Sessions[id][ss[1]]
+	}
+
+	return -1, Session{}
+}
+
+func EndSessionCookie(w http.ResponseWriter) {
+	http.SetCookie(w, &http.Cookie{Name: "session", Path: "/", MaxAge: -1})
+}
+
+func AuthCookie(r *http.Request) (auth bool, uid int64) {
+	if uid, s := GetSessionCookie(r); s != (Session{}) {
+		if s.Expiry.After(time.Now()) {
+			return true, uid
+		}
+
+		EndSession(uid, s.Token)
+	}
+
+	return false, -1
+}
+
+func AuthCookieAdmin(r *http.Request) (auth bool, admin bool, uid int64) {
+	if ok, uid := AuthCookie(r); ok {
+		if user, err := GetUser(uid); err == nil && user.IsAdmin {
+			return true, true, uid
+		}
+
+		return true, false, uid
+	}
+
+	return false, false, -1
+}
 
 /* Hash a password with a salt using Argon2. */
 func Hash(pass string, salt []byte) []byte {
@@ -37,82 +129,4 @@ func Salt() ([]byte, error) {
 	}
 
 	return b, nil
-}
-
-func NewSession(id uint64, expiry time.Time) (string, error) {
-	b := make([]byte, 24)
-	if _, err := rand.Read(b); err != nil {
-		return "", err
-	}
-
-	s := base64.StdEncoding.EncodeToString(b)
-	sessions[s] = session{id, expiry}
-	return s, nil
-}
-
-func EndSession(s string) {
-	delete(sessions, s)
-}
-
-func Auth(s string) (bool, uint64) {
-	if v, ok := sessions[s]; ok {
-		if v.expiry.After(time.Now()) {
-			return true, v.id
-		} else {
-			delete(sessions, s)
-		}
-	}
-
-	return false, math.MaxUint64
-}
-
-func AuthHttp(r *http.Request) (bool, uint64) {
-	if c := util.Cookie(r, "session"); c != nil {
-		return Auth(c.Value)
-	}
-
-	return false, math.MaxUint64
-}
-
-func AuthHttpAdmin(r *http.Request) (auth bool, admin bool, uid uint64) {
-	if ok, uid := AuthHttp(r); ok {
-		if user, err := GetUser(uid); err == nil && user.IsAdmin {
-			return true, true, uid
-		}
-
-		return true, false, uid
-	}
-
-	return false, false, math.MaxUint64
-}
-
-func SessionCookie(r *http.Request) string {
-	if c := util.Cookie(r, "session"); c != nil {
-		return c.Value
-	}
-
-	return ""
-}
-
-func GetSessions() (s string) {
-	for k, v := range sessions {
-		s += fmt.Sprint(k, v.id, v.expiry)
-	}
-
-	return s
-}
-
-func CleanupSessions() {
-	n := 0
-
-	for k, v := range sessions {
-		if v.expiry.Before(time.Now()) {
-			delete(sessions, k)
-			n += 1
-		}
-	}
-
-	if n > 0 {
-		log.Println("[Sessions] Cleaned up", n, "expired sessions")
-	}
 }

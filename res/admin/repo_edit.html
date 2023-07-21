@@ -1,22 +1,24 @@
 <!DOCTYPE html>
 <head>{{template "base/head" .}}</head>
 <body>
-	<h1>{{.Title}}</h1>
-	<form action="/admin/repo/edit?repo={{.Id}}" method="post">
-		<label for="id">ID:</label>
-		<input type="text" name="id" value="{{.Id}}" disabled><br>
-		<label for="id">Owner:</label>
-		<input type="text" name="owner" value="{{.Owner}}" disabled><br>
-		<label for="reponame">Name:</label>
-		<input type="text" name="reponame" value="{{.Name}}"><br>
-		<label for="description">Description:</label>
-		<input type="text" name="description" value="{{.Description}}"><br>
-		<label for="visibility">Visibility:</label>
-		<select name="visibility">
-			<option value="public">Public</option>
-			<option value="private" {{if .IsPrivate}}selected{{end}}>Private</option>
-		</select><br>
-		<input type="submit" value="Update">
-	</form>
-	<span>{{.Message}}</span>
+	<main>
+		<h1>{{.Title}}</h1>
+		<form action="/admin/repo/edit?repo={{.Id}}" method="post">
+			<label for="id">ID:</label>
+			<input type="text" name="id" value="{{.Id}}" disabled><br>
+			<label for="id">Owner:</label>
+			<input type="text" name="owner" value="{{.Owner}}" disabled><br>
+			<label for="reponame">Name:</label>
+			<input type="text" name="reponame" value="{{.Name}}"><br>
+			<label for="description">Description:</label>
+			<input type="text" name="description" value="{{.Description}}"><br>
+			<label for="visibility">Visibility:</label>
+			<select name="visibility">
+				<option value="public">Public</option>
+				<option value="private" {{if .IsPrivate}}selected{{end}}>Private</option>
+			</select><br>
+			<input type="submit" value="Update">
+		</form>
+		<span>{{.Message}}</span>
+	</main>
 </body>

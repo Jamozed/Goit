@@ -26,11 +26,12 @@ func SliceContains[T comparable](s []T, e T) bool {
 	return false
 }
 
-/* Return the named cookie or nil if not found. */
+/* Return the named cookie or nil if not found or invalid. */
 func Cookie(r *http.Request, name string) *http.Cookie {
-	if c, err := r.Cookie(name); err != nil {
-		return nil
-	} else {
+	c, err := r.Cookie(name)
+	if err == nil && c.Valid() == nil {
 		return c
 	}
+
+	return nil
 }

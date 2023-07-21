@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<head>{{template "base/head" .}}</head>
+<body>
+	<table>
+		<tr>
+			<td rowspan="2">
+				<a href="/"><img src="/static/favicon.png" style="max-height: 24px"></a>
+			</td>
+			<td><h1>{{.Title}}</h1></td>
+		</tr>
+		<tr><td>
+			<a href="/admin/users">Users</a>
+			| <a href="/admin/repos">Repos</a>
+		</td></tr>
+	</table>
+</body>

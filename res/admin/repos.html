@@ -4,11 +4,17 @@
 	<header>
 		<table>
 			<tr>
-				<td><img src = "/static/favicon.png" style="max-height: 24px"></td>
+				<td rowspan="2">
+					<a href="/"><img src="/static/favicon.png" style="max-height: 24px"></a>
+				</td>
 				<td><h1>{{.Title}}</h1></td>
 			</tr>
+			<tr><td>
+				<a href="/admin/users">Users</a>
+				| <a href="/admin/repos">Repos</a>
+			</td></tr>
 		</table>
-	</header>
+	</header><hr>
 	<main>
 		<table>
 			<thead>

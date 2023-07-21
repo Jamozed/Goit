@@ -1,19 +1,21 @@
 <!DOCTYPE html>
 <head>{{template "base/head" .}}</head>
 <body>
-	<h1>{{.Title}}</h1>
-	<form action="/admin/user/edit?user={{.Id}}" method="post">
-		<label for="id">ID:</label>
-		<input type="text" name="id" value="{{.Id}}" disabled><br>
-		<label for="username">Username:</label>
-		<input type="text" name="username" value="{{.Name}}"><br>
-		<label for="fullname">Full Name:</label>
-		<input type="text" name="fullname" value="{{.FullName}}"><br>
-		<label for="password">Password:</label>
-		<input type="password" name="password" placeholder="Unchanged"><br>
-		<label for="admin">Admin:</label>
-		<input type="checkbox" name="admin" value="true" {{if .IsAdmin}}checked{{end}}><br>
-		<input type="submit" value="Update">
-	</form>
-	<span>{{.Message}}</span>
+	<main>
+		<h1>{{.Title}}</h1>
+		<form action="/admin/user/edit?user={{.Id}}" method="post">
+			<label for="id">ID:</label>
+			<input type="text" name="id" value="{{.Id}}" disabled><br>
+			<label for="username">Username:</label>
+			<input type="text" name="username" value="{{.Name}}"><br>
+			<label for="fullname">Full Name:</label>
+			<input type="text" name="fullname" value="{{.FullName}}"><br>
+			<label for="password">Password:</label>
+			<input type="password" name="password" placeholder="Unchanged"><br>
+			<label for="admin">Admin:</label>
+			<input type="checkbox" name="admin" value="true" {{if .IsAdmin}}checked{{end}}><br>
+			<input type="submit" value="Update">
+		</form>
+		<span>{{.Message}}</span>
+	</main>
 </body>

@@ -19,6 +19,7 @@ func init() {
 	template.Must(tmpl.New("base/head").Parse(res.BaseHead))
 	template.Must(tmpl.New("base/header").Parse(res.BaseHeader))
 
+	template.Must(tmpl.New("admin/index").Parse(res.AdminIndex))
 	template.Must(tmpl.New("admin/users").Parse(res.AdminUsers))
 	template.Must(tmpl.New("admin/user/create").Parse(res.AdminUserCreate))
 	template.Must(tmpl.New("admin/user/edit").Parse(res.AdminUserEdit))

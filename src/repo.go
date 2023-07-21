@@ -22,8 +22,8 @@ import (
 )
 
 type Repo struct {
-	Id            uint64
-	OwnerId       uint64
+	Id            int64
+	OwnerId       int64
 	Name          string
 	Description   string
 	DefaultBranch string
@@ -31,7 +31,14 @@ type Repo struct {
 }
 
 func HandleIndex(w http.ResponseWriter, r *http.Request) {
-	auth, admin, uid := AuthHttpAdmin(r)
+	auth, admin, uid := AuthCookieAdmin(r)
+
+	user, err := GetUser(uid)
+	if err != nil {
+		log.Println("[/]", err.Error())
+		HttpError(w, http.StatusInternalServerError)
+		return
+	}
 
 	if rows, err := db.Query("SELECT id, owner_id, name, description, is_private FROM repos"); err != nil {
 		log.Println("[/]", err.Error())
@@ -41,10 +48,14 @@ func HandleIndex(w http.ResponseWriter, r *http.Request) {
 
 		type row struct{ Name, Description, Owner, Visibility, LastCommit string }
 		data := struct {
-			Title       string
-			Admin, Auth bool
-			Repos       []row
+			Title, Username string
+			Admin, Auth     bool
+			Repos           []row
 		}{Title: "Repositories", Admin: admin, Auth: auth}
+
+		if user != nil {
+			data.Username = user.Name
+		}
 
 		for rows.Next() {
 			d := Repo{}
@@ -75,7 +86,7 @@ func HandleIndex(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleRepoCreate(w http.ResponseWriter, r *http.Request) {
-	if ok, uid := AuthHttp(r); !ok {
+	if ok, uid := AuthCookie(r); !ok {
 		HttpError(w, http.StatusUnauthorized)
 	} else if r.Method == http.MethodPost {
 		name := r.FormValue("reponame")
@@ -216,7 +227,7 @@ func HandleRepoRefs(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func GetRepo(id uint64) (*Repo, error) {
+func GetRepo(id int64) (*Repo, error) {
 	r := &Repo{}
 
 	if err := db.QueryRow(

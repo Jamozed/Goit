@@ -13,7 +13,7 @@
 				| <a href="/admin">Admin</a>
 			{{end}}
 			{{if .Auth}}
-				| <a href="/user/logout">Logout</a>
+				| <a href="/user/logout">Logout</a>{{if .Username}} ({{.Username}}){{end}}
 			{{else}}
 				| <a href="/user/login">Login</a>
 			{{end}}

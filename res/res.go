@@ -14,6 +14,9 @@ var BaseHead string
 //go:embed base/header.html
 var BaseHeader string
 
+//go:embed admin/index.html
+var AdminIndex string
+
 //go:embed admin/users.html
 var AdminUsers string
 
