@@ -1,7 +1,32 @@
 <!DOCTYPE html>
 <head>{{template "base/head" .}}</head>
 <body>
-	<header>{{template "base/header" .}}</header><hr>
+	<header>
+		<table>
+			<tr>
+				<td rowspan="2">
+					<a href="/"><img style="max-height: 24px;" src="/static/favicon.png"></a>
+				</td>
+				<td><h1>{{.Title}}</h1></td>
+			</tr>
+			<tr>
+				<td>
+					<a href="/">Repositories</a>
+					{{if .Auth}}
+						| <a href="/user/sessions">User</a>
+					{{end}}
+					{{if .Admin}}
+						| <a href="/admin">Admin</a>
+					{{end}}
+					{{if .Auth}}
+						| <a href="/user/logout">Logout</a>{{if .Username}} ({{.Username}}){{end}}
+					{{else}}
+						| <a href="/user/login">Login</a>
+					{{end}}
+				</td>
+			</tr>
+		</table>
+	</header><hr>
 	<main>
 		<table>
 			<thead>

@@ -31,7 +31,7 @@ type Repo struct {
 }
 
 func HandleIndex(w http.ResponseWriter, r *http.Request) {
-	auth, admin, uid := AuthCookieAdmin(r)
+	auth, admin, uid := AuthCookieAdmin(w, r, true)
 
 	user, err := GetUser(uid)
 	if err != nil {
@@ -86,7 +86,7 @@ func HandleIndex(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleRepoCreate(w http.ResponseWriter, r *http.Request) {
-	if ok, uid := AuthCookie(r); !ok {
+	if ok, uid := AuthCookie(w, r, true); !ok {
 		HttpError(w, http.StatusUnauthorized)
 	} else if r.Method == http.MethodPost {
 		name := r.FormValue("reponame")

@@ -17,7 +17,6 @@ var tmpl = template.Must(template.New("error").Parse(res.Error))
 func init() {
 	template.Must(tmpl.New("index").Parse(res.Index))
 	template.Must(tmpl.New("base/head").Parse(res.BaseHead))
-	template.Must(tmpl.New("base/header").Parse(res.BaseHeader))
 
 	template.Must(tmpl.New("admin/index").Parse(res.AdminIndex))
 	template.Must(tmpl.New("admin/users").Parse(res.AdminUsers))
@@ -26,9 +25,11 @@ func init() {
 	template.Must(tmpl.New("admin/repos").Parse(res.AdminRepos))
 	template.Must(tmpl.New("admin/repo/edit").Parse(res.AdminRepoEdit))
 
-	template.Must(tmpl.New("base/repo_header").Parse(res.RepoHeader))
-	template.Must(tmpl.New("user_login").Parse(res.UserLogin))
+	template.Must(tmpl.New("user/header").Parse(res.UserHeader))
+	template.Must(tmpl.New("user/login").Parse(res.UserLogin))
+	template.Must(tmpl.New("user/sessions").Parse(res.UserSessions))
 
+	template.Must(tmpl.New("repo/header").Parse(res.RepoHeader))
 	template.Must(tmpl.New("repo_create").Parse(res.RepoCreate))
 
 	template.Must(tmpl.New("repo_log").Parse(res.RepoLog))

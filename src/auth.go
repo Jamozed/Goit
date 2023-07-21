@@ -9,6 +9,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -19,8 +20,8 @@ import (
 )
 
 type Session struct {
-	Token, Ip string
-	Expiry    time.Time
+	Token, Ip    string
+	Seen, Expiry time.Time
 }
 
 var Sessions = map[int64]map[string]Session{}
@@ -36,7 +37,7 @@ func NewSession(uid int64, ip string, expiry time.Time) (Session, error) {
 	}
 
 	t := base64.StdEncoding.EncodeToString(b)
-	Sessions[uid][t] = Session{t, ip, expiry}
+	Sessions[uid][t] = Session{Token: t, Ip: util.If(Conf.IpSessions, ip, ""), Seen: time.Now(), Expiry: expiry}
 	return Sessions[uid][t], nil
 }
 
@@ -65,9 +66,12 @@ func CleanupSessions() {
 }
 
 func SetSessionCookie(w http.ResponseWriter, uid int64, s Session) {
-	http.SetCookie(w, &http.Cookie{
-		Name: "session", Value: fmt.Sprint(uid) + "." + s.Token, Path: "/", Expires: s.Expiry,
-	})
+	c := &http.Cookie{Name: "session", Value: fmt.Sprint(uid) + "." + s.Token, Path: "/", Expires: s.Expiry}
+	if err := c.Valid(); err != nil {
+		log.Println("[Cookie]", err.Error())
+	}
+
+	http.SetCookie(w, c)
 }
 
 func GetSessionCookie(r *http.Request) (int64, Session) {
@@ -82,7 +86,13 @@ func GetSessionCookie(r *http.Request) (int64, Session) {
 			return -1, Session{}
 		}
 
-		return id, Sessions[id][ss[1]]
+		s := Sessions[id][ss[1]]
+		if s != (Session{}) {
+			s.Seen = time.Now()
+			Sessions[id][ss[1]] = s
+		}
+
+		return id, s
 	}
 
 	return -1, Session{}
@@ -92,9 +102,20 @@ func EndSessionCookie(w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{Name: "session", Path: "/", MaxAge: -1})
 }
 
-func AuthCookie(r *http.Request) (auth bool, uid int64) {
+func AuthCookie(w http.ResponseWriter, r *http.Request, renew bool) (auth bool, uid int64) {
 	if uid, s := GetSessionCookie(r); s != (Session{}) {
 		if s.Expiry.After(time.Now()) {
+			if renew && time.Until(s.Expiry) < 24*time.Hour {
+				ip, _, _ := net.SplitHostPort(r.RemoteAddr)
+				s1, err := NewSession(uid, ip, time.Now().Add(2*24*time.Hour))
+				if err != nil {
+					log.Println("[Renew Auth]", err.Error())
+				} else {
+					SetSessionCookie(w, uid, s1)
+					EndSession(uid, s.Token)
+				}
+			}
+
 			return true, uid
 		}
 
@@ -104,8 +125,8 @@ func AuthCookie(r *http.Request) (auth bool, uid int64) {
 	return false, -1
 }
 
-func AuthCookieAdmin(r *http.Request) (auth bool, admin bool, uid int64) {
-	if ok, uid := AuthCookie(r); ok {
+func AuthCookieAdmin(w http.ResponseWriter, r *http.Request, renew bool) (auth bool, admin bool, uid int64) {
+	if ok, uid := AuthCookie(w, r, renew); ok {
 		if user, err := GetUser(uid); err == nil && user.IsAdmin {
 			return true, true, uid
 		}

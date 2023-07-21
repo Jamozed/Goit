@@ -18,17 +18,19 @@ import (
 )
 
 type Config struct {
-	DataPath string `json:"data_path"`
-	HttpAddr string `json:"http_addr"`
-	HttpPort string `json:"http_port"`
-	GitPath  string `json:"git_path"`
+	DataPath   string `json:"data_path"`
+	HttpAddr   string `json:"http_addr"`
+	HttpPort   string `json:"http_port"`
+	GitPath    string `json:"git_path"`
+	IpSessions bool   `json:"ip_sessions"`
 }
 
 var Conf = Config{
-	DataPath: path.Join(xdg.DataHome, "goit"),
-	HttpAddr: "",
-	HttpPort: "8080",
-	GitPath:  "git",
+	DataPath:   path.Join(xdg.DataHome, "goit"),
+	HttpAddr:   "",
+	HttpPort:   "8080",
+	GitPath:    "git",
+	IpSessions: true,
 }
 
 var db *sql.DB

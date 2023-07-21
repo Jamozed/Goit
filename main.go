@@ -24,8 +24,10 @@ func main() {
 	h.StrictSlash(true)
 
 	h.Path("/").HandlerFunc(goit.HandleIndex)
+	// h.Path("/user").Methods("GET").HandlerFunc(goit.HandleUserIndex)
 	h.Path("/user/login").Methods("GET", "POST").HandlerFunc(goit.HandleUserLogin)
 	h.Path("/user/logout").Methods("GET", "POST").HandlerFunc(goit.HandleUserLogout)
+	h.Path("/user/sessions").Methods("GET", "POST").HandlerFunc(goit.HandleUserSessions)
 	h.Path("/repo/create").Methods("GET", "POST").HandlerFunc(goit.HandleRepoCreate)
 	h.Path("/admin").Methods("GET").HandlerFunc(goit.HandleAdminIndex)
 	h.Path("/admin/users").Methods("GET").HandlerFunc(goit.HandleAdminUsers)

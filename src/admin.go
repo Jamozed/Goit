@@ -16,7 +16,7 @@ import (
 )
 
 func HandleAdminIndex(w http.ResponseWriter, r *http.Request) {
-	if _, admin, _ := AuthCookieAdmin(r); !admin {
+	if _, admin, _ := AuthCookieAdmin(w, r, true); !admin {
 		HttpError(w, http.StatusNotFound)
 		return
 	}
@@ -27,7 +27,7 @@ func HandleAdminIndex(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleAdminUsers(w http.ResponseWriter, r *http.Request) {
-	if _, admin, _ := AuthCookieAdmin(r); !admin {
+	if _, admin, _ := AuthCookieAdmin(w, r, true); !admin {
 		HttpError(w, http.StatusNotFound)
 		return
 	}
@@ -72,7 +72,7 @@ func HandleAdminUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleAdminUserCreate(w http.ResponseWriter, r *http.Request) {
-	if _, admin, _ := AuthCookieAdmin(r); !admin {
+	if _, admin, _ := AuthCookieAdmin(w, r, true); !admin {
 		HttpError(w, http.StatusNotFound)
 		return
 	}
@@ -117,7 +117,7 @@ func HandleAdminUserCreate(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleAdminUserEdit(w http.ResponseWriter, r *http.Request) {
-	if _, admin, _ := AuthCookieAdmin(r); !admin {
+	if _, admin, _ := AuthCookieAdmin(w, r, true); !admin {
 		HttpError(w, http.StatusNotFound)
 		return
 	}
@@ -195,7 +195,7 @@ func HandleAdminUserEdit(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleAdminRepos(w http.ResponseWriter, r *http.Request) {
-	if _, admin, _ := AuthCookieAdmin(r); !admin {
+	if _, admin, _ := AuthCookieAdmin(w, r, true); !admin {
 		HttpError(w, http.StatusNotFound)
 		return
 	}
@@ -250,7 +250,7 @@ func HandleAdminRepos(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleAdminRepoEdit(w http.ResponseWriter, r *http.Request) {
-	if _, admin, _ := AuthCookieAdmin(r); !admin {
+	if _, admin, _ := AuthCookieAdmin(w, r, true); !admin {
 		HttpError(w, http.StatusNotFound)
 		return
 	}

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<head>{{template "base/head" .}}</head>
+<body>
+	<header>{{template "user/header" .}}</header><hr>
+	<main>
+		<table>
+			<thead>
+				<tr>
+					<td><b>IP</b></td>
+					<td><b>Seen</b></td>
+					<td><b>Expiry</b></td>
+					<td></td>
+					<td></td>
+				</tr>
+			</thead>
+			<tbody>
+			{{range .Sessions}}
+				<tr>
+					<td>{{.Ip}}</a></td>
+					<td>{{.Seen}}</td>
+					<td>{{.Expiry}}</td>
+					<td><a href="">revoke</a></td>
+					<td>{{.Current}}</td>
+				</tr>
+			{{end}}
+			</tbody>
+		</table>
+	</main>
+</body>
