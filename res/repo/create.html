@@ -1,15 +1,22 @@
 <!DOCTYPE html>
-<head>
-	<meta charset="UTF-8">
-	<title>Create Repository</title>
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<link rel="stylesheet" type="text/css" href="/static/style.css">
-	<link rel="icon" type="image/png" href="/static/favicon.png">
-</head>
+<head>{{template "base/head" .}}</head>
 <body>
+	<header>
+		<table>
+			<tr>
+				<td rowspan="2">
+					<a href="/"><img src="/static/favicon.png" style="max-height: 24px"></a>
+				</td>
+				<td><h1>{{.Title}}</h1></td>
+			</tr>
+			<tr><td></td></tr>
+		</table>
+	</header>
 	<form action="/repo/create" method="post">
 		<label for="reponame">Name:</label>
 		<input type="text" name="reponame"><br>
+		<label for="description">Description</label>
+		<input type="text" name="description"><br>
 		<label for="visibility">Visibility:</label>
 		<select name="visibility">
 			<option value="public">Public</option>
@@ -17,5 +24,5 @@
 		</select><br>
 		<input type="submit" value="Create">
 	</form>
-	<p>{{.Msg}}</p>
+	<p>{{.Message}}</p>
 </body>

@@ -13,6 +13,7 @@
 				<td>
 					<a href="/">Repositories</a>
 					{{if .Auth}}
+						| <a href="/repo/create">Create</a>
 						| <a href="/user/sessions">User</a>
 					{{end}}
 					{{if .Admin}}

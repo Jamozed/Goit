@@ -41,16 +41,16 @@ var UserSessions string
 //go:embed repo/header.html
 var RepoHeader string
 
-//go:embed repo_create.html
+//go:embed repo/create.html
 var RepoCreate string
 
-//go:embed repo_log.html
+//go:embed repo/log.html
 var RepoLog string
 
-//go:embed repo_tree.html
+//go:embed repo/tree.html
 var RepoTree string
 
-//go:embed repo_refs.html
+//go:embed repo/refs.html
 var RepoRefs string
 
 //go:embed style.css

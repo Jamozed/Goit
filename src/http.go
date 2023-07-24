@@ -30,11 +30,11 @@ func init() {
 	template.Must(tmpl.New("user/sessions").Parse(res.UserSessions))
 
 	template.Must(tmpl.New("repo/header").Parse(res.RepoHeader))
-	template.Must(tmpl.New("repo_create").Parse(res.RepoCreate))
+	template.Must(tmpl.New("repo/create").Parse(res.RepoCreate))
 
-	template.Must(tmpl.New("repo_log").Parse(res.RepoLog))
-	template.Must(tmpl.New("repo_tree").Parse(res.RepoTree))
-	template.Must(tmpl.New("repo_refs").Parse(res.RepoRefs))
+	template.Must(tmpl.New("repo/log").Parse(res.RepoLog))
+	template.Must(tmpl.New("repo/tree").Parse(res.RepoTree))
+	template.Must(tmpl.New("repo/refs").Parse(res.RepoRefs))
 }
 
 func HttpError(w http.ResponseWriter, code int) {

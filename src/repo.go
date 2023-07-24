@@ -86,34 +86,45 @@ func HandleIndex(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleRepoCreate(w http.ResponseWriter, r *http.Request) {
-	if ok, uid := AuthCookie(w, r, true); !ok {
+	ok, uid := AuthCookie(w, r, true)
+	if !ok {
 		HttpError(w, http.StatusUnauthorized)
-	} else if r.Method == http.MethodPost {
-		name := r.FormValue("reponame")
+		return
+	}
+
+	data := struct{ Title, Message string }{Title: "Repository - Create"}
+
+	if r.Method == http.MethodPost {
+		reponame := r.FormValue("reponame")
+		description := r.FormValue("description")
 		private := r.FormValue("visibility") == "private"
 
-		if taken, err := RepoExists(name); err != nil {
-			log.Println("[RepoCreate:RepoExists]", err.Error())
+		if reponame == "" {
+			data.Message = "Name cannot be empty"
+		} else if util.SliceContains(reserved, reponame) {
+			data.Message = "Name \"" + reponame + "\" is reserved"
+		} else if exists, err := RepoExists(reponame); err != nil {
+			log.Println("[/repo/create]", err.Error())
 			HttpError(w, http.StatusInternalServerError)
-		} else if taken {
-			tmpl.ExecuteTemplate(w, "repo_create", struct{ Msg string }{"Reponame is taken"})
-		} else if util.SliceContains[string](reserved, name) {
-			tmpl.ExecuteTemplate(w, "repo_create", struct{ Msg string }{"Reponame is reserved"})
+			return
+		} else if exists {
+			data.Message = "Name \"" + reponame + "\" already exists"
+		} else if _, err := db.Exec(
+			`INSERT INTO repos (owner_id, name, name_lower, description, default_branch, is_private)
+			VALUES (?, ?, ?, ?, ?, ?)`,
+			uid, reponame, strings.ToLower(reponame), description, "master", private,
+		); err != nil {
+			log.Println("[/repo/create]", err.Error())
+			HttpError(w, http.StatusInternalServerError)
+			return
 		} else {
-			if _, err := db.Exec(
-				`INSERT INTO repos (
-					owner_id, name, name_lower, description, default_branch, is_private
-				) VALUES (?, ?, ?, ?, ?, ?)`,
-				uid, name, strings.ToLower(name), "", "master", private,
-			); err != nil {
-				log.Println("[RepoCreate:INSERT]", err.Error())
-				HttpError(w, http.StatusInternalServerError)
-			} else {
-				http.Redirect(w, r, "/"+name+"/", http.StatusFound)
-			}
+			http.Redirect(w, r, "/"+reponame, http.StatusFound)
+			return
 		}
-	} else /* GET */ {
-		tmpl.ExecuteTemplate(w, "repo_create", nil)
+	}
+
+	if err := tmpl.ExecuteTemplate(w, "repo/create", data); err != nil {
+		log.Println("[/repo/create]", err.Error())
 	}
 }
 
@@ -155,7 +166,7 @@ func HandleRepoLog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := tmpl.ExecuteTemplate(w, "repo_log", struct {
+	if err := tmpl.ExecuteTemplate(w, "repo/log", struct {
 		Title, Name, Description, Url string
 		Readme, Licence               string
 		Commits                       []row
@@ -215,7 +226,7 @@ func HandleRepoRefs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := tmpl.ExecuteTemplate(w, "repo_refs", struct {
+	if err := tmpl.ExecuteTemplate(w, "repo/refs", struct {
 		Title, Name, Description, Url string
 		Readme, Licence               string
 		Branches                      []bra
