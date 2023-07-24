@@ -73,7 +73,7 @@ func HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if err := tmpl.ExecuteTemplate(w, "user/login", data); err != nil {
+	if err := Tmpl.ExecuteTemplate(w, "user/login", data); err != nil {
 		log.Println("[/user/login]", err.Error())
 	}
 }
@@ -107,7 +107,7 @@ func HandleUserSessions(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	if err := tmpl.ExecuteTemplate(w, "user/sessions", data); err != nil {
+	if err := Tmpl.ExecuteTemplate(w, "user/sessions", data); err != nil {
 		log.Println("[/user/login]", err.Error())
 	}
 }

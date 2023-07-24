@@ -12,6 +12,7 @@ import (
 
 	"github.com/Jamozed/Goit/res"
 	goit "github.com/Jamozed/Goit/src"
+	"github.com/Jamozed/Goit/src/repo"
 	"github.com/gorilla/mux"
 )
 
@@ -29,6 +30,7 @@ func main() {
 	h.Path("/user/logout").Methods("GET", "POST").HandlerFunc(goit.HandleUserLogout)
 	h.Path("/user/sessions").Methods("GET", "POST").HandlerFunc(goit.HandleUserSessions)
 	h.Path("/repo/create").Methods("GET", "POST").HandlerFunc(goit.HandleRepoCreate)
+	h.Path("/repo/delete").Methods("DELETE").HandlerFunc(repo.HandleDelete)
 	h.Path("/admin").Methods("GET").HandlerFunc(goit.HandleAdminIndex)
 	h.Path("/admin/users").Methods("GET").HandlerFunc(goit.HandleAdminUsers)
 	h.Path("/admin/user/create").Methods("GET", "POST").HandlerFunc(goit.HandleAdminUserCreate)
@@ -36,17 +38,17 @@ func main() {
 	h.Path("/admin/repos").Methods("GET").HandlerFunc(goit.HandleAdminRepos)
 	h.Path("/admin/repo/edit").Methods("GET", "POST").HandlerFunc(goit.HandleAdminRepoEdit)
 
-	h.Path("/{repo:.+(?:\\.git)$}").Methods(http.MethodGet).HandlerFunc(redirectDotGit)
-	h.Path("/{repo}").Methods(http.MethodGet).HandlerFunc(goit.HandleRepoLog)
-	h.Path("/{repo}/log").Methods(http.MethodGet).HandlerFunc(goit.HandleRepoLog)
-	h.Path("/{repo}/tree").Methods(http.MethodGet).HandlerFunc(goit.HandleRepoTree)
-	h.Path("/{repo}/refs").Methods(http.MethodGet).HandlerFunc(goit.HandleRepoRefs)
-	h.Path("/{repo}/info/refs").Methods(http.MethodGet).HandlerFunc(goit.HandleInfoRefs)
-	h.Path("/{repo}/git-upload-pack").Methods(http.MethodPost).HandlerFunc(goit.HandleUploadPack)
-	h.Path("/{repo}/git-receive-pack").Methods(http.MethodPost).HandlerFunc(goit.HandleReceivePack)
+	h.Path("/{repo:.+(?:\\.git)$}").Methods("GET").HandlerFunc(redirectDotGit)
+	h.Path("/{repo}").Methods("GET").HandlerFunc(repo.HandleLog)
+	h.Path("/{repo}/log").Methods("GET").HandlerFunc(repo.HandleLog)
+	h.Path("/{repo}/tree").Methods("GET").HandlerFunc(goit.HandleRepoTree)
+	h.Path("/{repo}/refs").Methods("GET").HandlerFunc(goit.HandleRepoRefs)
+	h.Path("/{repo}/info/refs").Methods("GET").HandlerFunc(goit.HandleInfoRefs)
+	h.Path("/{repo}/git-upload-pack").Methods("POST").HandlerFunc(goit.HandleUploadPack)
+	h.Path("/{repo}/git-receive-pack").Methods("POST").HandlerFunc(goit.HandleReceivePack)
 
-	h.Path("/static/style.css").Methods(http.MethodGet).HandlerFunc(handleStyle)
-	h.Path("/static/favicon.png").Methods(http.MethodGet).HandlerFunc(handleFavicon)
+	h.Path("/static/style.css").Methods("GET").HandlerFunc(handleStyle)
+	h.Path("/static/favicon.png").Methods("GET").HandlerFunc(handleFavicon)
 
 	h.PathPrefix("/").HandlerFunc(goit.HttpNotFound)
 

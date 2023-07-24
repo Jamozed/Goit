@@ -12,35 +12,35 @@ import (
 	"github.com/Jamozed/Goit/res"
 )
 
-var tmpl = template.Must(template.New("error").Parse(res.Error))
+var Tmpl = template.Must(template.New("error").Parse(res.Error))
 
 func init() {
-	template.Must(tmpl.New("index").Parse(res.Index))
-	template.Must(tmpl.New("base/head").Parse(res.BaseHead))
+	template.Must(Tmpl.New("index").Parse(res.Index))
+	template.Must(Tmpl.New("base/head").Parse(res.BaseHead))
 
-	template.Must(tmpl.New("admin/index").Parse(res.AdminIndex))
-	template.Must(tmpl.New("admin/users").Parse(res.AdminUsers))
-	template.Must(tmpl.New("admin/user/create").Parse(res.AdminUserCreate))
-	template.Must(tmpl.New("admin/user/edit").Parse(res.AdminUserEdit))
-	template.Must(tmpl.New("admin/repos").Parse(res.AdminRepos))
-	template.Must(tmpl.New("admin/repo/edit").Parse(res.AdminRepoEdit))
+	template.Must(Tmpl.New("admin/index").Parse(res.AdminIndex))
+	template.Must(Tmpl.New("admin/users").Parse(res.AdminUsers))
+	template.Must(Tmpl.New("admin/user/create").Parse(res.AdminUserCreate))
+	template.Must(Tmpl.New("admin/user/edit").Parse(res.AdminUserEdit))
+	template.Must(Tmpl.New("admin/repos").Parse(res.AdminRepos))
+	template.Must(Tmpl.New("admin/repo/edit").Parse(res.AdminRepoEdit))
 
-	template.Must(tmpl.New("user/header").Parse(res.UserHeader))
-	template.Must(tmpl.New("user/login").Parse(res.UserLogin))
-	template.Must(tmpl.New("user/sessions").Parse(res.UserSessions))
+	template.Must(Tmpl.New("user/header").Parse(res.UserHeader))
+	template.Must(Tmpl.New("user/login").Parse(res.UserLogin))
+	template.Must(Tmpl.New("user/sessions").Parse(res.UserSessions))
 
-	template.Must(tmpl.New("repo/header").Parse(res.RepoHeader))
-	template.Must(tmpl.New("repo/create").Parse(res.RepoCreate))
+	template.Must(Tmpl.New("repo/header").Parse(res.RepoHeader))
+	template.Must(Tmpl.New("repo/create").Parse(res.RepoCreate))
 
-	template.Must(tmpl.New("repo/log").Parse(res.RepoLog))
-	template.Must(tmpl.New("repo/tree").Parse(res.RepoTree))
-	template.Must(tmpl.New("repo/refs").Parse(res.RepoRefs))
+	template.Must(Tmpl.New("repo/log").Parse(res.RepoLog))
+	template.Must(Tmpl.New("repo/tree").Parse(res.RepoTree))
+	template.Must(Tmpl.New("repo/refs").Parse(res.RepoRefs))
 }
 
 func HttpError(w http.ResponseWriter, code int) {
 	w.WriteHeader(code)
 	s := fmt.Sprint(code) + " " + http.StatusText(code)
-	tmpl.ExecuteTemplate(w, "error", struct{ Status string }{s})
+	Tmpl.ExecuteTemplate(w, "error", struct{ Status string }{s})
 }
 
 func HttpNotFound(w http.ResponseWriter, r *http.Request) {

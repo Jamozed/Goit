@@ -23,6 +23,7 @@ type Config struct {
 	HttpPort   string `json:"http_port"`
 	GitPath    string `json:"git_path"`
 	IpSessions bool   `json:"ip_sessions"`
+	UsesHttps  bool   `json:"uses_https"`
 }
 
 var Conf = Config{
@@ -31,6 +32,7 @@ var Conf = Config{
 	HttpPort:   "8080",
 	GitPath:    "git",
 	IpSessions: true,
+	UsesHttps:  false,
 }
 
 var db *sql.DB

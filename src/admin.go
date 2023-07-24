@@ -21,7 +21,7 @@ func HandleAdminIndex(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := tmpl.ExecuteTemplate(w, "admin/index", struct{ Title string }{"Admin"}); err != nil {
+	if err := Tmpl.ExecuteTemplate(w, "admin/index", struct{ Title string }{"Admin"}); err != nil {
 		log.Println("[/admin/index]", err.Error())
 	}
 }
@@ -66,7 +66,7 @@ func HandleAdminUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := tmpl.ExecuteTemplate(w, "admin/users", data); err != nil {
+	if err := Tmpl.ExecuteTemplate(w, "admin/users", data); err != nil {
 		log.Println("[/admin/users]", err.Error())
 	}
 }
@@ -111,7 +111,7 @@ func HandleAdminUserCreate(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if err := tmpl.ExecuteTemplate(w, "admin/user/create", data); err != nil {
+	if err := Tmpl.ExecuteTemplate(w, "admin/user/create", data); err != nil {
 		log.Println("[/admin/user/create]", err.Error())
 	}
 }
@@ -189,7 +189,7 @@ func HandleAdminUserEdit(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if err := tmpl.ExecuteTemplate(w, "admin/user/edit", data); err != nil {
+	if err := Tmpl.ExecuteTemplate(w, "admin/user/edit", data); err != nil {
 		log.Println("[/admin/user/edit]", err.Error())
 	}
 }
@@ -244,7 +244,7 @@ func HandleAdminRepos(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := tmpl.ExecuteTemplate(w, "admin/repos", data); err != nil {
+	if err := Tmpl.ExecuteTemplate(w, "admin/repos", data); err != nil {
 		log.Println("[/admin/repos]", err.Error())
 	}
 }
@@ -314,7 +314,7 @@ func HandleAdminRepoEdit(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if err := tmpl.ExecuteTemplate(w, "admin/repo/edit", data); err != nil {
+	if err := Tmpl.ExecuteTemplate(w, "admin/repo/edit", data); err != nil {
 		log.Println("[/admin/repo/edit]", err.Error())
 	}
 }

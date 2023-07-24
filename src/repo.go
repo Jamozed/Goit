@@ -12,12 +12,10 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/Jamozed/Goit/src/util"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/gorilla/mux"
 )
 
@@ -79,7 +77,7 @@ func HandleIndex(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if err := tmpl.ExecuteTemplate(w, "index", data); err != nil {
+		if err := Tmpl.ExecuteTemplate(w, "index", data); err != nil {
 			log.Println("[/]", err.Error())
 		}
 	}
@@ -123,57 +121,8 @@ func HandleRepoCreate(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if err := tmpl.ExecuteTemplate(w, "repo/create", data); err != nil {
+	if err := Tmpl.ExecuteTemplate(w, "repo/create", data); err != nil {
 		log.Println("[/repo/create]", err.Error())
-	}
-}
-
-func HandleRepoLog(w http.ResponseWriter, r *http.Request) {
-	reponame := mux.Vars(r)["repo"]
-
-	repo, err := GetRepoByName(reponame)
-	if err != nil {
-		HttpError(w, http.StatusInternalServerError)
-		return
-	} else if repo == nil {
-		HttpError(w, http.StatusNotFound)
-		return
-	}
-
-	type row struct{ Date, Message, Author string }
-	commits := []row{}
-
-	if gr, err := git.PlainOpen(RepoPath(reponame)); err != nil {
-		log.Println("[Repo:Log]", err.Error())
-		HttpError(w, http.StatusInternalServerError)
-		return
-	} else if ref, err := gr.Head(); err != nil {
-		if !errors.Is(err, plumbing.ErrReferenceNotFound) {
-			log.Println("[Repo:Log]", err.Error())
-			HttpError(w, http.StatusInternalServerError)
-			return
-		}
-	} else if iter, err := gr.Log(&git.LogOptions{From: ref.Hash()}); err != nil {
-		log.Println("[Repo:Log]", err.Error())
-		HttpError(w, http.StatusInternalServerError)
-		return
-	} else if err := iter.ForEach(func(c *object.Commit) error {
-		commits = append(commits, row{c.Author.When.UTC().Format(time.DateTime), strings.SplitN(c.Message, "\n", 2)[0], c.Author.Name})
-		return nil
-	}); err != nil {
-		log.Println("[Repo:Log]", err.Error())
-		HttpError(w, http.StatusInternalServerError)
-		return
-	}
-
-	if err := tmpl.ExecuteTemplate(w, "repo/log", struct {
-		Title, Name, Description, Url string
-		Readme, Licence               string
-		Commits                       []row
-	}{
-		"Log", reponame, repo.Description, r.URL.Host + "/" + repo.Name + ".git", "", "", commits,
-	}); err != nil {
-		log.Println("[Repo:Log]", err.Error())
 	}
 }
 
@@ -226,13 +175,14 @@ func HandleRepoRefs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := tmpl.ExecuteTemplate(w, "repo/refs", struct {
+	if err := Tmpl.ExecuteTemplate(w, "repo/refs", struct {
 		Title, Name, Description, Url string
 		Readme, Licence               string
 		Branches                      []bra
 		Tags                          []tag
 	}{
-		"Refs", reponame, repo.Description, r.URL.Host + "/" + repo.Name + ".git", "", "", bras, tags,
+		"Refs", reponame, repo.Description, util.If(Conf.UsesHttps, "https://", "http://") + r.Host + r.URL.Path, "",
+		"", bras, tags,
 	}); err != nil {
 		log.Println("[Repo:Refs]", err.Error())
 	}
@@ -246,9 +196,9 @@ func GetRepo(id int64) (*Repo, error) {
 	).Scan(&r.Id, &r.OwnerId, &r.Name, &r.Description, &r.DefaultBranch, &r.IsPrivate); err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			return nil, err
-		} else {
-			return nil, nil
 		}
+
+		return nil, nil
 	} else {
 		return r, nil
 	}
@@ -257,13 +207,14 @@ func GetRepo(id int64) (*Repo, error) {
 func GetRepoByName(name string) (*Repo, error) {
 	r := &Repo{}
 
-	err := db.QueryRow(
+	if err := db.QueryRow(
 		"SELECT id, owner_id, name, description, default_branch, is_private FROM repos WHERE name = ?", name,
-	).Scan(&r.Id, &r.OwnerId, &r.Name, &r.Description, &r.DefaultBranch, &r.IsPrivate)
-	if errors.Is(err, sql.ErrNoRows) {
+	).Scan(&r.Id, &r.OwnerId, &r.Name, &r.Description, &r.DefaultBranch, &r.IsPrivate); err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+
 		return nil, nil
-	} else if err != nil {
-		return nil, err
 	}
 
 	return r, nil
@@ -313,4 +264,16 @@ func RepoSize(name string) (uint64, error) {
 	})
 
 	return uint64(size), err
+}
+
+func DelRepo(name string) error {
+	if err := os.RemoveAll(RepoPath(name)); err != nil {
+		return err
+	}
+
+	if _, err := db.Exec("DELETE FROM repos WHERE name = ?", name); err != nil {
+		return err
+	}
+
+	return nil
 }

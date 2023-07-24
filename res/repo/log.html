@@ -3,27 +3,33 @@
 <body>
 	<header>{{template "repo/header" .}}</header><hr>
 	<main>
-		{{if .Commits}}
-			<table>
-				<thead>
-					<tr>
-						<td><b>Date</b></td>
-						<td><b>Message</b></td>
-						<td><b>Author</b></td>
-					</tr>
-				</thead>
-				<tbody>
-				{{range .Commits}}
-					<tr>
-						<td>{{.Date}}</a></td>
-						<td>{{.Message}}</td>
-						<td>{{.Author}}</td>
-					</tr>
+		<table>
+			<thead>
+				<tr>
+					<td><b>Date</b></td>
+					<td><b>Message</b></td>
+					<td><b>Author</b></td>
+					<td><b>Files</b></td>
+					<td><b>+</b></td>
+					<td><b>-</b></td>
+				</tr>
+			</thead>
+			<tbody>
+				{{if .Commits}}
+					{{range .Commits}}
+						<tr>
+							<td>{{.Date}}</a></td>
+							<td><a href="/{{$.Name}}/commit/{{.Hash}}">{{.Message}}</a></td>
+							<td>{{.Author}}</td>
+							<td align="right">{{.Files}}</td>
+							<td align="right" style="color: #008800">{{.Additions}}</td>
+							<td align="right" style="color: #AA0000">{{.Deletions}}</td>
+						</tr>
+					{{end}}
+				{{else}}
+					<tr><td colspan="6">No commits</td></tr>
 				{{end}}
-				</tbody>
-			</table>
-		{{else}}
-			<span>No commits</span>
-		{{end}}
+			</tbody>
+		</table>
 	</main>
 </body>
