@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -27,17 +26,15 @@ func HandleLog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var offset uint64 = 0
-	if o := r.URL.Query().Get("o"); o != "" {
-		if i, err := strconv.ParseUint(o, 10, 64); err != nil {
-			goit.HttpError(w, http.StatusBadRequest)
-			return
-		} else {
-			offset = i
-		}
-	}
-
-	offset += 1
+	// var offset uint64 = 0
+	// if o := r.URL.Query().Get("o"); o != "" {
+	// 	if i, err := strconv.ParseUint(o, 10, 64); err != nil {
+	// 		goit.HttpError(w, http.StatusBadRequest)
+	// 		return
+	// 	} else {
+	// 		offset = i
+	// 	}
+	// }
 
 	type row struct{ Hash, Date, Message, Author, Files, Additions, Deletions string }
 	data := struct {
@@ -45,8 +42,8 @@ func HandleLog(w http.ResponseWriter, r *http.Request) {
 		Readme, Licence               string
 		Commits                       []row
 	}{
-		Title: repo.Name + " - Log", Name: repo.Name,
-		Description: repo.Description, Url: util.If(goit.Conf.UsesHttps, "https://", "http://") + r.Host + r.URL.Path,
+		Title: repo.Name + " - Log", Name: repo.Name, Description: repo.Description,
+		Url: util.If(goit.Conf.UsesHttps, "https://", "http://") + r.Host + "/" + repo.Name,
 	}
 
 	gr, err := git.PlainOpen(goit.RepoPath(repo.Name))

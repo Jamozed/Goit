@@ -6,17 +6,25 @@
 		<table>
 			<thead>
 				<tr>
+					<td><b>Mode</b></td>
 					<td><b>Name</b></td>
 					<td><b>Size</b></td>
+					<td></td>
 				</tr>
 			</thead>
 			<tbody>
-			{{range .Files}}
-				<tr>
-					<td>{{.Name}}</a></td>
-					<td>{{.Size}}</td>
-				</tr>
-			{{end}}
+				{{if .Files}}
+					{{range .Files}}
+						<tr>
+							<td>{{.Mode}}</td>
+							<td><a href="/{{$.Name}}/tree/{{.Name}}">{{.Name}}</a></td>
+							<td align="right" {{if .B}}style="padding-right: calc(2ch + 0.4em);"{{end}}>{{.Size}}</td>
+							<td>log blame raw download</td>
+						</tr>
+					{{end}}
+				{{else}}
+					<tr><td colspan="4">No files</td></tr>
+				{{end}}
 			</tbody>
 		</table>
 	</main>

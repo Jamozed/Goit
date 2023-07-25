@@ -25,7 +25,6 @@ func main() {
 	h.StrictSlash(true)
 
 	h.Path("/").HandlerFunc(goit.HandleIndex)
-	// h.Path("/user").Methods("GET").HandlerFunc(goit.HandleUserIndex)
 	h.Path("/user/login").Methods("GET", "POST").HandlerFunc(goit.HandleUserLogin)
 	h.Path("/user/logout").Methods("GET", "POST").HandlerFunc(goit.HandleUserLogout)
 	h.Path("/user/sessions").Methods("GET", "POST").HandlerFunc(goit.HandleUserSessions)
@@ -41,7 +40,9 @@ func main() {
 	h.Path("/{repo:.+(?:\\.git)$}").Methods("GET").HandlerFunc(redirectDotGit)
 	h.Path("/{repo}").Methods("GET").HandlerFunc(repo.HandleLog)
 	h.Path("/{repo}/log").Methods("GET").HandlerFunc(repo.HandleLog)
-	h.Path("/{repo}/tree").Methods("GET").HandlerFunc(goit.HandleRepoTree)
+	h.Path("/{repo}/log/{path:.*}").Methods("GET").HandlerFunc(repo.HandleLog)
+	h.Path("/{repo}/tree").Methods("GET").HandlerFunc(repo.HandleTree)
+	h.Path("/{repo}/tree/{path:.*}").Methods("GET").HandlerFunc(repo.HandleTree)
 	h.Path("/{repo}/refs").Methods("GET").HandlerFunc(goit.HandleRepoRefs)
 	h.Path("/{repo}/info/refs").Methods("GET").HandlerFunc(goit.HandleInfoRefs)
 	h.Path("/{repo}/git-upload-pack").Methods("POST").HandlerFunc(goit.HandleUploadPack)

@@ -126,10 +126,6 @@ func HandleRepoCreate(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func HandleRepoTree(w http.ResponseWriter, r *http.Request) {
-	HttpError(w, http.StatusNoContent)
-}
-
 func HandleRepoRefs(w http.ResponseWriter, r *http.Request) {
 	reponame := mux.Vars(r)["repo"]
 
@@ -181,8 +177,8 @@ func HandleRepoRefs(w http.ResponseWriter, r *http.Request) {
 		Branches                      []bra
 		Tags                          []tag
 	}{
-		"Refs", reponame, repo.Description, util.If(Conf.UsesHttps, "https://", "http://") + r.Host + r.URL.Path, "",
-		"", bras, tags,
+		"Refs", reponame, repo.Description, util.If(Conf.UsesHttps, "https://", "http://") + r.Host + "/" + repo.Name,
+		"", "", bras, tags,
 	}); err != nil {
 		log.Println("[Repo:Refs]", err.Error())
 	}
