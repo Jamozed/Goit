@@ -1,8 +1,11 @@
 package repo
 
 import (
+	"errors"
 	"log"
 	"net/http"
+	"path"
+	"sort"
 	"strings"
 
 	goit "github.com/Jamozed/Goit/src"
@@ -15,6 +18,7 @@ import (
 
 func HandleTree(w http.ResponseWriter, r *http.Request) {
 	_, uid := goit.AuthCookie(w, r, true)
+	treepath := mux.Vars(r)["path"]
 
 	repo, err := goit.GetRepoByName(mux.Vars(r)["repo"])
 	if err != nil {
@@ -26,8 +30,8 @@ func HandleTree(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type row struct {
-		Mode, Name, Size string
-		B                bool
+		Mode, Name, Path, Size string
+		B                      bool
 	}
 	data := struct {
 		Title, Name, Description, Url string
@@ -59,25 +63,53 @@ func HandleTree(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	iter, err := commit.Tree()
+	tree, err := commit.Tree()
 	if err != nil {
 		log.Println("[/repo/tree]", err.Error())
 		goit.HttpError(w, http.StatusInternalServerError)
 		return
 	}
 
-	if err := iter.Files().ForEach(func(f *object.File) error {
-		size := humanize.IBytes(uint64(f.Size))
+	if treepath != "" {
+		data.Files = append(data.Files, row{Mode: "d---------", Name: "..", Path: path.Dir(treepath)})
+
+		tree, err = tree.Tree(treepath)
+		if errors.Is(err, object.ErrDirectoryNotFound) {
+			goit.HttpError(w, http.StatusNotFound)
+			return
+		} else if err != nil {
+			log.Println("[/repo/tree]", err.Error())
+			goit.HttpError(w, http.StatusInternalServerError)
+			return
+		}
+	}
+
+	sort.SliceStable(tree.Entries, func(i, j int) bool {
+		if tree.Entries[i].Mode&0o40000 != 0 && tree.Entries[j].Mode&0o40000 == 0 {
+			return true
+		}
+
+		return tree.Entries[i].Name < tree.Entries[j].Name
+	})
+
+	for _, v := range tree.Entries {
+		size := ""
+
+		if v.Mode&0o40000 == 0 {
+			file, err := tree.File(v.Name)
+			if err != nil {
+				log.Println("[/repo/tree]", err.Error())
+				goit.HttpError(w, http.StatusInternalServerError)
+				return
+			}
+
+			size = humanize.IBytes(uint64(file.Size))
+		}
+
 		data.Files = append(data.Files, row{
-			Mode: util.ModeString(uint32(f.Mode)), Name: f.Name, Size: size,
+			Mode: util.ModeString(uint32(v.Mode)), Name: v.Name, Path: path.Join(treepath, v.Name), Size: size,
 			B: util.If(strings.HasSuffix(size, " B"), true, false),
 		})
-
-		return nil
-	}); err != nil {
-		log.Println("[/repo/tree]", err.Error())
-		goit.HttpError(w, http.StatusInternalServerError)
-		return
 	}
 
 	if err := goit.Tmpl.ExecuteTemplate(w, "repo/tree", data); err != nil {

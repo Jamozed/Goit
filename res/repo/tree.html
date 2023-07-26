@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<head>{{template "base/head" .}}</head>
+<head lang="en-GB">{{template "base/head" .}}</head>
 <body>
 	<header>{{template "repo/header" .}}</header><hr>
 	<main>
@@ -17,7 +17,7 @@
 					{{range .Files}}
 						<tr>
 							<td>{{.Mode}}</td>
-							<td><a href="/{{$.Name}}/tree/{{.Name}}">{{.Name}}</a></td>
+							<td><a href="/{{$.Name}}/tree/{{.Path}}">{{.Name}}</a></td>
 							<td align="right" {{if .B}}style="padding-right: calc(2ch + 0.4em);"{{end}}>{{.Size}}</td>
 							<td>log blame raw download</td>
 						</tr>

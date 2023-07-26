@@ -1,12 +1,12 @@
 html { background-color: #111111; color: #888888; height: 100%; }
-body { font-family: monospace; margin: 1em; }
+body { font-family: monospace; margin: 1rem; }
 
 a { color: #FF7E00; text-decoration: none; }
 a:hover { text-decoration: underline; }
 h1, h2 { font-size: 1em; margin: 0; }
-hr { border: 0; height: 1em; margin: 0; }
+hr { border: 0; height: 1rem; margin: 0; }
 
-table td { padding: 0 0.4em; }
+table td { padding: 0 0.4rem; }
 table td:empty::after { content: "\00a0"; }
 
 main table tr:hover td { background-color: #222222; }

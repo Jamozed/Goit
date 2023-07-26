@@ -37,15 +37,15 @@ func Cookie(r *http.Request, name string) *http.Cookie {
 }
 
 func ModeString(mode uint32) string {
-	s := "-"
-	s += If((mode&0b100000000) != 0, "r", "-")
-	s += If((mode&0b010000000) != 0, "w", "-")
-	s += If((mode&0b001000000) != 0, "x", "-")
-	s += If((mode&0b000100000) != 0, "r", "-")
-	s += If((mode&0b000010000) != 0, "w", "-")
-	s += If((mode&0b000001000) != 0, "x", "-")
-	s += If((mode&0b000000100) != 0, "r", "-")
-	s += If((mode&0b000000010) != 0, "w", "-")
-	s += If((mode&0b000000001) != 0, "x", "-")
+	s := If((mode&0o40000) != 0, "d", "-")
+	s += If((mode&0o400) != 0, "r", "-")
+	s += If((mode&0o200) != 0, "w", "-")
+	s += If((mode&0o100) != 0, "x", "-")
+	s += If((mode&0o040) != 0, "r", "-")
+	s += If((mode&0o020) != 0, "w", "-")
+	s += If((mode&0o010) != 0, "x", "-")
+	s += If((mode&0o004) != 0, "r", "-")
+	s += If((mode&0o002) != 0, "w", "-")
+	s += If((mode&0o001) != 0, "x", "-")
 	return s
 }
