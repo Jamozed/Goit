@@ -21,9 +21,9 @@
 							<td>{{.Date}}</a></td>
 							<td><a href="/{{$.Name}}/commit/{{.Hash}}">{{.Message}}</a></td>
 							<td>{{.Author}}</td>
-							<td align="right">{{.Files}}</td>
-							<td align="right" style="color: #008800">{{.Additions}}</td>
-							<td align="right" style="color: #AA0000">{{.Deletions}}</td>
+							<td style="text-align: right;">{{.Files}}</td>
+							<td style="text-align: right;" style="color: #008800">{{.Additions}}</td>
+							<td style="text-align: right;" style="color: #AA0000">{{.Deletions}}</td>
 						</tr>
 					{{end}}
 				{{else}}

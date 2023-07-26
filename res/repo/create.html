@@ -12,17 +12,38 @@
 			<tr><td></td></tr>
 		</table>
 	</header>
-	<form action="/repo/create" method="post">
-		<label for="reponame">Name:</label>
-		<input type="text" name="reponame"><br>
-		<label for="description">Description</label>
-		<input type="text" name="description"><br>
-		<label for="visibility">Visibility:</label>
-		<select name="visibility">
-			<option value="public">Public</option>
-			<option value="private">Private</option>
-		</select><br>
-		<input type="submit" value="Create">
-	</form>
-	<p>{{.Message}}</p>
+	<main>
+		<form action="/repo/create" method="post">
+			<table>
+				<tr>
+					<td style="text-align: right;"><label for="reponame">Name</label></td>
+					<td><input type="text" name="reponame"></td>
+				</tr>
+				<tr>
+					<td style="text-align: right; vertical-align: top;"><label for="description">Description</label></td>
+					<td><textarea name="description"></textarea></td>
+				</tr>
+				<tr>
+					<td style="text-align: right;"><label for="visibility">Visibility</label></td>
+					<td>
+						<select name="visibility">
+							<option value="public">Public</option>
+							<option value="private">Private</option>
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>
+						<input type="submit" value="Create">
+						<a href="/" style="color: inherit;">Cancel</a>
+					</td>
+				</tr>
+				<tr>
+					<td></td>
+					<td style="color: #AA0000">{{.Message}}</td>
+				</tr>
+			</table>
+		</form>
+	</main>
 </body>

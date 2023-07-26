@@ -83,49 +83,6 @@ func HandleIndex(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func HandleRepoCreate(w http.ResponseWriter, r *http.Request) {
-	ok, uid := AuthCookie(w, r, true)
-	if !ok {
-		HttpError(w, http.StatusUnauthorized)
-		return
-	}
-
-	data := struct{ Title, Message string }{Title: "Repository - Create"}
-
-	if r.Method == http.MethodPost {
-		reponame := r.FormValue("reponame")
-		description := r.FormValue("description")
-		private := r.FormValue("visibility") == "private"
-
-		if reponame == "" {
-			data.Message = "Name cannot be empty"
-		} else if util.SliceContains(reserved, reponame) {
-			data.Message = "Name \"" + reponame + "\" is reserved"
-		} else if exists, err := RepoExists(reponame); err != nil {
-			log.Println("[/repo/create]", err.Error())
-			HttpError(w, http.StatusInternalServerError)
-			return
-		} else if exists {
-			data.Message = "Name \"" + reponame + "\" already exists"
-		} else if _, err := db.Exec(
-			`INSERT INTO repos (owner_id, name, name_lower, description, default_branch, is_private)
-			VALUES (?, ?, ?, ?, ?, ?)`,
-			uid, reponame, strings.ToLower(reponame), description, "master", private,
-		); err != nil {
-			log.Println("[/repo/create]", err.Error())
-			HttpError(w, http.StatusInternalServerError)
-			return
-		} else {
-			http.Redirect(w, r, "/"+reponame, http.StatusFound)
-			return
-		}
-	}
-
-	if err := Tmpl.ExecuteTemplate(w, "repo/create", data); err != nil {
-		log.Println("[/repo/create]", err.Error())
-	}
-}
-
 func HandleRepoRefs(w http.ResponseWriter, r *http.Request) {
 	reponame := mux.Vars(r)["repo"]
 
@@ -216,6 +173,46 @@ func GetRepoByName(name string) (*Repo, error) {
 	return r, nil
 }
 
+func CreateRepo(repo Repo) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+
+	if _, err := tx.Exec(
+		`INSERT INTO repos (owner_id, name, name_lower, description, default_branch, is_private)
+		VALUES (?, ?, ?, ?, ?, ?)`,
+		repo.OwnerId, repo.Name, strings.ToLower(repo.Name), repo.Description, repo.DefaultBranch, repo.IsPrivate,
+	); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if _, err := git.PlainInit(RepoPath(repo.Name), true); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		os.RemoveAll(RepoPath(repo.Name))
+		return err
+	}
+
+	return nil
+}
+
+func DelRepo(name string) error {
+	if err := os.RemoveAll(RepoPath(name)); err != nil {
+		return err
+	}
+
+	if _, err := db.Exec("DELETE FROM repos WHERE name = ?", name); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func RepoExists(name string) (bool, error) {
 	if err := db.QueryRow(
 		"SELECT name FROM repos WHERE name_lower = ?", strings.ToLower(name),
@@ -260,16 +257,4 @@ func RepoSize(name string) (uint64, error) {
 	})
 
 	return uint64(size), err
-}
-
-func DelRepo(name string) error {
-	if err := os.RemoveAll(RepoPath(name)); err != nil {
-		return err
-	}
-
-	if _, err := db.Exec("DELETE FROM repos WHERE name = ?", name); err != nil {
-		return err
-	}
-
-	return nil
 }

@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 	goit "github.com/Jamozed/Goit/src"
 	"github.com/Jamozed/Goit/src/util"
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/gorilla/mux"
 )
@@ -53,21 +55,17 @@ func HandleLog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ref, err := gr.Head()
-	if err != nil {
+	if ref, err := gr.Head(); err != nil {
+		if !errors.Is(err, plumbing.ErrReferenceNotFound) {
+			log.Println("[/repo/log]", err.Error())
+			goit.HttpError(w, http.StatusInternalServerError)
+			return
+		}
+	} else if iter, err := gr.Log(&git.LogOptions{From: ref.Hash()}); err != nil {
 		log.Println("[/repo/log]", err.Error())
 		goit.HttpError(w, http.StatusInternalServerError)
 		return
-	}
-
-	iter, err := gr.Log(&git.LogOptions{From: ref.Hash()})
-	if err != nil {
-		log.Println("[/repo/log]", err.Error())
-		goit.HttpError(w, http.StatusInternalServerError)
-		return
-	}
-
-	if err := iter.ForEach(func(c *object.Commit) error {
+	} else if err := iter.ForEach(func(c *object.Commit) error {
 		var files, additions, deletions int
 
 		if stats, err := c.Stats(); err != nil {
