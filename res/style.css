@@ -11,6 +11,11 @@ table td:empty::after { content: "\00a0"; }
 
 main table tr:hover td { background-color: #222222; }
 
+table td.lnum { padding: 0; }
+table td.lnum a { color: inherit; display: block; padding: 0 0.4rem 0 0.8rem; }
+table td.lnum a:hover { text-decoration: none; }
+table td.line { tab-size: 4; white-space: pre; }
+
 form table input { border: 2px solid #333333; border-radius: 3px; background-color: #111111; padding: 2px; }
 form table input[type="text"] { color: #888888; width: 24em; }
 form table input[type="submit"] { color: #FF7E00; width: 6em; }

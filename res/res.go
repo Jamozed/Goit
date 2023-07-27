@@ -50,6 +50,9 @@ var RepoLog string
 //go:embed repo/tree.html
 var RepoTree string
 
+//go:embed repo/file.html
+var RepoFile string
+
 //go:embed repo/refs.html
 var RepoRefs string
 

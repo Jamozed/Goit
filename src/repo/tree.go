@@ -72,7 +72,9 @@ func HandleTree(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if treepath != "" {
-			data.Files = append(data.Files, row{Mode: "d---------", Name: "..", Path: path.Dir(treepath)})
+			data.Files = append(data.Files, row{
+				Mode: "d---------", Name: "..", Path: path.Join("tree", path.Dir(treepath)),
+			})
 
 			tree, err = tree.Tree(treepath)
 			if errors.Is(err, object.ErrDirectoryNotFound) {
@@ -94,7 +96,7 @@ func HandleTree(w http.ResponseWriter, r *http.Request) {
 		})
 
 		for _, v := range tree.Entries {
-			size := ""
+			var fpath, size string
 
 			if v.Mode&0o40000 == 0 {
 				file, err := tree.File(v.Name)
@@ -104,6 +106,7 @@ func HandleTree(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 
+				fpath = path.Join("file", treepath, v.Name)
 				size = humanize.IBytes(uint64(file.Size))
 			} else {
 				var dirSize uint64
@@ -124,11 +127,12 @@ func HandleTree(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 
+				fpath = path.Join("tree", treepath, v.Name)
 				size = humanize.IBytes(dirSize)
 			}
 
 			data.Files = append(data.Files, row{
-				Mode: util.ModeString(uint32(v.Mode)), Name: v.Name, Path: path.Join(treepath, v.Name), Size: size,
+				Mode: util.ModeString(uint32(v.Mode)), Name: v.Name, Path: fpath, Size: size,
 				B: util.If(strings.HasSuffix(size, " B"), true, false),
 			})
 		}

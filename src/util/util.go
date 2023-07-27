@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+
+	"golang.org/x/exp/constraints"
 )
 
 const ModeNotRegular = os.ModeSymlink | os.ModeDevice | os.ModeNamedPipe | os.ModeSocket | os.ModeCharDevice |
@@ -31,6 +33,22 @@ func SliceContains[T comparable](s []T, e T) bool {
 	}
 
 	return false
+}
+
+func Min[T constraints.Ordered](a, b T) T {
+	if a < b {
+		return a
+	}
+
+	return b
+}
+
+func Max[T constraints.Ordered](a, b T) T {
+	if a > b {
+		return a
+	}
+
+	return b
 }
 
 /* Return the named cookie or nil if not found or invalid. */

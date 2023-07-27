@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<head lang="en-GB">{{template "base/head" .}}</head>
+<body>
+	<header>
+		{{template "repo/header" .}}<hr>
+		{{.File}} ({{.Size}}) {{.Mode}}
+	</header><hr>
+	<main>
+		<table>
+			{{if .Lines}}
+				{{range $i, $l := .Lines}}
+					<tr id="{{$i}}">
+						<td class="lnum" style="text-align: right;"><a href="#{{$i}}">{{$i}}</a></td>
+						<td class="line">{{$l}}</td>
+					</tr>
+				{{end}}
+			{{else}}
+				<tr><td>Binary file</td></tr>
+			{{end}}
+		</table>
+	</main>
+</body>

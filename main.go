@@ -43,6 +43,7 @@ func main() {
 	h.Path("/{repo}/log/{path:.*}").Methods("GET").HandlerFunc(repo.HandleLog)
 	h.Path("/{repo}/tree").Methods("GET").HandlerFunc(repo.HandleTree)
 	h.Path("/{repo}/tree/{path:.*}").Methods("GET").HandlerFunc(repo.HandleTree)
+	h.Path("/{repo}/file/{path:.*}").Methods("GET").HandlerFunc(repo.HandleFile)
 	h.Path("/{repo}/refs").Methods("GET").HandlerFunc(goit.HandleRepoRefs)
 	h.Path("/{repo}/info/refs").Methods("GET").HandlerFunc(goit.HandleInfoRefs)
 	h.Path("/{repo}/git-upload-pack").Methods("POST").HandlerFunc(goit.HandleUploadPack)

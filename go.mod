@@ -9,6 +9,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/mattn/go-sqlite3 v1.14.17
 	golang.org/x/crypto v0.9.0
+	golang.org/x/exp v0.0.0-20230725093048-515e97ebf090
 )
 
 require (
