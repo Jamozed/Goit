@@ -10,7 +10,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/Jamozed/Goit/src/util"
@@ -225,36 +224,4 @@ func RepoExists(name string) (bool, error) {
 	} else {
 		return true, nil
 	}
-}
-
-func RepoSize(name string) (uint64, error) {
-	var size int64
-
-	err := filepath.WalkDir(RepoPath(name), func(_ string, d os.DirEntry, err error) error {
-		if err != nil {
-			if errors.Is(err, os.ErrNotExist) {
-				return nil
-			} else {
-				return err
-			}
-		}
-
-		if d.IsDir() {
-			return nil
-		}
-
-		f, err := d.Info()
-		if err != nil {
-			return err
-		}
-
-		/* Only count the size of regular files */
-		if (f.Mode() & (os.ModeSymlink | os.ModeDevice | os.ModeNamedPipe | os.ModeSocket | os.ModeCharDevice | os.ModeIrregular)) == 0 {
-			size += f.Size()
-		}
-
-		return nil
-	})
-
-	return uint64(size), err
 }

@@ -5,8 +5,15 @@
 package util
 
 import (
+	"errors"
+	"io/fs"
 	"net/http"
+	"os"
+	"path/filepath"
 )
+
+const ModeNotRegular = os.ModeSymlink | os.ModeDevice | os.ModeNamedPipe | os.ModeSocket | os.ModeCharDevice |
+	os.ModeIrregular
 
 func If[T any](cond bool, a, b T) T {
 	if cond {
@@ -48,4 +55,35 @@ func ModeString(mode uint32) string {
 	s += If((mode&0o002) != 0, "w", "-")
 	s += If((mode&0o001) != 0, "x", "-")
 	return s
+}
+
+func DirSize(path string) (uint64, error) {
+	var size int64
+
+	err := filepath.WalkDir(path, func(_ string, d fs.DirEntry, err error) error {
+		if err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				return nil
+			}
+
+			return err
+		}
+
+		if d.IsDir() {
+			return nil
+		}
+
+		f, err := d.Info()
+		if err != nil {
+			return err
+		}
+
+		if (f.Mode() & ModeNotRegular) == 0 {
+			size += f.Size()
+		}
+
+		return nil
+	})
+
+	return uint64(size), err
 }

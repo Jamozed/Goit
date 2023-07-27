@@ -105,6 +105,26 @@ func HandleTree(w http.ResponseWriter, r *http.Request) {
 				}
 
 				size = humanize.IBytes(uint64(file.Size))
+			} else {
+				var dirSize uint64
+
+				dirt, err := tree.Tree(v.Name)
+				if err != nil {
+					log.Println("[/repo/tree]", err.Error())
+					goit.HttpError(w, http.StatusInternalServerError)
+					return
+				}
+
+				if err := dirt.Files().ForEach(func(f *object.File) error {
+					dirSize += uint64(f.Size)
+					return nil
+				}); err != nil {
+					log.Println("[/repo/tree]", err.Error())
+					goit.HttpError(w, http.StatusInternalServerError)
+					return
+				}
+
+				size = humanize.IBytes(dirSize)
 			}
 
 			data.Files = append(data.Files, row{

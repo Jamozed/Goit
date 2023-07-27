@@ -228,7 +228,7 @@ func HandleAdminRepos(w http.ResponseWriter, r *http.Request) {
 			log.Println("[/admin/repos]", err.Error())
 		}
 
-		size, err := RepoSize(d.Name)
+		size, err := util.DirSize(RepoPath(d.Name))
 		if err != nil {
 			log.Println("[/admin/repos]", err.Error())
 		}
