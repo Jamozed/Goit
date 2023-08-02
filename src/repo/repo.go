@@ -3,10 +3,18 @@ package repo
 import (
 	"log"
 	"net/http"
+	"regexp"
 	"strconv"
 
 	goit "github.com/Jamozed/Goit/src"
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/go-git/go-git/v5/plumbing/storer"
 )
+
+var readmePattern = regexp.MustCompile(`(?i)^readme(?:\.?(?:md|txt))?$`)
+var licencePattern = regexp.MustCompile(`(?i)^licence(?:\.?(?:md|txt))?$`)
 
 func HandleDelete(w http.ResponseWriter, r *http.Request) {
 	auth, admin, uid := goit.AuthCookieAdmin(w, r, true)
@@ -36,4 +44,56 @@ func HandleDelete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, "/", http.StatusFound)
+}
+
+func findReadme(gr *git.Repository, ref *plumbing.Reference) (string, error) {
+	commit, err := gr.CommitObject(ref.Hash())
+	if err != nil {
+		return "", err
+	}
+
+	iter, err := commit.Files()
+	if err != nil {
+		return "", err
+	}
+
+	var filename string
+	if err := iter.ForEach(func(f *object.File) error {
+		if readmePattern.MatchString(f.Name) {
+			filename = f.Name
+			return storer.ErrStop
+		}
+
+		return nil
+	}); err != nil {
+		return "", err
+	}
+
+	return filename, nil
+}
+
+func findLicence(gr *git.Repository, ref *plumbing.Reference) (string, error) {
+	commit, err := gr.CommitObject(ref.Hash())
+	if err != nil {
+		return "", err
+	}
+
+	iter, err := commit.Files()
+	if err != nil {
+		return "", err
+	}
+
+	var filename string
+	if err := iter.ForEach(func(f *object.File) error {
+		if licencePattern.MatchString(f.Name) {
+			filename = f.Name
+			return storer.ErrStop
+		}
+
+		return nil
+	}); err != nil {
+		return "", err
+	}
+
+	return filename, nil
 }

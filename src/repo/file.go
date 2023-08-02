@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"path"
 	"strings"
 
 	goit "github.com/Jamozed/Goit/src"
@@ -59,6 +60,13 @@ func HandleFile(w http.ResponseWriter, r *http.Request) {
 		log.Println("[/repo/file]", err.Error())
 		goit.HttpError(w, http.StatusInternalServerError)
 		return
+	}
+
+	if readme, _ := findReadme(gr, ref); readme != "" {
+		data.Readme = path.Join("/", repo.Name, "file", readme)
+	}
+	if licence, _ := findLicence(gr, ref); licence != "" {
+		data.Licence = path.Join("/", repo.Name, "file", licence)
 	}
 
 	commit, err := gr.CommitObject(ref.Hash())

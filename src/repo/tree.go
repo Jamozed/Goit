@@ -57,6 +57,13 @@ func HandleTree(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
+		if readme, _ := findReadme(gr, ref); readme != "" {
+			data.Readme = path.Join("/", repo.Name, "file", readme)
+		}
+		if licence, _ := findLicence(gr, ref); licence != "" {
+			data.Licence = path.Join("/", repo.Name, "file", licence)
+		}
+
 		commit, err := gr.CommitObject(ref.Hash())
 		if err != nil {
 			log.Println("[/repo/tree]", err.Error())

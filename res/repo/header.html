@@ -19,10 +19,10 @@
 			| <a href="/{{.Name}}/tree">Tree</a>
 			| <a href="/{{.Name}}/refs">Refs</a>
 			{{if .Readme}}
-				| <a href="">README</a>
+				| <a href="{{.Readme}}">README</a>
 			{{end}}
 			{{if .Licence}}
-				| <a href="">LICENCE</a>
+				| <a href="{{.Licence}}">LICENCE</a>
 			{{end}}
 		</td>
 	</tr>

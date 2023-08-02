@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"path"
 	"strings"
 	"time"
 
@@ -55,13 +56,23 @@ func HandleLog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if ref, err := gr.Head(); err != nil {
-		if !errors.Is(err, plumbing.ErrReferenceNotFound) {
-			log.Println("[/repo/log]", err.Error())
-			goit.HttpError(w, http.StatusInternalServerError)
-			return
-		}
-	} else if iter, err := gr.Log(&git.LogOptions{From: ref.Hash()}); err != nil {
+	ref, err := gr.Head()
+	if errors.Is(err, plumbing.ErrReferenceNotFound) {
+		goto execute
+	} else if err != nil {
+		log.Println("[/repo/log]", err.Error())
+		goit.HttpError(w, http.StatusInternalServerError)
+		return
+	}
+
+	if readme, _ := findReadme(gr, ref); readme != "" {
+		data.Readme = path.Join("/", repo.Name, "file", readme)
+	}
+	if licence, _ := findLicence(gr, ref); licence != "" {
+		data.Licence = path.Join("/", repo.Name, "file", licence)
+	}
+
+	if iter, err := gr.Log(&git.LogOptions{From: ref.Hash()}); err != nil {
 		log.Println("[/repo/log]", err.Error())
 		goit.HttpError(w, http.StatusInternalServerError)
 		return
@@ -90,6 +101,7 @@ func HandleLog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+execute:
 	if err := goit.Tmpl.ExecuteTemplate(w, "repo/log", data); err != nil {
 		log.Println("[/repo/log]", err.Error())
 	}
