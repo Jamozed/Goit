@@ -27,61 +27,6 @@ type Repo struct {
 	IsPrivate     bool
 }
 
-func HandleIndex(w http.ResponseWriter, r *http.Request) {
-	auth, admin, uid := AuthCookieAdmin(w, r, true)
-
-	user, err := GetUser(uid)
-	if err != nil {
-		log.Println("[/]", err.Error())
-		HttpError(w, http.StatusInternalServerError)
-		return
-	}
-
-	if rows, err := db.Query("SELECT id, owner_id, name, description, is_private FROM repos"); err != nil {
-		log.Println("[/]", err.Error())
-		HttpError(w, http.StatusInternalServerError)
-	} else {
-		defer rows.Close()
-
-		type row struct{ Name, Description, Owner, Visibility, LastCommit string }
-		data := struct {
-			Title, Username string
-			Admin, Auth     bool
-			Repos           []row
-		}{Title: "Repositories", Admin: admin, Auth: auth}
-
-		if user != nil {
-			data.Username = user.Name
-		}
-
-		for rows.Next() {
-			d := Repo{}
-			if err := rows.Scan(&d.Id, &d.OwnerId, &d.Name, &d.Description, &d.IsPrivate); err != nil {
-				log.Println("[/]", err.Error())
-			} else if !d.IsPrivate || (auth && uid == d.OwnerId) {
-				owner, err := GetUser(d.OwnerId)
-				if err != nil {
-					log.Println("[/]", err.Error())
-				}
-
-				data.Repos = append(data.Repos, row{
-					d.Name, d.Description, owner.Name, util.If(d.IsPrivate, "private", "public"), "",
-				})
-			}
-		}
-
-		if err := rows.Err(); err != nil {
-			log.Println("[/]", err.Error())
-			HttpError(w, http.StatusInternalServerError)
-			return
-		}
-
-		if err := Tmpl.ExecuteTemplate(w, "index", data); err != nil {
-			log.Println("[/]", err.Error())
-		}
-	}
-}
-
 func HandleRepoRefs(w http.ResponseWriter, r *http.Request) {
 	reponame := mux.Vars(r)["repo"]
 

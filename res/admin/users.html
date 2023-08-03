@@ -30,7 +30,7 @@
 			{{range .Users}}
 				<tr>
 					<td>{{.Id}}</td>
-					<td><a href="/?user={{.Name}}">{{.Name}}</a></td>
+					<td><a href="/?u={{.Name}}">{{.Name}}</a></td>
 					<td>{{.FullName}}</td>
 					<td>{{.IsAdmin}}</td>
 					<td><a href="/admin/user/edit?user={{.Id}}">edit</a></td>
