@@ -47,6 +47,9 @@ var RepoCreate string
 //go:embed repo/log.html
 var RepoLog string
 
+//go:embed repo/commit.html
+var RepoCommit string
+
 //go:embed repo/tree.html
 var RepoTree string
 

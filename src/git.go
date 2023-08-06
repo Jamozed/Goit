@@ -21,7 +21,7 @@ import (
 type gitCommand struct {
 	prog string
 	args []string
-	dir  string
+	Dir  string
 	env  []string
 }
 
@@ -33,12 +33,12 @@ func HandleInfoRefs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c := newCommand(strings.TrimPrefix(service, "git-"), "--stateless-rpc", "--advertise-refs", ".")
-	c.addEnv(os.Environ()...)
-	c.addEnv("GIT_PROTOCOL=version=2")
-	c.dir = RepoPath(repo.Name)
+	c := NewGitCommand(strings.TrimPrefix(service, "git-"), "--stateless-rpc", "--advertise-refs", ".")
+	c.AddEnv(os.Environ()...)
+	c.AddEnv("GIT_PROTOCOL=version=2")
+	c.Dir = RepoPath(repo.Name)
 
-	refs, _, err := c.run(nil, nil)
+	refs, _, err := c.Run(nil, nil)
 	if err != nil {
 		log.Println("[Git HTTP]", err.Error())
 		HttpError(w, http.StatusInternalServerError)
@@ -161,18 +161,18 @@ func gitHttpRpc(w http.ResponseWriter, r *http.Request, service string, repo *Re
 		}
 	}
 
-	c := newCommand(strings.TrimPrefix(service, "git-"), "--stateless-rpc", ".")
-	c.addEnv(os.Environ()...)
-	c.dir = RepoPath(repo.Name)
+	c := NewGitCommand(strings.TrimPrefix(service, "git-"), "--stateless-rpc", ".")
+	c.AddEnv(os.Environ()...)
+	c.Dir = RepoPath(repo.Name)
 
 	if p := r.Header.Get("Git-Protocol"); p == "version=2" {
-		c.addEnv("GIT_PROTOCOL=version=2")
+		c.AddEnv("GIT_PROTOCOL=version=2")
 	}
 
 	w.Header().Add("Content-Type", "application/x-"+service+"-result")
 	w.WriteHeader(http.StatusOK)
 
-	if _, _, err := c.run(body, w); err != nil {
+	if _, _, err := c.Run(body, w); err != nil {
 		log.Println("[Git RPC]", err.Error())
 		HttpError(w, http.StatusInternalServerError)
 		return
@@ -187,17 +187,17 @@ func pktLine(str string) []byte {
 
 func pktFlush() []byte { return []byte("0000") }
 
-func newCommand(args ...string) *gitCommand {
+func NewGitCommand(args ...string) *gitCommand {
 	return &gitCommand{prog: "git", args: args}
 }
 
-func (C *gitCommand) addEnv(env ...string) {
+func (C *gitCommand) AddEnv(env ...string) {
 	C.env = append(C.env, env...)
 }
 
-func (C *gitCommand) run(in io.Reader, out io.Writer) ([]byte, []byte, error) {
+func (C *gitCommand) Run(in io.Reader, out io.Writer) ([]byte, []byte, error) {
 	c := exec.Command(C.prog, C.args...)
-	c.Dir = C.dir
+	c.Dir = C.Dir
 	c.Env = C.env
 	c.Stdin = in
 

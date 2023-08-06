@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<head lang="en-GB">{{template "base/head" .}}</head>
+<body>
+	<header>{{template "repo/header" .}}</header><hr>
+	<main>
+		<table>
+			<tr><td>Author</td><td>{{.Author}}</td></tr>
+			<tr><td>Date</td><td>{{.Date}}</td></tr>
+			<tr><td>Commit</td><td><a href="/{{.Name}}/commit/{{.Commit}}">{{.Commit}}</a></td></tr>
+			{{range $i, $h := .Parents}}
+				<tr><td>Parent</td><td><a href="/{{$.Name}}/commit/{{$h}}">{{$h}}</a></td></tr>
+			{{end}}
+		</table>
+		<p>{{.MessageSubject}}</p>
+		<p>{{.MessageBody}}</p>
+		<h2>Diffstat</h2>
+		<table>
+			{{range .DiffStat}}
+				<tr>
+					<td><a href="/{{$.Name}}/file/{{.Name}}">{{.Name}}</a></td>
+					<td>|</td><td>{{.Num}}</td><td>{{.Diff}}</td>
+				</tr>
+			{{end}}
+		</table>
+		<p>{{.Summary}}</p>
+		<pre>{{.Diff}}</pre>
+	</main>
+</body>

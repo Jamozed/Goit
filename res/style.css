@@ -28,3 +28,35 @@ form table textarea {
 	border: 2px solid #333333; border-radius: 3px; background-color: #111111; color: #888888; max-height: 18rem;
 	min-height: 6rem; padding: 2px; resize: vertical; width: 24em;
 }
+
+.term-fg1 { font-weight: bold; } /* Bold */
+.term-fg2 { color: #888888; } /* Faint */
+.term-fg3 { font-style: italic; } /* Italic */
+.term-fg4 { text-decoration: underline; } /* Underline */
+.term-fg5 { animation: blink-animation 1s steps(3, start) infinite; } /* Blink */
+.term-fg9 { text-decoration: line-through; } /* Strikethrough */
+
+.term-fg30 { color: #000000; } /* Black */
+.term-fg31 { color: #AA0000; } /* Red */
+.term-fg32 { color: #00AA00; } /* Green */
+.term-fg33 { color: #AA5500; } /* Yellow */
+.term-fg34 { color: #0000FF; } /* Blue */
+.term-fg35 { color: #AA00AA; } /* Magenta */
+.term-fg36 { color: #00AAAA; } /* Cyan */
+
+.term-bg40 { background: #000000; } /* Black */
+.term-bg41 { background: #AA0000; } /* Red */
+.term-bg42 { background: #00AA00; } /* Green */
+.term-bg43 { background: #AA5500; } /* Yellow */
+.term-bg44 { background: #0000FF; } /* Blue */
+.term-bg45 { background: #AA00AA; } /* Magenta */
+.term-bg46 { background: #00AAAA; } /* Cyan */
+
+.term-fgi90 { color: #555555; } /* Bright Black */
+.term-fgi91 { color: #FF5555; } /* Bright Red */
+.term-fgi92 { color: #55FF55; } /* Bright Green */
+.term-fgi93 { color: #FFFF55; } /* Bright Yellow */
+.term-fgi94 { color: #5555FF; } /* Bright Blue */
+.term-fgi95 { color: #FF55FF; } /* Bright Magenta */
+.term-fgi96 { color: #55FFFF; } /* Bright Cyan */
+.term-fgi97 { color: #FFFFFF; } /* Bright White */
