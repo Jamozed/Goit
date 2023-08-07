@@ -7,15 +7,10 @@ package goit
 import (
 	"database/sql"
 	"errors"
-	"log"
-	"net/http"
 	"os"
 	"strings"
 
-	"github.com/Jamozed/Goit/src/util"
 	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/gorilla/mux"
 )
 
 type Repo struct {
@@ -25,64 +20,6 @@ type Repo struct {
 	Description   string
 	DefaultBranch string
 	IsPrivate     bool
-}
-
-func HandleRepoRefs(w http.ResponseWriter, r *http.Request) {
-	reponame := mux.Vars(r)["repo"]
-
-	repo, err := GetRepoByName(reponame)
-	if err != nil {
-		HttpError(w, http.StatusInternalServerError)
-		return
-	} else if repo == nil {
-		HttpError(w, http.StatusNotFound)
-		return
-	}
-
-	type bra struct{ Name, Hash string }
-	type tag struct{ Name, Hash string }
-	bras := []bra{}
-	tags := []tag{}
-
-	if gr, err := git.PlainOpen(RepoPath(reponame)); err != nil {
-		log.Println("[Repo:Refs]", err.Error())
-		HttpError(w, http.StatusInternalServerError)
-		return
-	} else if iter, err := gr.Branches(); err != nil {
-		log.Println("[Repo:Refs]", err.Error())
-		HttpError(w, http.StatusInternalServerError)
-		return
-	} else if err := iter.ForEach(func(b *plumbing.Reference) error {
-		bras = append(bras, bra{b.Name().Short(), b.Hash().String()})
-		return nil
-	}); err != nil {
-		log.Println("[Repo:Refs]", err.Error())
-		HttpError(w, http.StatusInternalServerError)
-		return
-	} else if iter, err := gr.Tags(); err != nil {
-		log.Println("[Repo:Refs]", err.Error())
-		HttpError(w, http.StatusInternalServerError)
-		return
-	} else if err := iter.ForEach(func(b *plumbing.Reference) error {
-		tags = append(tags, tag{b.Name().Short(), b.Hash().String()})
-		return nil
-	}); err != nil {
-		log.Println("[Repo:Refs]", err.Error())
-		HttpError(w, http.StatusInternalServerError)
-		return
-	}
-
-	if err := Tmpl.ExecuteTemplate(w, "repo/refs", struct {
-		Title, Name, Description, Url string
-		Readme, Licence               string
-		Branches                      []bra
-		Tags                          []tag
-	}{
-		"Refs", reponame, repo.Description, util.If(Conf.UsesHttps, "https://", "http://") + r.Host + "/" + repo.Name,
-		"", "", bras, tags,
-	}); err != nil {
-		log.Println("[Repo:Refs]", err.Error())
-	}
 }
 
 func GetRepo(id int64) (*Repo, error) {

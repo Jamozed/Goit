@@ -3,43 +3,51 @@
 <body>
 	<header>{{template "repo/header" .}}</header><hr>
 	<main>
-	{{if .Branches}}
 		<h2>Branches</h2>
 		<table class="highlight-row">
 			<thead>
 				<tr>
 					<td><b>Name</b></td>
-					<td><b>Hash</b></td>
+					<td><b>Message</b></td>
+					<td><b>Author</b></td>
+					<td><b>Last Commit</b></td>
 				</tr>
 			</thead>
 			<tbody>
 			{{range .Branches}}
 				<tr>
-					<td>{{.Name}}</a></td>
-					<td>{{.Hash}}</td>
+					<td>{{.Name}}</td>
+					<td><a href="/{{$.Name}}/commit/{{.Hash}}">{{.Message}}</a></td>
+					<td>{{.Author}}</td>
+					<td>{{.LastCommit}}</td>
 				</tr>
+			{{else}}
+				<tr><td colspan="4">No branches</td></tr>
 			{{end}}
 			</tbody>
 		</table>
-	{{end}}
-	{{if .Tags}}
-		<h2>Tags</h2>
+		<br><h2>Tags</h2>
 		<table class="highlight-row">
 			<thead>
 				<tr>
 					<td><b>Name</b></td>
-					<td><b>Hash</b></td>
+					<td><b>Message</b></td>
+					<td><b>Author</b></td>
+					<td><b>Last Commit</b></td>
 				</tr>
 			</thead>
 			<tbody>
 			{{range .Tags}}
 				<tr>
-					<td>{{.Name}}</a></td>
-					<td>{{.Hash}}</td>
+					<td>{{.Name}}</td>
+					<td><a href="/{{$.Name}}/commit/{{.Hash}}">{{.Message}}</a></td>
+					<td>{{.Author}}</td>
+					<td>{{.LastCommit}}</td>
 				</tr>
+			{{else}}
+				<tr><td colspan="4">No tags</td></tr>
 			{{end}}
 			</tbody>
 		</table>
-	{{end}}
 	</main>
 </body>
