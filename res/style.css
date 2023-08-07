@@ -9,7 +9,7 @@ hr { border: 0; height: 1rem; margin: 0; }
 table td { padding: 0 0.4rem; }
 table td:empty::after { content: "\00a0"; }
 
-main table tr:hover td { background-color: #222222; }
+.highlight-row tr:hover td { background-color: #222222; }
 
 table td.lnum { padding: 0; }
 table td.lnum a { color: inherit; display: block; padding: 0 0.4rem 0 0.8rem; }
@@ -38,7 +38,7 @@ form table textarea {
 
 .term-fg30 { color: #000000; } /* Black */
 .term-fg31 { color: #AA0000; } /* Red */
-.term-fg32 { color: #00AA00; } /* Green */
+.term-fg32 { color: #008800; } /* Green */
 .term-fg33 { color: #AA5500; } /* Yellow */
 .term-fg34 { color: #0000FF; } /* Blue */
 .term-fg35 { color: #AA00AA; } /* Magenta */

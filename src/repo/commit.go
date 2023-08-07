@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"path"
 	"strconv"
 	"strings"
 	"time"
@@ -36,7 +37,7 @@ func HandleCommit(w http.ResponseWriter, r *http.Request) {
 		Author, Date, Commit          string
 		Parents                       []string
 		MessageSubject, MessageBody   string
-		DiffStat                      []struct{ Name, Num, Diff string }
+		DiffStat                      []struct{ Name, Num, Plusses, Minuses string }
 		Summary                       string
 		Diff                          template.HTML
 	}{
@@ -49,6 +50,22 @@ func HandleCommit(w http.ResponseWriter, r *http.Request) {
 		log.Println("[/repo/commit]", err.Error())
 		goit.HttpError(w, http.StatusInternalServerError)
 		return
+	}
+
+	ref, err := gr.Head()
+	if err != nil {
+		if !errors.Is(err, plumbing.ErrReferenceNotFound) {
+			log.Println("[/repo/log]", err.Error())
+			goit.HttpError(w, http.StatusInternalServerError)
+			return
+		}
+	} else {
+		if readme, _ := findReadme(gr, ref); readme != "" {
+			data.Readme = path.Join("/", repo.Name, "file", readme)
+		}
+		if licence, _ := findLicence(gr, ref); licence != "" {
+			data.Licence = path.Join("/", repo.Name, "file", licence)
+		}
 	}
 
 	commit, err := gr.CommitObject(plumbing.NewHash(mux.Vars(r)["hash"]))
@@ -82,15 +99,16 @@ func HandleCommit(w http.ResponseWriter, r *http.Request) {
 
 	var files, additions, deletions int = len(st), 0, 0
 	for _, s := range st {
-		/* TODO handle renames and colored plusses and minuses */
-		f := struct{ Name, Num, Diff string }{Name: s.Name}
+		/* TODO handle renames */
+		f := struct{ Name, Num, Plusses, Minuses string }{Name: s.Name}
 		f.Num = strconv.FormatInt(int64(s.Addition+s.Deletion), 10)
 
 		if s.Addition+s.Deletion > 80 {
-			f.Diff = strings.Repeat("+", (s.Addition*80)/(s.Addition+s.Deletion))
-			f.Diff += strings.Repeat("-", (s.Deletion*80)/(s.Addition+s.Deletion))
+			f.Plusses = strings.Repeat("+", (s.Addition*80)/(s.Addition+s.Deletion))
+			f.Minuses = strings.Repeat("-", (s.Deletion*80)/(s.Addition+s.Deletion))
 		} else {
-			f.Diff = strings.Repeat("+", s.Addition) + strings.Repeat("-", s.Deletion)
+			f.Plusses = strings.Repeat("+", s.Addition)
+			f.Minuses = strings.Repeat("-", s.Deletion)
 		}
 
 		data.DiffStat = append(data.DiffStat, f)

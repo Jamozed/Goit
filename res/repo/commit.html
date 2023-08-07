@@ -18,11 +18,15 @@
 			{{range .DiffStat}}
 				<tr>
 					<td><a href="/{{$.Name}}/file/{{.Name}}">{{.Name}}</a></td>
-					<td>|</td><td>{{.Num}}</td><td>{{.Diff}}</td>
+					<td>|</td><td>{{.Num}}</td>
+					<td>
+						<span style="color: #008800;">{{.Plusses}}</span><!--
+						--><span style="color: #AA0000;">{{.Minuses}}</span>
+					</td>
 				</tr>
 			{{end}}
 		</table>
 		<p>{{.Summary}}</p>
-		<pre>{{.Diff}}</pre>
+		<pre style="tab-size: 4;">{{.Diff}}</pre>
 	</main>
 </body>

@@ -6,7 +6,7 @@
 		{{.File}} ({{.Size}}) {{.Mode}}
 	</header><hr>
 	<main>
-		<table>
+		<table class="highlight-row">
 			{{if .Lines}}
 				{{range $i, $l := .Lines}}
 					<tr id="{{$i}}">
