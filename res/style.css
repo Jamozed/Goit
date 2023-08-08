@@ -18,6 +18,7 @@ table td.line { tab-size: 4; white-space: pre; }
 
 form table input { border: 2px solid #333333; border-radius: 3px; background-color: #111111; padding: 2px; }
 form table input[type="text"] { color: #888888; width: 24em; }
+form table input[type="password"] { color: #888888; width: 24em; }
 form table input[type="submit"] { color: #FF7E00; width: 6em; }
 
 form table select {

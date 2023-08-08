@@ -5,12 +5,10 @@
 package goit
 
 import (
-	"bytes"
 	"database/sql"
 	"errors"
 	"fmt"
 	"log"
-	"net"
 	"net/http"
 	"strings"
 	"time"
@@ -29,54 +27,6 @@ type User struct {
 }
 
 var reserved []string = []string{"admin", "repo", "static", "user"}
-
-func HandleUserLogin(w http.ResponseWriter, r *http.Request) {
-	if ok, _ := AuthCookie(w, r, true); ok {
-		http.Redirect(w, r, "/", http.StatusFound)
-		return
-	}
-
-	data := struct{ Title, Message string }{"Login", ""}
-
-	if r.Method == http.MethodPost {
-		u := User{}
-		username := strings.ToLower(r.FormValue("username"))
-		password := r.FormValue("password")
-
-		if username == "" {
-			data.Message = "Username cannot be empty"
-		} else if exists, err := UserExists(username); err != nil {
-			log.Println("[User:Login:Exists]", err.Error())
-			HttpError(w, http.StatusInternalServerError)
-			return
-		} else if !exists {
-			data.Message = "Invalid credentials"
-		} else if err := db.QueryRow(
-			"SELECT id, name, pass, pass_algo, salt FROM users WHERE name = ?", username,
-		).Scan(&u.Id, &u.Name, &u.Pass, &u.PassAlgo, &u.Salt); err != nil {
-			log.Println("[User:Login:SELECT]", err.Error())
-			HttpError(w, http.StatusInternalServerError)
-			return
-		} else if !bytes.Equal(Hash(password, u.Salt), u.Pass) {
-			data.Message = "Invalid credentials"
-		} else {
-			ip, _, _ := net.SplitHostPort(r.RemoteAddr)
-			if s, err := NewSession(u.Id, ip, time.Now().Add(2*24*time.Hour)); err != nil {
-				log.Println("[User:Login:Session]", err.Error())
-				HttpError(w, http.StatusInternalServerError)
-				return
-			} else {
-				SetSessionCookie(w, u.Id, s)
-				http.Redirect(w, r, "/", http.StatusFound)
-				return
-			}
-		}
-	}
-
-	if err := Tmpl.ExecuteTemplate(w, "user/login", data); err != nil {
-		log.Println("[/user/login]", err.Error())
-	}
-}
 
 func HandleUserLogout(w http.ResponseWriter, r *http.Request) {
 	id, s := GetSessionCookie(r)

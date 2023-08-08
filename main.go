@@ -13,6 +13,7 @@ import (
 	"github.com/Jamozed/Goit/res"
 	goit "github.com/Jamozed/Goit/src"
 	"github.com/Jamozed/Goit/src/repo"
+	"github.com/Jamozed/Goit/src/user"
 	"github.com/gorilla/mux"
 )
 
@@ -25,7 +26,7 @@ func main() {
 	h.StrictSlash(true)
 
 	h.Path("/").HandlerFunc(goit.HandleIndex)
-	h.Path("/user/login").Methods("GET", "POST").HandlerFunc(goit.HandleUserLogin)
+	h.Path("/user/login").Methods("GET", "POST").HandlerFunc(user.HandleLogin)
 	h.Path("/user/logout").Methods("GET", "POST").HandlerFunc(goit.HandleUserLogout)
 	h.Path("/user/sessions").Methods("GET", "POST").HandlerFunc(goit.HandleUserSessions)
 	h.Path("/repo/create").Methods("GET", "POST").HandlerFunc(repo.HandleCreate)

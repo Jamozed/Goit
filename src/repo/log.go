@@ -18,13 +18,13 @@ import (
 )
 
 func HandleLog(w http.ResponseWriter, r *http.Request) {
-	_, uid := goit.AuthCookie(w, r, true)
+	auth, uid := goit.AuthCookie(w, r, true)
 
 	repo, err := goit.GetRepoByName(mux.Vars(r)["repo"])
 	if err != nil {
 		goit.HttpError(w, http.StatusInternalServerError)
 		return
-	} else if repo == nil || (repo.IsPrivate && repo.OwnerId != uid) {
+	} else if repo == nil || (repo.IsPrivate && (!auth || repo.OwnerId != uid)) {
 		goit.HttpError(w, http.StatusNotFound)
 		return
 	}

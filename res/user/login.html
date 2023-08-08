@@ -1,14 +1,38 @@
 <!DOCTYPE html>
 <head lang="en-GB">{{template "base/head" .}}</head>
 <body>
-<body>
-	<h1>Login</h1>
-	<form action="/user/login" method="post">
-		<label for="username">Username:</label>
-		<input type="text" name="username"><br>
-		<label for="password">Password:</label>
-		<input type="password" name="password"><br>
-		<input type="submit" value="Login">
-	</form>
-	<p>{{.Message}}</p>
+	<header>
+		<table>
+			<tr>
+				<td rowspan="2"><a href="/"><img src="/static/favicon.png" style="max-height: 24px"></a></td>
+				<td><h1>{{.Title}}</h1></td>
+			</tr>
+			<tr><td></td></tr>
+		</table>
+	</header>
+	<main>
+		<form action="/user/login" method="post">
+			<table>
+				<tr>
+					<td style="text-align: right;"><label for="username">Username</label></td>
+					<td><input type="text" name="username" value="{{.Name}}" {{if not .FocusPw}}autofocus{{end}}></td>
+				</tr>
+				<tr>
+					<td style="text-align: right;"><label for="password">Password</label></td>
+					<td><input type="password" name="password" {{if .FocusPw}}autofocus{{end}}></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>
+						<input type="submit" value="Login">
+						<a href="/" style="color: inherit;">Cancel</a>
+					</td>
+				</tr>
+				<tr>
+					<td></td>
+					<td style="color: #AA0000">{{.Message}}</td>
+				</tr>
+			</table>
+		</form>
+	</main>
 </body>
