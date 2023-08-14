@@ -15,6 +15,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/go-git/go-git/v5/plumbing/format/diff"
+	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/gorilla/mux"
 )
 
@@ -215,4 +217,90 @@ func (C *gitCommand) Run(in io.Reader, out io.Writer) ([]byte, []byte, error) {
 	}
 
 	return stdout.Bytes(), stderr.Bytes(), nil
+}
+
+type DiffStat struct {
+	Name, Prev string
+	Status     string
+	Addition   int
+	Deletion   int
+	IsBinary   bool
+}
+
+func DiffStats(c *object.Commit) ([]DiffStat, error) {
+	from, err := c.Tree()
+	if err != nil {
+		return nil, err
+	}
+
+	to := &object.Tree{}
+	if c.NumParents() != 0 {
+		parent, err := c.Parents().Next()
+		if err != nil {
+			return nil, err
+		}
+
+		to, err = parent.Tree()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	patch, err := to.Patch(from)
+	if err != nil {
+		return nil, err
+	}
+
+	var stats []DiffStat
+	for _, fp := range patch.FilePatches() {
+		var stat DiffStat
+
+		if len(fp.Chunks()) == 0 {
+			if !fp.IsBinary() {
+				continue
+			}
+
+			stat.IsBinary = true
+		}
+
+		from, to := fp.Files()
+		if from == nil /* Added */ {
+			stat.Name = to.Path()
+			stat.Status = "A"
+		} else if to == nil /* Deleted */ {
+			stat.Name = from.Path()
+			stat.Status = "D"
+		} else if from.Path() != to.Path() /* Renamed */ {
+			stat.Name = to.Path()
+			stat.Prev = from.Path()
+			stat.Status = "R"
+		} else {
+			stat.Name = from.Path()
+			stat.Status = "M"
+		}
+
+		for _, chunk := range fp.Chunks() {
+			s := chunk.Content()
+			if len(s) == 0 {
+				continue
+			}
+
+			switch chunk.Type() {
+			case diff.Add:
+				stat.Addition += strings.Count(s, "\n")
+				if s[len(s)-1] != '\n' {
+					stat.Addition++
+				}
+			case diff.Delete:
+				stat.Deletion += strings.Count(s, "\n")
+				if s[len(s)-1] != '\n' {
+					stat.Deletion++
+				}
+			}
+		}
+
+		stats = append(stats, stat)
+	}
+
+	return stats, nil
 }

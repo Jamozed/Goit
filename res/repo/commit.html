@@ -15,14 +15,20 @@
 		<p>{{.MessageBody}}</p>
 		<h2>Diffstat</h2>
 		<table>
-			{{range .DiffStat}}
+			{{range .Stats}}
 				<tr>
-					<td><a href="/{{$.Name}}/file/{{.Name}}">{{.Name}}</a></td>
-					<td>|</td><td>{{.Num}}</td>
-					<td>
-						<span style="color: #008800;">{{.Plusses}}</span><!--
-						--><span style="color: #AA0000;">{{.Minuses}}</span>
-					</td>
+					<td>{{.Status}}</td>
+					<td><a href="/{{$.Name}}/file/{{.Path}}">{{.Name}}</a></td>
+					<td>|</td>
+					{{if .IsBinary}}
+						<td colspan="2">binary</td>
+					{{else}}
+						<td>{{.Num}}</td>
+						<td>
+							<span style="color: #008800;">{{.Plusses}}</span><!--
+							--><span style="color: #AA0000;">{{.Minuses}}</span>
+						</td>
+					{{end}}
 				</tr>
 			{{end}}
 		</table>

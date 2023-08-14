@@ -79,7 +79,7 @@ func HandleLog(w http.ResponseWriter, r *http.Request) {
 	} else if err := iter.ForEach(func(c *object.Commit) error {
 		var files, additions, deletions int
 
-		if stats, err := c.Stats(); err != nil {
+		if stats, err := goit.DiffStats(c); err != nil {
 			log.Println("[/repo/log]", err.Error())
 		} else {
 			files = len(stats)
@@ -90,8 +90,9 @@ func HandleLog(w http.ResponseWriter, r *http.Request) {
 		}
 
 		data.Commits = append(data.Commits, row{
-			c.Hash.String(), c.Author.When.UTC().Format(time.DateTime), strings.SplitN(c.Message, "\n", 2)[0],
-			c.Author.Name, fmt.Sprint(files), "+" + fmt.Sprint(additions), "-" + fmt.Sprint(deletions),
+			Hash: c.Hash.String(), Date: c.Author.When.UTC().Format(time.DateTime),
+			Message: strings.SplitN(c.Message, "\n", 2)[0], Author: c.Author.Name, Files: fmt.Sprint(files),
+			Additions: "+" + fmt.Sprint(additions), Deletions: "-" + fmt.Sprint(deletions),
 		})
 
 		return nil

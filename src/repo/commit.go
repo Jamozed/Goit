@@ -31,13 +31,18 @@ func HandleCommit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	type stat struct {
+		Name, Path, Status, Num, Plusses, Minuses string
+		IsBinary                                  bool
+	}
+
 	data := struct {
 		Title, Name, Description, Url string
 		Readme, Licence               string
 		Author, Date, Commit          string
 		Parents                       []string
 		MessageSubject, MessageBody   string
-		DiffStat                      []struct{ Name, Num, Plusses, Minuses string }
+		Stats                         []stat
 		Summary                       string
 		Diff                          template.HTML
 	}{
@@ -90,7 +95,7 @@ func HandleCommit(w http.ResponseWriter, r *http.Request) {
 	data.MessageSubject = message[0]
 	data.MessageBody = message[1]
 
-	st, err := commit.Stats()
+	st, err := goit.DiffStats(commit)
 	if err != nil {
 		log.Println("[/repo/commit]", err.Error())
 		goit.HttpError(w, http.StatusInternalServerError)
@@ -99,8 +104,7 @@ func HandleCommit(w http.ResponseWriter, r *http.Request) {
 
 	var files, additions, deletions int = len(st), 0, 0
 	for _, s := range st {
-		/* TODO handle renames */
-		f := struct{ Name, Num, Plusses, Minuses string }{Name: s.Name}
+		f := stat{Name: s.Name, Path: s.Name, Status: s.Status}
 		f.Num = strconv.FormatInt(int64(s.Addition+s.Deletion), 10)
 
 		if s.Addition+s.Deletion > 80 {
@@ -111,7 +115,14 @@ func HandleCommit(w http.ResponseWriter, r *http.Request) {
 			f.Minuses = strings.Repeat("-", s.Deletion)
 		}
 
-		data.DiffStat = append(data.DiffStat, f)
+		if s.Status == "R" {
+			f.Name = s.Prev + " -> " + s.Name
+		}
+		if s.IsBinary {
+			f.IsBinary = true
+		}
+
+		data.Stats = append(data.Stats, f)
 
 		additions += s.Addition
 		deletions += s.Deletion
