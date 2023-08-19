@@ -13,6 +13,11 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/storer"
 )
 
+type HeaderFields struct {
+	Name, Description, Url, Readme, Licence string
+	Editable                                bool
+}
+
 var readmePattern = regexp.MustCompile(`(?i)^readme(?:\.?(?:md|txt))?$`)
 var licencePattern = regexp.MustCompile(`(?i)^licence(?:\.?(?:md|txt))?$`)
 

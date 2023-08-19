@@ -24,6 +24,9 @@
 			{{if .Licence}}
 				| <a href="{{.Licence}}">LICENCE</a>
 			{{end}}
+			{{if .Editable}}
+				| <a href="/{{.Name}}/edit">Edit</a>
+			{{end}}
 		</td>
 	</tr>
 </table>

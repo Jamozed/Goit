@@ -44,9 +44,11 @@ func HandleLog(w http.ResponseWriter, r *http.Request) {
 		Title, Name, Description, Url string
 		Readme, Licence               string
 		Commits                       []row
+		Editable                      bool
 	}{
 		Title: repo.Name + " - Log", Name: repo.Name, Description: repo.Description,
-		Url: util.If(goit.Conf.UsesHttps, "https://", "http://") + r.Host + "/" + repo.Name,
+		Url:      util.If(goit.Conf.UsesHttps, "https://", "http://") + r.Host + "/" + repo.Name,
+		Editable: (auth && repo.OwnerId == uid),
 	}
 
 	gr, err := git.PlainOpen(goit.RepoPath(repo.Name))

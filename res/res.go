@@ -44,6 +44,9 @@ var RepoHeader string
 //go:embed repo/create.html
 var RepoCreate string
 
+//go:embed repo/edit.html
+var RepoEdit string
+
 //go:embed repo/log.html
 var RepoLog string
 

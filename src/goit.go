@@ -85,7 +85,6 @@ func Goit(conf string) (err error) {
 			name TEXT UNIQUE NOT NULL,
 			name_lower TEXT UNIQUE NOT NULL,
 			description TEXT NOT NULL,
-			default_branch TEXT NOT NULL,
 			is_private BOOLEAN NOT NULL
 		)`,
 	); err != nil {
