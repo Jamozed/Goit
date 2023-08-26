@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -87,7 +88,7 @@ func HandleAdminUserCreate(w http.ResponseWriter, r *http.Request) {
 
 		if username == "" {
 			data.Message = "Username cannot be empty"
-		} else if util.SliceContains(reserved, username) {
+		} else if slices.Contains(reserved, username) {
 			data.Message = "Username \"" + username + "\" is reserved"
 		} else if exists, err := UserExists(username); err != nil {
 			log.Println("[/admin/user/create]", err.Error())
@@ -154,7 +155,7 @@ func HandleAdminUserEdit(w http.ResponseWriter, r *http.Request) {
 
 		if data.Name == "" {
 			data.Message = "Username cannot be empty"
-		} else if util.SliceContains(reserved, data.Name) {
+		} else if slices.Contains(reserved, data.Name) {
 			data.Message = "Username \"" + data.Name + "\" is reserved"
 		} else if exists, err := UserExists(data.Name); err != nil {
 			log.Println("[/admin/user/edit]", err.Error())
@@ -294,7 +295,7 @@ func HandleAdminRepoEdit(w http.ResponseWriter, r *http.Request) {
 
 		if data.Name == "" {
 			data.Message = "Name cannot be empty"
-		} else if util.SliceContains(reserved, data.Name) {
+		} else if slices.Contains(reserved, data.Name) {
 			data.Message = "Name \"" + data.Name + "\" is reserved"
 		} else if exists, err := RepoExists(data.Name); err != nil {
 			log.Println("[/admin/repo/edit]", err.Error())

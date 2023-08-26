@@ -62,7 +62,7 @@ func CreateRepo(repo Repo) error {
 
 	if _, err := tx.Exec(
 		`INSERT INTO repos (owner_id, name, name_lower, description, is_private)
-		VALUES (?, ?, ?, ?, ?, ?)`,
+		VALUES (?, ?, ?, ?, ?)`,
 		repo.OwnerId, repo.Name, strings.ToLower(repo.Name), repo.Description, repo.IsPrivate,
 	); err != nil {
 		tx.Rollback()

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"slices"
 
 	goit "github.com/Jamozed/Goit/src"
 	"github.com/Jamozed/Goit/src/util"
@@ -64,7 +65,7 @@ func HandleEdit(w http.ResponseWriter, r *http.Request) {
 
 		if data.Name == "" {
 			data.Message = "Name cannot be empty"
-		} else if util.SliceContains(reserved, data.Name) {
+		} else if slices.Contains(reserved, data.Name) {
 			data.Message = "Name \"" + data.Name + "\" is reserved"
 		} else if exists, err := goit.RepoExists(data.Name); err != nil {
 			log.Println("[/repo/edit]", err.Error())

@@ -97,7 +97,7 @@ func HandleFile(w http.ResponseWriter, r *http.Request) {
 		goit.HttpError(w, http.StatusInternalServerError)
 		return
 	} else {
-		buf := make([]byte, util.Min(file.Size, 512))
+		buf := make([]byte, min(file.Size, 512))
 
 		if _, err := rc.Read(buf); err != nil {
 			log.Println("[/repo/file]", err.Error())
@@ -106,7 +106,7 @@ func HandleFile(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if strings.HasPrefix(http.DetectContentType(buf), "text") {
-			buf2 := make([]byte, util.Min(file.Size-int64(len(buf)), (10*1024*1024)-int64(len(buf))))
+			buf2 := make([]byte, min(file.Size-int64(len(buf)), (10*1024*1024)-int64(len(buf))))
 			if _, err := rc.Read(buf2); err != nil && !errors.Is(err, io.EOF) {
 				log.Println("[/repo/file]", err.Error())
 				goit.HttpError(w, http.StatusInternalServerError)
