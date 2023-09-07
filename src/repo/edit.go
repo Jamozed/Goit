@@ -91,16 +91,16 @@ func HandleEdit(w http.ResponseWriter, r *http.Request) {
 		data.Form.Description = r.FormValue("description")
 		data.Form.IsPrivate = r.FormValue("visibility") == "private"
 
-		if data.Name == "" {
+		if data.Form.Name == "" {
 			data.Message = "Name cannot be empty"
-		} else if slices.Contains(reserved, data.Name) {
-			data.Message = "Name \"" + data.Name + "\" is reserved"
-		} else if exists, err := goit.RepoExists(data.Name); err != nil {
+		} else if slices.Contains(reserved, data.Form.Name) {
+			data.Message = "Name \"" + data.Form.Name + "\" is reserved"
+		} else if exists, err := goit.RepoExists(data.Form.Name); err != nil {
 			log.Println("[/repo/edit]", err.Error())
 			goit.HttpError(w, http.StatusInternalServerError)
 			return
-		} else if exists && data.Name != repo.Name {
-			data.Message = "Name \"" + data.Name + "\" is taken"
+		} else if exists && data.Form.Name != repo.Name {
+			data.Message = "Name \"" + data.Form.Name + "\" is taken"
 		} else if err := goit.UpdateRepo(repo.Id, goit.Repo{
 			Name: data.Form.Name, Description: data.Form.Description, IsPrivate: data.Form.IsPrivate,
 		}); err != nil {

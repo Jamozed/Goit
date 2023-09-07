@@ -102,7 +102,7 @@ func EndSessionCookie(w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{Name: "session", Path: "/", MaxAge: -1})
 }
 
-func AuthCookie(w http.ResponseWriter, r *http.Request, renew bool) (auth bool, uid int64) {
+func AuthCookie(w http.ResponseWriter, r *http.Request, renew bool) (bool, int64) {
 	if uid, s := GetSessionCookie(r); s != (Session{}) {
 		if s.Expiry.After(time.Now()) {
 			if renew && time.Until(s.Expiry) < 24*time.Hour {
@@ -125,7 +125,7 @@ func AuthCookie(w http.ResponseWriter, r *http.Request, renew bool) (auth bool, 
 	return false, -1
 }
 
-func AuthCookieAdmin(w http.ResponseWriter, r *http.Request, renew bool) (auth bool, admin bool, uid int64) {
+func AuthCookieAdmin(w http.ResponseWriter, r *http.Request, renew bool) (bool, bool, int64) {
 	if ok, uid := AuthCookie(w, r, renew); ok {
 		if user, err := GetUser(uid); err == nil && user.IsAdmin {
 			return true, true, uid

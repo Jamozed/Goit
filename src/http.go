@@ -28,6 +28,7 @@ func init() {
 	template.Must(Tmpl.New("user/header").Parse(res.UserHeader))
 	template.Must(Tmpl.New("user/login").Parse(res.UserLogin))
 	template.Must(Tmpl.New("user/sessions").Parse(res.UserSessions))
+	template.Must(Tmpl.New("user/edit").Parse(res.UserEdit))
 
 	template.Must(Tmpl.New("repo/header").Parse(res.RepoHeader))
 	template.Must(Tmpl.New("repo/create").Parse(res.RepoCreate))

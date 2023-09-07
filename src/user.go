@@ -104,3 +104,14 @@ func UserExists(name string) (bool, error) {
 		return true, nil
 	}
 }
+
+func UpdateUser(uid int64, user User) error {
+	if _, err := db.Exec(
+		"UPDATE users SET name = ?, name_full = ? WHERE id = ?",
+		user.Name, user.FullName, uid,
+	); err != nil {
+		return err
+	}
+
+	return nil
+}

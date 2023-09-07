@@ -40,6 +40,9 @@ var UserLogin string
 //go:embed user/sessions.html
 var UserSessions string
 
+//go:embed user/edit.html
+var UserEdit string
+
 //go:embed repo/header.html
 var RepoHeader string
 

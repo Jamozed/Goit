@@ -141,9 +141,5 @@ func UpdateRepo(rid int64, repo Repo) error {
 		return err
 	}
 
-	if _, err := db.Exec(""); err != nil {
-		return err
-	}
-
 	return nil
 }

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<head lang="en-GB">{{template "base/head" .}}</head>
+<body>
+	<header>{{template "user/header" .}}</header><hr>
+	<main>
+		<h1>{{.Title}}</h1><hr>
+		<form action="/user/edit" method="post">
+			<table>
+				<tr>
+					<td style="text-align: right;"><label for="username">Username</label></td>
+					<td><input type="text" name="username" value="{{.Form.Name}}" spellcheck="false"></td>
+				</tr>
+				<tr>
+					<td style="text-align: right;"><label for="fullname">Full Name</label></td>
+					<td><input type="text" name="fullname" value="{{.Form.FullName}}" spellcheck="false"></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>
+						<input type="submit" value="Update">
+						<a href="/" style="color: inherit;">Cancel</a>
+					</td>
+				</tr>
+				<tr>
+					<td></td>
+					<td style="color: #AA0000">{{.Message}}</td>
+				</tr>
+			</table>
+		</form>
+		<table>
+			<tr><td style="text-align: right;"><span>ID:</span></td><td><span>{{.Form.Id}}</span></td></tr>
+		</table>
+	</main>
+</body>
