@@ -1,13 +1,17 @@
 package repo
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
+	"path"
 	"slices"
 
 	goit "github.com/Jamozed/Goit/src"
 	"github.com/Jamozed/Goit/src/util"
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/gorilla/mux"
 )
 
@@ -57,6 +61,30 @@ func HandleEdit(w http.ResponseWriter, r *http.Request) {
 	data.Form.Name = repo.Name
 	data.Form.Description = repo.Description
 	data.Form.IsPrivate = repo.IsPrivate
+
+	gr, err := git.PlainOpen(goit.RepoPath(repo.Name))
+	if err != nil {
+		log.Println("[/repo/file]", err.Error())
+		goit.HttpError(w, http.StatusInternalServerError)
+		return
+	}
+
+	ref, err := gr.Head()
+	if errors.Is(err, plumbing.ErrReferenceNotFound) {
+		goit.HttpError(w, http.StatusNotFound)
+		return
+	} else if err != nil {
+		log.Println("[/repo/file]", err.Error())
+		goit.HttpError(w, http.StatusInternalServerError)
+		return
+	}
+
+	if readme, _ := findReadme(gr, ref); readme != "" {
+		data.Readme = path.Join("/", repo.Name, "file", readme)
+	}
+	if licence, _ := findLicence(gr, ref); licence != "" {
+		data.Licence = path.Join("/", repo.Name, "file", licence)
+	}
 
 	if r.Method == http.MethodPost {
 		data.Form.Name = r.FormValue("reponame")

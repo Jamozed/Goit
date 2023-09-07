@@ -2,6 +2,8 @@ package res
 
 import _ "embed"
 
+var Version string = "dev"
+
 //go:embed error.html
 var Error string
 
