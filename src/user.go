@@ -66,8 +66,8 @@ func GetUser(id int64) (*User, error) {
 	u := User{}
 
 	if err := db.QueryRow(
-		"SELECT id, name, name_full, is_admin FROM users WHERE id = ?", id,
-	).Scan(&u.Id, &u.Name, &u.FullName, &u.IsAdmin); err != nil {
+		"SELECT id, name, name_full, pass, pass_algo, salt, is_admin FROM users WHERE id = ?", id,
+	).Scan(&u.Id, &u.Name, &u.FullName, &u.Pass, &u.PassAlgo, &u.Salt, &u.IsAdmin); err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("[SELECT:user] %w", err)
 		} else {
@@ -109,6 +109,22 @@ func UpdateUser(uid int64, user User) error {
 	if _, err := db.Exec(
 		"UPDATE users SET name = ?, name_full = ? WHERE id = ?",
 		user.Name, user.FullName, uid,
+	); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func UpdatePassword(uid int64, password string) error {
+	salt, err := Salt()
+	if err != nil {
+		return err
+	}
+
+	if _, err := db.Exec(
+		"UPDATE users SET pass = ?, pass_algo = ?, salt = ? WHERE id = ?",
+		Hash(password, salt), "argon2", salt, uid,
 	); err != nil {
 		return err
 	}

@@ -6,27 +6,38 @@
 		<h1>{{.Title}}</h1><hr>
 		<form action="/user/edit" method="post">
 			<table>
+				<tr><td><label for="username">Username</label></td></tr>
+				<tr><td><input type="text" name="username" value="{{.Form.Name}}" spellcheck="false"></td></tr>
+				<tr><td><label for="fullname">Full Name</label></td></tr>
+				<tr><td><input type="text" name="fullname" value="{{.Form.FullName}}" spellcheck="false"></td></tr>
 				<tr>
-					<td style="text-align: right;"><label for="username">Username</label></td>
-					<td><input type="text" name="username" value="{{.Form.Name}}" spellcheck="false"></td>
-				</tr>
-				<tr>
-					<td style="text-align: right;"><label for="fullname">Full Name</label></td>
-					<td><input type="text" name="fullname" value="{{.Form.FullName}}" spellcheck="false"></td>
-				</tr>
-				<tr>
-					<td></td>
 					<td>
-						<input type="submit" value="Update">
-						<a href="/" style="color: inherit;">Cancel</a>
+						<input type="submit" name="submit" value="Update">
+						<!-- <a href="/" style="color: inherit;">Cancel</a> -->
+						<span style="color: #AA0000">{{.MessageA}}</span>
 					</td>
 				</tr>
-				<tr>
-					<td></td>
-					<td style="color: #AA0000">{{.Message}}</td>
-				</tr>
+				<!-- <tr><td style="color: #AA0000">{{.MessageA}}</td></tr> -->
 			</table>
-		</form>
+		</form><hr>
+		<form action="/user/edit" method="post">
+			<table>
+				<tr><td><label for="password">Current Password</label></td></tr>
+				<tr><td><input type="password" name="password"></td></tr>
+				<tr><td><label for="new_password">New Password</label></td></tr>
+				<tr><td><input type="password" name="new_password"></td></tr>
+				<tr><td><label for="confirm_password">Confirm New Password</label></td></tr>
+				<tr><td><input type="password" name="confirm_password"></td></tr>
+				<tr>
+					<td>
+						<input type="submit" name="submit" value="Update Password">
+						<!-- <a href="/" style="color: inherit;">Cancel</a> -->
+						<span style="color: #AA0000">{{.MessageB}}</span>
+					</td>
+				</tr>
+				<!-- <tr><td style="color: #AA0000">{{.MessageB}}</td></tr> -->
+			</table>
+		</form><hr>
 		<table>
 			<tr><td style="text-align: right;"><span>ID:</span></td><td><span>{{.Form.Id}}</span></td></tr>
 		</table>
