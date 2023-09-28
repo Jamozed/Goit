@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -44,16 +45,34 @@ func HandleUserSessions(w http.ResponseWriter, r *http.Request) {
 
 	_, ss := GetSessionCookie(r)
 
-	type row struct{ Ip, Seen, Expiry, Current string }
+	revoke, err := strconv.ParseInt(r.FormValue("revoke"), 10, 64)
+	if err != nil {
+		revoke = -1
+	}
+	if revoke >= 0 && revoke < int64(len(Sessions[uid])) {
+		current := Sessions[uid][revoke].Token == ss.Token
+		EndSession(uid, Sessions[uid][revoke].Token)
+
+		if current {
+			EndSessionCookie(w)
+			http.Redirect(w, r, "/", http.StatusFound)
+			return
+		}
+
+		http.Redirect(w, r, "/user/sessions", http.StatusFound)
+		return
+	}
+
+	type row struct{ Index, Ip, Seen, Expiry, Current string }
 	data := struct {
 		Title    string
 		Sessions []row
 	}{Title: "User - Sessions"}
 
-	for k, v := range Sessions[uid] {
+	for i, v := range Sessions[uid] {
 		data.Sessions = append(data.Sessions, row{
-			Ip: v.Ip, Seen: v.Seen.Format(time.DateTime), Expiry: v.Expiry.Format(time.DateTime),
-			Current: util.If(k == ss.Token, "(current)", ""),
+			Index: fmt.Sprint(i), Ip: v.Ip, Seen: v.Seen.Format(time.DateTime), Expiry: v.Expiry.Format(time.DateTime),
+			Current: util.If(v.Token == ss.Token, "(current)", ""),
 		})
 	}
 

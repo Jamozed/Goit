@@ -19,7 +19,7 @@
 					<td>{{.Ip}}</a></td>
 					<td>{{.Seen}}</td>
 					<td>{{.Expiry}}</td>
-					<td><a href="">revoke</a></td>
+					<td><a href="/user/sessions?revoke={{.Index}}">revoke</a></td>
 					<td>{{.Current}}</td>
 				</tr>
 			{{end}}

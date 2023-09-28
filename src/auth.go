@@ -24,7 +24,7 @@ type Session struct {
 	Seen, Expiry time.Time
 }
 
-var Sessions = map[int64]map[string]Session{}
+var Sessions = map[int64][]Session{}
 
 func NewSession(uid int64, ip string, expiry time.Time) (Session, error) {
 	b := make([]byte, 24)
@@ -33,18 +33,26 @@ func NewSession(uid int64, ip string, expiry time.Time) (Session, error) {
 	}
 
 	if Sessions[uid] == nil {
-		Sessions[uid] = map[string]Session{}
+		Sessions[uid] = []Session{}
 	}
 
 	t := base64.StdEncoding.EncodeToString(b)
-	Sessions[uid][t] = Session{Token: t, Ip: util.If(Conf.IpSessions, ip, ""), Seen: time.Now(), Expiry: expiry}
-	return Sessions[uid][t], nil
+	s := Session{Token: t, Ip: util.If(Conf.IpSessions, ip, ""), Seen: time.Now(), Expiry: expiry}
+
+	Sessions[uid] = append(Sessions[uid], s)
+	return s, nil
 }
 
-func EndSession(id int64, token string) {
-	delete(Sessions[id], token)
-	if len(Sessions[id]) == 0 {
-		delete(Sessions, id)
+func EndSession(uid int64, token string) {
+	for i, t := range Sessions[uid] {
+		if t.Token == token {
+			Sessions[uid] = append(Sessions[uid][:i], Sessions[uid][i+1:]...)
+			break
+		}
+	}
+
+	if len(Sessions[uid]) == 0 {
+		delete(Sessions, uid)
 	}
 }
 
@@ -52,9 +60,9 @@ func CleanupSessions() {
 	var n uint64 = 0
 
 	for k, v := range Sessions {
-		for k1, v1 := range v {
+		for _, v1 := range v {
 			if v1.Expiry.Before(time.Now()) {
-				EndSession(k, k1)
+				EndSession(k, v1.Token)
 				n += 1
 			}
 		}
@@ -86,13 +94,18 @@ func GetSessionCookie(r *http.Request) (int64, Session) {
 			return -1, Session{}
 		}
 
-		s := Sessions[id][ss[1]]
-		if s != (Session{}) {
-			s.Seen = time.Now()
-			Sessions[id][ss[1]] = s
+		for i, s := range Sessions[id] {
+			if ss[1] == s.Token {
+				if s != (Session{}) {
+					s.Seen = time.Now()
+					Sessions[id][i] = s
+				}
+
+				return id, s
+			}
 		}
 
-		return id, s
+		return id, Session{}
 	}
 
 	return -1, Session{}
