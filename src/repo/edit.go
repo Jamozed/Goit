@@ -64,26 +64,25 @@ func HandleEdit(w http.ResponseWriter, r *http.Request) {
 
 	gr, err := git.PlainOpen(goit.RepoPath(repo.Name))
 	if err != nil {
-		log.Println("[/repo/file]", err.Error())
+		log.Println("[/repo/edit]", err.Error())
 		goit.HttpError(w, http.StatusInternalServerError)
 		return
 	}
 
 	ref, err := gr.Head()
-	if errors.Is(err, plumbing.ErrReferenceNotFound) {
-		goit.HttpError(w, http.StatusNotFound)
-		return
-	} else if err != nil {
-		log.Println("[/repo/file]", err.Error())
+	if err != nil && !errors.Is(err, plumbing.ErrReferenceNotFound) {
+		log.Println("[/repo/edit]", err.Error())
 		goit.HttpError(w, http.StatusInternalServerError)
 		return
 	}
 
-	if readme, _ := findReadme(gr, ref); readme != "" {
-		data.Readme = path.Join("/", repo.Name, "file", readme)
-	}
-	if licence, _ := findLicence(gr, ref); licence != "" {
-		data.Licence = path.Join("/", repo.Name, "file", licence)
+	if ref != nil {
+		if readme, _ := findReadme(gr, ref); readme != "" {
+			data.Readme = path.Join("/", repo.Name, "file", readme)
+		}
+		if licence, _ := findLicence(gr, ref); licence != "" {
+			data.Licence = path.Join("/", repo.Name, "file", licence)
+		}
 	}
 
 	if r.Method == http.MethodPost {
