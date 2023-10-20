@@ -15,7 +15,7 @@ A simple and lightweight Git web server.
 
 ## Usage
 
-To build **Goit**, from the project root, run `go build`.
+To build **Goit**, from the project root, run `make build`.
 
 ## Meta
 
