@@ -5,6 +5,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"net/http"
 	"strings"
@@ -18,6 +19,9 @@ import (
 )
 
 func main() {
+	flag.BoolVar(&goit.Debug, "debug", false, "Enable debug logging")
+	flag.Parse()
+
 	log.Println("Starting Goit", res.Version)
 
 	if err := goit.Goit(goit.ConfPath()); err != nil {

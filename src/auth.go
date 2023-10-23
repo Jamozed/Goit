@@ -39,12 +39,16 @@ func NewSession(uid int64, ip string, expiry time.Time) (Session, error) {
 	var s = Session{Token: t, Ip: util.If(Conf.IpSessions, ip, ""), Seen: time.Now(), Expiry: expiry}
 
 	SessionsMutex.Lock()
+	Debugln("[goit.NewSession] SessionsMutex lock")
+
 	if Sessions[uid] == nil {
 		Sessions[uid] = []Session{}
 	}
 
 	Sessions[uid] = append(Sessions[uid], s)
+
 	SessionsMutex.Unlock()
+	Debugln("[goit.EndSession] SessionsMutex unlock")
 
 	return s, nil
 }
@@ -52,7 +56,9 @@ func NewSession(uid int64, ip string, expiry time.Time) (Session, error) {
 /* End a user session. */
 func EndSession(uid int64, token string) {
 	SessionsMutex.Lock()
+	Debugln("[goit.EndSession] SessionsMutex lock")
 	defer SessionsMutex.Unlock()
+	defer Debugln("[goit.EndSession] SessionsMutex unlock")
 
 	if Sessions[uid] == nil {
 		return
@@ -75,6 +81,8 @@ func CleanupSessions() {
 	var n int = 0
 
 	SessionsMutex.Lock()
+	Debugln("[goit.CleanupSessions] SessionsMutex lock")
+
 	for uid, v := range Sessions {
 		var i = 0
 		for _, s := range v {
@@ -92,7 +100,9 @@ func CleanupSessions() {
 			Sessions[uid] = v[:i]
 		}
 	}
+
 	SessionsMutex.Unlock()
+	Debugln("[goit.CleanupSessions] SessionsMutex unlock")
 
 	if n > 0 {
 		log.Println("[Cleanup] cleaned up", n, "expired sessions")
@@ -123,6 +133,10 @@ func GetSessionCookie(r *http.Request) (int64, Session) {
 		}
 
 		SessionsMutex.Lock()
+		Debugln("[goit.GetSessionCookie] SessionsMutex lock")
+		defer SessionsMutex.Unlock()
+		defer Debugln("[goit.GetSessionCookie] SessionsMutex unlock")
+
 		for i, s := range Sessions[uid] {
 			if ss[1] == s.Token {
 				if s != (Session{}) {
@@ -133,7 +147,6 @@ func GetSessionCookie(r *http.Request) (int64, Session) {
 				return uid, s
 			}
 		}
-		SessionsMutex.Unlock()
 
 		return uid, Session{}
 	}
