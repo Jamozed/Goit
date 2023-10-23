@@ -41,13 +41,17 @@ func HandleEdit(w http.ResponseWriter, r *http.Request) {
 
 	data := struct {
 		Title, Name, Description, Url string
-		Readme, Licence, Message      string
+		Readme, Licence               string
 		Editable                      bool
 
-		Form struct {
+		Edit struct {
 			Id, Owner, Name, Description string
 			IsPrivate                    bool
+			Message                      string
 		}
+
+		Transfer struct{ Owner, Message string }
+		Delete   struct{ Message string }
 	}{
 		Title:       "Repository - Edit",
 		Name:        repo.Name,
@@ -56,11 +60,11 @@ func HandleEdit(w http.ResponseWriter, r *http.Request) {
 		Editable:    (auth && repo.OwnerId == uid),
 	}
 
-	data.Form.Id = fmt.Sprint(repo.Id)
-	data.Form.Owner = owner.FullName + " (" + owner.Name + ")[" + fmt.Sprint(owner.Id) + "]"
-	data.Form.Name = repo.Name
-	data.Form.Description = repo.Description
-	data.Form.IsPrivate = repo.IsPrivate
+	data.Edit.Id = fmt.Sprint(repo.Id)
+	data.Edit.Owner = owner.FullName + " (" + owner.Name + ")[" + fmt.Sprint(owner.Id) + "]"
+	data.Edit.Name = repo.Name
+	data.Edit.Description = repo.Description
+	data.Edit.IsPrivate = repo.IsPrivate
 
 	gr, err := git.PlainOpen(goit.RepoPath(repo.Name))
 	if err != nil {
@@ -86,29 +90,66 @@ func HandleEdit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == http.MethodPost {
-		data.Form.Name = r.FormValue("reponame")
-		data.Form.Description = r.FormValue("description")
-		data.Form.IsPrivate = r.FormValue("visibility") == "private"
+		switch r.FormValue("action") {
+		case "edit":
+			data.Edit.Name = r.FormValue("reponame")
+			data.Edit.Description = r.FormValue("description")
+			data.Edit.IsPrivate = r.FormValue("visibility") == "private"
 
-		if data.Form.Name == "" {
-			data.Message = "Name cannot be empty"
-		} else if slices.Contains(reserved, data.Form.Name) {
-			data.Message = "Name \"" + data.Form.Name + "\" is reserved"
-		} else if exists, err := goit.RepoExists(data.Form.Name); err != nil {
-			log.Println("[/repo/edit]", err.Error())
-			goit.HttpError(w, http.StatusInternalServerError)
-			return
-		} else if exists && data.Form.Name != repo.Name {
-			data.Message = "Name \"" + data.Form.Name + "\" is taken"
-		} else if err := goit.UpdateRepo(repo.Id, goit.Repo{
-			Name: data.Form.Name, Description: data.Form.Description, IsPrivate: data.Form.IsPrivate,
-		}); err != nil {
-			log.Println("[/repo/edit]", err.Error())
-			goit.HttpError(w, http.StatusInternalServerError)
-			return
-		} else {
-			http.Redirect(w, r, "/"+data.Form.Name+"/edit", http.StatusFound)
-			return
+			if data.Edit.Name == "" {
+				data.Edit.Message = "Name cannot be empty"
+			} else if slices.Contains(reserved, data.Edit.Name) {
+				data.Edit.Message = "Name \"" + data.Edit.Name + "\" is reserved"
+			} else if exists, err := goit.RepoExists(data.Edit.Name); err != nil {
+				log.Println("[/repo/edit]", err.Error())
+				goit.HttpError(w, http.StatusInternalServerError)
+				return
+			} else if exists && data.Edit.Name != repo.Name {
+				data.Edit.Message = "Name \"" + data.Edit.Name + "\" is taken"
+			} else if err := goit.UpdateRepo(repo.Id, goit.Repo{
+				Name: data.Edit.Name, Description: data.Edit.Description, IsPrivate: data.Edit.IsPrivate,
+			}); err != nil {
+				log.Println("[/repo/edit]", err.Error())
+				goit.HttpError(w, http.StatusInternalServerError)
+				return
+			} else {
+				http.Redirect(w, r, "/"+data.Edit.Name+"/edit", http.StatusFound)
+				return
+			}
+
+		case "transfer":
+			data.Transfer.Owner = r.FormValue("owner")
+
+			if data.Transfer.Owner == "" {
+				data.Transfer.Message = "New owner cannot be empty"
+			} else if user, err := goit.GetUserByName(data.Transfer.Owner); err != nil {
+				log.Println("[/repo/edit]", err.Error())
+				goit.HttpError(w, http.StatusInternalServerError)
+				return
+			} else if user == nil {
+				data.Transfer.Message = "User \"" + data.Transfer.Owner + "\" does not exist"
+			} else if err := goit.ChownRepo(repo.Id, user.Id); err != nil {
+				log.Println("[/repo/edit]", err.Error())
+				goit.HttpError(w, http.StatusInternalServerError)
+				return
+			} else {
+				http.Redirect(w, r, "/"+data.Edit.Name, http.StatusFound)
+				return
+			}
+
+		case "delete":
+			var reponame = r.FormValue("reponame")
+
+			if reponame != repo.Name {
+				data.Delete.Message = "Input does not match the repository name"
+			} else if err := goit.DelRepo(repo.Id); err != nil {
+				log.Println("[/repo/edit]", err.Error())
+				goit.HttpError(w, http.StatusInternalServerError)
+				return
+			} else {
+				http.Redirect(w, r, "/", http.StatusFound)
+				return
+			}
 		}
 	}
 

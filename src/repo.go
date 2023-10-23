@@ -22,11 +22,11 @@ type Repo struct {
 	IsPrivate   bool
 }
 
-func GetRepo(id int64) (*Repo, error) {
+func GetRepo(rid int64) (*Repo, error) {
 	r := &Repo{}
 
 	if err := db.QueryRow(
-		"SELECT id, owner_id, name, description, is_private FROM repos WHERE id = ?", id,
+		"SELECT id, owner_id, name, description, is_private FROM repos WHERE id = ?", rid,
 	).Scan(&r.Id, &r.OwnerId, &r.Name, &r.Description, &r.IsPrivate); err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			return nil, err
@@ -82,12 +82,17 @@ func CreateRepo(repo Repo) error {
 	return nil
 }
 
-func DelRepo(name string) error {
-	if err := os.RemoveAll(RepoPath(name)); err != nil {
+func DelRepo(rid int64) error {
+	repo, err := GetRepo(rid)
+	if err != nil {
 		return err
 	}
 
-	if _, err := db.Exec("DELETE FROM repos WHERE name = ?", name); err != nil {
+	if err := os.RemoveAll(RepoPath(repo.Name)); err != nil {
+		return err
+	}
+
+	if _, err := db.Exec("DELETE FROM repos WHERE id = ?", rid); err != nil {
 		return err
 	}
 
@@ -128,7 +133,6 @@ func UpdateRepo(rid int64, repo Repo) error {
 	}
 
 	if repo.Name != old.Name {
-		/* TODO use a mutex lock or something to make sure this doesn't break */
 		if err := os.Rename(RepoPath(old.Name), RepoPath(repo.Name)); err != nil {
 			tx.Rollback()
 			return err
@@ -138,6 +142,14 @@ func UpdateRepo(rid int64, repo Repo) error {
 	if err := tx.Commit(); err != nil {
 		os.Rename(RepoPath(repo.Name), RepoPath(old.Name))
 		log.Println("[repo/update]", "error while renaming, check repo \""+old.Name+"\"/\""+repo.Name+"\"")
+		return err
+	}
+
+	return nil
+}
+
+func ChownRepo(rid int64, uid int64) error {
+	if _, err := db.Exec("UPDATE repos SET owner_id = ? WHERE id = ?", uid, rid); err != nil {
 		return err
 	}
 

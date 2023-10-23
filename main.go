@@ -37,7 +37,6 @@ func main() {
 	h.Path("/user/sessions").Methods("GET", "POST").HandlerFunc(user.HandleSessions)
 	h.Path("/user/edit").Methods("GET", "POST").HandlerFunc(user.HandleEdit)
 	h.Path("/repo/create").Methods("GET", "POST").HandlerFunc(repo.HandleCreate)
-	h.Path("/repo/delete").Methods("DELETE").HandlerFunc(repo.HandleDelete)
 	h.Path("/admin").Methods("GET").HandlerFunc(goit.HandleAdminIndex)
 	h.Path("/admin/users").Methods("GET").HandlerFunc(goit.HandleAdminUsers)
 	h.Path("/admin/user/create").Methods("GET", "POST").HandlerFunc(goit.HandleAdminUserCreate)
