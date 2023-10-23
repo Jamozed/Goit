@@ -1,11 +1,12 @@
 .PHONY: all build test help
 all: help
 
+MODULE = "github.com/Jamozed/Goit"
 PROGRAM = "goit"
 VERSION = "0.0.0"
 
 build: ## Build the project
-	@go build -ldflags "-X res.Version=$(VERSION)" -o ./bin/$(PROGRAM) .
+	@go build -ldflags "-X $(MODULE)/res.Version=$(VERSION)" -o ./bin/$(PROGRAM) .
 
 test: ## Run unit tests
 	@go test ./...

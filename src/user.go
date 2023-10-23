@@ -8,13 +8,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
-	"strconv"
 	"strings"
-	"time"
-
-	"github.com/Jamozed/Goit/src/util"
 )
 
 type User struct {
@@ -34,51 +29,6 @@ func HandleUserLogout(w http.ResponseWriter, r *http.Request) {
 	EndSession(id, s.Token)
 	EndSessionCookie(w)
 	http.Redirect(w, r, "/", http.StatusFound)
-}
-
-func HandleUserSessions(w http.ResponseWriter, r *http.Request) {
-	auth, uid := AuthCookie(w, r, true)
-	if !auth {
-		HttpError(w, http.StatusUnauthorized)
-		return
-	}
-
-	_, ss := GetSessionCookie(r)
-
-	revoke, err := strconv.ParseInt(r.FormValue("revoke"), 10, 64)
-	if err != nil {
-		revoke = -1
-	}
-	if revoke >= 0 && revoke < int64(len(Sessions[uid])) {
-		current := Sessions[uid][revoke].Token == ss.Token
-		EndSession(uid, Sessions[uid][revoke].Token)
-
-		if current {
-			EndSessionCookie(w)
-			http.Redirect(w, r, "/", http.StatusFound)
-			return
-		}
-
-		http.Redirect(w, r, "/user/sessions", http.StatusFound)
-		return
-	}
-
-	type row struct{ Index, Ip, Seen, Expiry, Current string }
-	data := struct {
-		Title    string
-		Sessions []row
-	}{Title: "User - Sessions"}
-
-	for i, v := range Sessions[uid] {
-		data.Sessions = append(data.Sessions, row{
-			Index: fmt.Sprint(i), Ip: v.Ip, Seen: v.Seen.Format(time.DateTime), Expiry: v.Expiry.Format(time.DateTime),
-			Current: util.If(v.Token == ss.Token, "(current)", ""),
-		})
-	}
-
-	if err := Tmpl.ExecuteTemplate(w, "user/sessions", data); err != nil {
-		log.Println("[/user/login]", err.Error())
-	}
 }
 
 func GetUser(id int64) (*User, error) {

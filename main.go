@@ -18,6 +18,8 @@ import (
 )
 
 func main() {
+	log.Println("Starting Goit", res.Version)
+
 	if err := goit.Goit(goit.ConfPath()); err != nil {
 		log.Fatalln(err.Error())
 	}
@@ -28,7 +30,7 @@ func main() {
 	h.Path("/").HandlerFunc(goit.HandleIndex)
 	h.Path("/user/login").Methods("GET", "POST").HandlerFunc(user.HandleLogin)
 	h.Path("/user/logout").Methods("GET", "POST").HandlerFunc(goit.HandleUserLogout)
-	h.Path("/user/sessions").Methods("GET", "POST").HandlerFunc(goit.HandleUserSessions)
+	h.Path("/user/sessions").Methods("GET", "POST").HandlerFunc(user.HandleSessions)
 	h.Path("/user/edit").Methods("GET", "POST").HandlerFunc(user.HandleEdit)
 	h.Path("/repo/create").Methods("GET", "POST").HandlerFunc(repo.HandleCreate)
 	h.Path("/repo/delete").Methods("DELETE").HandlerFunc(repo.HandleDelete)

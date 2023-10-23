@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Jamozed/Goit/src/util"
@@ -25,25 +26,38 @@ type Session struct {
 }
 
 var Sessions = map[int64][]Session{}
+var SessionsMutex = sync.RWMutex{}
 
+/* Generate a new user session. */
 func NewSession(uid int64, ip string, expiry time.Time) (Session, error) {
-	b := make([]byte, 24)
+	var b = make([]byte, 24)
 	if _, err := rand.Read(b); err != nil {
 		return Session{}, err
 	}
 
+	var t = base64.StdEncoding.EncodeToString(b)
+	var s = Session{Token: t, Ip: util.If(Conf.IpSessions, ip, ""), Seen: time.Now(), Expiry: expiry}
+
+	SessionsMutex.Lock()
 	if Sessions[uid] == nil {
 		Sessions[uid] = []Session{}
 	}
 
-	t := base64.StdEncoding.EncodeToString(b)
-	s := Session{Token: t, Ip: util.If(Conf.IpSessions, ip, ""), Seen: time.Now(), Expiry: expiry}
-
 	Sessions[uid] = append(Sessions[uid], s)
+	SessionsMutex.Unlock()
+
 	return s, nil
 }
 
+/* End a user session. */
 func EndSession(uid int64, token string) {
+	SessionsMutex.Lock()
+	defer SessionsMutex.Unlock()
+
+	if Sessions[uid] == nil {
+		return
+	}
+
 	for i, t := range Sessions[uid] {
 		if t.Token == token {
 			Sessions[uid] = append(Sessions[uid][:i], Sessions[uid][i+1:]...)
@@ -56,23 +70,36 @@ func EndSession(uid int64, token string) {
 	}
 }
 
+/* Cleanup expired user sessions. */
 func CleanupSessions() {
-	var n uint64 = 0
+	var n int = 0
 
-	for k, v := range Sessions {
-		for _, v1 := range v {
-			if v1.Expiry.Before(time.Now()) {
-				EndSession(k, v1.Token)
-				n += 1
+	SessionsMutex.Lock()
+	for uid, v := range Sessions {
+		var i = 0
+		for _, s := range v {
+			if s.Expiry.After(time.Now()) {
+				v[i] = s
+				i += 1
 			}
 		}
+
+		n += len(v) - i
+
+		if i == 0 {
+			delete(Sessions, uid)
+		} else {
+			Sessions[uid] = v[:i]
+		}
 	}
+	SessionsMutex.Unlock()
 
 	if n > 0 {
 		log.Println("[Cleanup] cleaned up", n, "expired sessions")
 	}
 }
 
+/* Set a user session cookie. */
 func SetSessionCookie(w http.ResponseWriter, uid int64, s Session) {
 	c := &http.Cookie{Name: "session", Value: fmt.Sprint(uid) + "." + s.Token, Path: "/", Expires: s.Expiry}
 	if err := c.Valid(); err != nil {
@@ -82,6 +109,7 @@ func SetSessionCookie(w http.ResponseWriter, uid int64, s Session) {
 	http.SetCookie(w, c)
 }
 
+/* Get a user session cookie if one is present. */
 func GetSessionCookie(r *http.Request) (int64, Session) {
 	if c := util.Cookie(r, "session"); c != nil {
 		ss := strings.SplitN(c.Value, ".", 2)
@@ -89,32 +117,36 @@ func GetSessionCookie(r *http.Request) (int64, Session) {
 			return -1, Session{}
 		}
 
-		id, err := strconv.ParseInt(ss[0], 10, 64)
+		uid, err := strconv.ParseInt(ss[0], 10, 64)
 		if err != nil {
 			return -1, Session{}
 		}
 
-		for i, s := range Sessions[id] {
+		SessionsMutex.Lock()
+		for i, s := range Sessions[uid] {
 			if ss[1] == s.Token {
 				if s != (Session{}) {
 					s.Seen = time.Now()
-					Sessions[id][i] = s
+					Sessions[uid][i] = s
 				}
 
-				return id, s
+				return uid, s
 			}
 		}
+		SessionsMutex.Unlock()
 
-		return id, Session{}
+		return uid, Session{}
 	}
 
 	return -1, Session{}
 }
 
+/* End the current user session cookie. */
 func EndSessionCookie(w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{Name: "session", Path: "/", MaxAge: -1})
 }
 
+/* Authenticate a user session cookie. */
 func AuthCookie(w http.ResponseWriter, r *http.Request, renew bool) (bool, int64) {
 	if uid, s := GetSessionCookie(r); s != (Session{}) {
 		if s.Expiry.After(time.Now()) {
@@ -138,6 +170,7 @@ func AuthCookie(w http.ResponseWriter, r *http.Request, renew bool) (bool, int64
 	return false, -1
 }
 
+/* Authenticate a user session cookie and check admin status. */
 func AuthCookieAdmin(w http.ResponseWriter, r *http.Request, renew bool) (bool, bool, int64) {
 	if ok, uid := AuthCookie(w, r, renew); ok {
 		if user, err := GetUser(uid); err == nil && user.IsAdmin {
