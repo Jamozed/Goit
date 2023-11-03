@@ -51,6 +51,7 @@ func main() {
 	h.Path("/{repo}/tree").Methods("GET").HandlerFunc(repo.HandleTree)
 	h.Path("/{repo}/tree/{path:.*}").Methods("GET").HandlerFunc(repo.HandleTree)
 	h.Path("/{repo}/file/{path:.*}").Methods("GET").HandlerFunc(repo.HandleFile)
+	h.Path("/{repo}/raw/{path:.*}").Methods("GET").HandlerFunc(repo.HandleRaw)
 	h.Path("/{repo}/refs").Methods("GET").HandlerFunc(repo.HandleRefs)
 	h.Path("/{repo}/edit").Methods("GET", "POST").HandlerFunc(repo.HandleEdit)
 	h.Path("/{repo}/info/refs").Methods("GET").HandlerFunc(goit.HandleInfoRefs)

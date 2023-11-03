@@ -19,7 +19,13 @@
 							<td>{{.Mode}}</td>
 							<td><a href="/{{$.Name}}/{{.Path}}">{{.Name}}</a></td>
 							<td align="right" {{if .B}}style="padding-right: calc(2ch + 0.4em);"{{end}}>{{.Size}}</td>
-							<td>log blame raw download</td>
+							<td>
+								{{if .RawPath}}
+									log blame
+									<a href="/{{$.Name}}/raw/{{.RawPath}}">raw</a>
+									download
+								{{end}}
+							</td>
 						</tr>
 					{{end}}
 				{{else}}

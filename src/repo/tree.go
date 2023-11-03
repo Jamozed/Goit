@@ -31,8 +31,8 @@ func HandleTree(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type row struct {
-		Mode, Name, Path, Size string
-		B                      bool
+		Mode, Name, Path, RawPath, Size string
+		B                               bool
 	}
 	data := struct {
 		Title, Name, Description, Url string
@@ -105,7 +105,7 @@ func HandleTree(w http.ResponseWriter, r *http.Request) {
 		})
 
 		for _, v := range tree.Entries {
-			var fpath, size string
+			var fpath, rpath, size string
 
 			if v.Mode&0o40000 == 0 {
 				file, err := tree.File(v.Name)
@@ -116,6 +116,7 @@ func HandleTree(w http.ResponseWriter, r *http.Request) {
 				}
 
 				fpath = path.Join("file", treepath, v.Name)
+				rpath = path.Join(treepath, v.Name)
 				size = humanize.IBytes(uint64(file.Size))
 			} else {
 				var dirSize uint64
@@ -141,7 +142,7 @@ func HandleTree(w http.ResponseWriter, r *http.Request) {
 			}
 
 			data.Files = append(data.Files, row{
-				Mode: util.ModeString(uint32(v.Mode)), Name: v.Name, Path: fpath, Size: size,
+				Mode: util.ModeString(uint32(v.Mode)), Name: v.Name, Path: fpath, RawPath: rpath, Size: size,
 				B: util.If(strings.HasSuffix(size, " B"), true, false),
 			})
 		}
