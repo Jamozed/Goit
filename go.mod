@@ -4,6 +4,7 @@ go 1.21.0
 
 require (
 	github.com/adrg/xdg v0.4.0
+	github.com/buildkite/terminal-to-html/v3 v3.9.1
 	github.com/dustin/go-humanize v1.0.1
 	github.com/go-git/go-git/v5 v5.9.0
 	github.com/gorilla/mux v1.8.0
@@ -16,7 +17,6 @@ require (
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20230923063757-afb1ddc0824c // indirect
 	github.com/acomagu/bufpipe v1.0.4 // indirect
-	github.com/buildkite/terminal-to-html/v3 v3.9.1
 	github.com/cloudflare/circl v1.3.5 // indirect
 	github.com/cyphar/filepath-securejoin v0.2.4 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect

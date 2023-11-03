@@ -159,6 +159,40 @@ func EndSessionCookie(w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{Name: "session", Path: "/", MaxAge: -1})
 }
 
+/* Authenticate a user session, returns auth, user, error. */
+func Auth(w http.ResponseWriter, r *http.Request, renew bool) (bool, *User, error) {
+	uid, s := GetSessionCookie(r)
+	if s == (Session{}) {
+		return false, nil, nil
+	}
+
+	/* Attempt to get the user associated with the session UID */
+	user, err := GetUser(uid)
+	if err != nil {
+		return false, nil, fmt.Errorf("[auth] %w", err)
+	}
+
+	/* End invalid and expired sessions */
+	if user == nil || s.Expiry.Before(time.Now()) {
+		EndSession(uid, s.Token)
+		return false, nil, nil
+	}
+
+	/* Renew the session if appropriate */
+	if renew && time.Until(s.Expiry) < 24*time.Hour {
+		ip, _, _ := net.SplitHostPort(r.RemoteAddr)
+		s1, err := NewSession(uid, ip, time.Now().Add(2*24*time.Hour))
+		if err != nil {
+			log.Println("[auth/renew]", err.Error())
+		} else {
+			SetSessionCookie(w, uid, s1)
+			EndSession(uid, s.Token)
+		}
+	}
+
+	return true, user, nil
+}
+
 /* Authenticate a user session cookie. */
 func AuthCookie(w http.ResponseWriter, r *http.Request, renew bool) (bool, int64) {
 	if uid, s := GetSessionCookie(r); s != (Session{}) {

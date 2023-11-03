@@ -8,8 +8,6 @@ import (
 	goit "github.com/Jamozed/Goit/src"
 )
 
-var reserved []string = []string{"admin", "repo", "static", "user"}
-
 func HandleCreate(w http.ResponseWriter, r *http.Request) {
 	ok, uid := goit.AuthCookie(w, r, true)
 	if !ok {
@@ -30,7 +28,7 @@ func HandleCreate(w http.ResponseWriter, r *http.Request) {
 
 		if data.Name == "" {
 			data.Message = "Name cannot be empty"
-		} else if slices.Contains(reserved, data.Name) {
+		} else if slices.Contains(goit.Reserved, data.Name) {
 			data.Message = "Name \"" + data.Name + "\" is reserved"
 		} else if exists, err := goit.RepoExists(data.Name); err != nil {
 			log.Println("[/repo/create]", err.Error())

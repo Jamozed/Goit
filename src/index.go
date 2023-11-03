@@ -12,24 +12,25 @@ import (
 )
 
 func HandleIndex(w http.ResponseWriter, r *http.Request) {
-	auth, admin, uid := AuthCookieAdmin(w, r, true)
-
-	user, err := GetUser(uid)
+	auth, user, err := Auth(w, r, true)
 	if err != nil {
-		log.Println("[/]", err.Error())
+		log.Println("[index]", err.Error())
 		HttpError(w, http.StatusInternalServerError)
 		return
 	}
+
+	userQuery := r.FormValue("u")
 
 	type row struct{ Name, Description, Owner, Visibility, LastCommit string }
 	data := struct {
 		Title, Username string
 		Admin, Auth     bool
 		Repos           []row
-	}{Title: "Repositories", Admin: admin, Auth: auth}
+	}{Title: "Repositories", Auth: auth}
 
 	if user != nil {
 		data.Username = user.Name
+		data.Admin = user.IsAdmin
 	}
 
 	rows, err := db.Query("SELECT id, owner_id, name, description, is_private FROM repos")
@@ -45,10 +46,15 @@ func HandleIndex(w http.ResponseWriter, r *http.Request) {
 
 		if err := rows.Scan(&repo.Id, &repo.OwnerId, &repo.Name, &repo.Description, &repo.IsPrivate); err != nil {
 			log.Println("[/]", err.Error())
-		} else if !repo.IsPrivate || (auth && uid == repo.OwnerId) {
+		} else if !repo.IsPrivate || (auth && user.Id == repo.OwnerId) {
 			owner, err := GetUser(repo.OwnerId)
 			if err != nil {
 				log.Println("[/]", err.Error())
+			}
+
+			/* Only display repositories matching user query if present */
+			if userQuery != "" && owner.Name != userQuery {
+				continue
 			}
 
 			var lastCommit string

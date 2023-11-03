@@ -22,8 +22,6 @@ type User struct {
 	IsAdmin  bool
 }
 
-var reserved []string = []string{"admin", "repo", "static", "user"}
-
 func HandleUserLogout(w http.ResponseWriter, r *http.Request) {
 	id, s := GetSessionCookie(r)
 	EndSession(id, s.Token)
