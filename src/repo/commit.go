@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	goit "github.com/Jamozed/Goit/src"
+	"github.com/Jamozed/Goit/src/goit"
 	"github.com/Jamozed/Goit/src/util"
 	"github.com/buildkite/terminal-to-html/v3"
 	"github.com/go-git/go-git/v5"

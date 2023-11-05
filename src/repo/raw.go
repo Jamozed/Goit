@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 
-	goit "github.com/Jamozed/Goit/src"
+	"github.com/Jamozed/Goit/src/goit"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"

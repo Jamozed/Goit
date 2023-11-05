@@ -11,7 +11,7 @@ import (
 	"net/http"
 	"time"
 
-	goit "github.com/Jamozed/Goit/src"
+	"github.com/Jamozed/Goit/src/goit"
 )
 
 func HandleLogin(w http.ResponseWriter, r *http.Request) {

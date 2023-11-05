@@ -8,7 +8,7 @@ import (
 	"path"
 	"slices"
 
-	goit "github.com/Jamozed/Goit/src"
+	"github.com/Jamozed/Goit/src/goit"
 	"github.com/Jamozed/Goit/src/util"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"

@@ -6,7 +6,7 @@ PROGRAM = "goit"
 VERSION = "0.0.0"
 
 build: ## Build the project
-	@go build -ldflags "-X $(MODULE)/res.Version=$(VERSION)" -o ./bin/$(PROGRAM) .
+	@go build -ldflags "-X $(MODULE)/res.Version=$(VERSION)" -o ./bin/$(PROGRAM) ./src
 
 test: ## Run unit tests
 	@go test ./...

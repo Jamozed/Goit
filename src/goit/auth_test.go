@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	goit "github.com/Jamozed/Goit/src"
+	"github.com/Jamozed/Goit/src/goit"
 )
 
 func TestNewSession(t *testing.T) {

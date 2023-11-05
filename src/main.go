@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/Jamozed/Goit/res"
-	goit "github.com/Jamozed/Goit/src"
+	"github.com/Jamozed/Goit/src/goit"
 	"github.com/Jamozed/Goit/src/repo"
 	"github.com/Jamozed/Goit/src/user"
 	"github.com/gorilla/mux"

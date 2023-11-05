@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	goit "github.com/Jamozed/Goit/src"
+	"github.com/Jamozed/Goit/src/goit"
 	"github.com/Jamozed/Goit/src/util"
 )
 

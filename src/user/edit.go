@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"slices"
 
-	goit "github.com/Jamozed/Goit/src"
+	"github.com/Jamozed/Goit/src/goit"
 )
 
 func HandleEdit(w http.ResponseWriter, r *http.Request) {
