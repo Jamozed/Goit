@@ -13,13 +13,13 @@ import (
 )
 
 type User struct {
-	Id       int64
-	Name     string
-	FullName string
-	Pass     []byte
-	PassAlgo string
-	Salt     []byte
-	IsAdmin  bool
+	Id       int64  `json:"id"`
+	Name     string `json:"name"`
+	FullName string `json:"name_full"`
+	Pass     []byte `json:"pass"`
+	PassAlgo string `json:"pass_algo"`
+	Salt     []byte `json:"salt"`
+	IsAdmin  bool   `json:"is_admin"`
 }
 
 func HandleUserLogout(w http.ResponseWriter, r *http.Request) {

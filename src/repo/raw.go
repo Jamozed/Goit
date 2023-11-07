@@ -32,7 +32,7 @@ func HandleRaw(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	gr, err := git.PlainOpen(goit.RepoPath(repo.Name))
+	gr, err := git.PlainOpen(goit.RepoPath(repo.Name, true))
 	if err != nil {
 		log.Println("[/repo/file]", err.Error())
 		goit.HttpError(w, http.StatusInternalServerError)

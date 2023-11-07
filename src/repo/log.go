@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"path"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -51,7 +51,7 @@ func HandleLog(w http.ResponseWriter, r *http.Request) {
 		Editable: (auth && repo.OwnerId == uid),
 	}
 
-	gr, err := git.PlainOpen(goit.RepoPath(repo.Name))
+	gr, err := git.PlainOpen(goit.RepoPath(repo.Name, true))
 	if err != nil {
 		log.Println("[/repo/log]", err.Error())
 		goit.HttpError(w, http.StatusInternalServerError)
@@ -68,10 +68,10 @@ func HandleLog(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if readme, _ := findReadme(gr, ref); readme != "" {
-		data.Readme = path.Join("/", repo.Name, "file", readme)
+		data.Readme = filepath.Join("/", repo.Name, "file", readme)
 	}
 	if licence, _ := findLicence(gr, ref); licence != "" {
-		data.Licence = path.Join("/", repo.Name, "file", licence)
+		data.Licence = filepath.Join("/", repo.Name, "file", licence)
 	}
 
 	if iter, err := gr.Log(&git.LogOptions{From: ref.Hash()}); err != nil {

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"path"
+	"path/filepath"
 	"slices"
 
 	"github.com/Jamozed/Goit/src/goit"
@@ -66,7 +66,7 @@ func HandleEdit(w http.ResponseWriter, r *http.Request) {
 	data.Edit.Description = repo.Description
 	data.Edit.IsPrivate = repo.IsPrivate
 
-	gr, err := git.PlainOpen(goit.RepoPath(repo.Name))
+	gr, err := git.PlainOpen(goit.RepoPath(repo.Name, true))
 	if err != nil {
 		log.Println("[/repo/edit]", err.Error())
 		goit.HttpError(w, http.StatusInternalServerError)
@@ -82,10 +82,10 @@ func HandleEdit(w http.ResponseWriter, r *http.Request) {
 
 	if ref != nil {
 		if readme, _ := findReadme(gr, ref); readme != "" {
-			data.Readme = path.Join("/", repo.Name, "file", readme)
+			data.Readme = filepath.Join("/", repo.Name, "file", readme)
 		}
 		if licence, _ := findLicence(gr, ref); licence != "" {
-			data.Licence = path.Join("/", repo.Name, "file", licence)
+			data.Licence = filepath.Join("/", repo.Name, "file", licence)
 		}
 	}
 

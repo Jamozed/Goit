@@ -15,11 +15,11 @@ import (
 )
 
 type Repo struct {
-	Id          int64
-	OwnerId     int64
-	Name        string
-	Description string
-	IsPrivate   bool
+	Id          int64  `json:"id"`
+	OwnerId     int64  `json:"owner_id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	IsPrivate   bool   `json:"is_private"`
 }
 
 func GetRepo(rid int64) (*Repo, error) {
@@ -69,13 +69,13 @@ func CreateRepo(repo Repo) error {
 		return err
 	}
 
-	if _, err := git.PlainInit(RepoPath(repo.Name), true); err != nil {
+	if _, err := git.PlainInit(RepoPath(repo.Name, true), true); err != nil {
 		tx.Rollback()
 		return err
 	}
 
 	if err := tx.Commit(); err != nil {
-		os.RemoveAll(RepoPath(repo.Name))
+		os.RemoveAll(RepoPath(repo.Name, true))
 		return err
 	}
 
@@ -88,7 +88,7 @@ func DelRepo(rid int64) error {
 		return err
 	}
 
-	if err := os.RemoveAll(RepoPath(repo.Name)); err != nil {
+	if err := os.RemoveAll(RepoPath(repo.Name, true)); err != nil {
 		return err
 	}
 
@@ -133,14 +133,14 @@ func UpdateRepo(rid int64, repo Repo) error {
 	}
 
 	if repo.Name != old.Name {
-		if err := os.Rename(RepoPath(old.Name), RepoPath(repo.Name)); err != nil {
+		if err := os.Rename(RepoPath(old.Name, true), RepoPath(repo.Name, true)); err != nil {
 			tx.Rollback()
 			return err
 		}
 	}
 
 	if err := tx.Commit(); err != nil {
-		os.Rename(RepoPath(repo.Name), RepoPath(old.Name))
+		os.Rename(RepoPath(repo.Name, true), RepoPath(old.Name, true))
 		log.Println("[repo/update]", "error while renaming, check repo \""+old.Name+"\"/\""+repo.Name+"\"")
 		return err
 	}

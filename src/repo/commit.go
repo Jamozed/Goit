@@ -6,7 +6,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
-	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -52,7 +52,7 @@ func HandleCommit(w http.ResponseWriter, r *http.Request) {
 		Editable: (auth && repo.OwnerId == uid),
 	}
 
-	gr, err := git.PlainOpen(goit.RepoPath(repo.Name))
+	gr, err := git.PlainOpen(goit.RepoPath(repo.Name, true))
 	if err != nil {
 		log.Println("[/repo/commit]", err.Error())
 		goit.HttpError(w, http.StatusInternalServerError)
@@ -68,10 +68,10 @@ func HandleCommit(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		if readme, _ := findReadme(gr, ref); readme != "" {
-			data.Readme = path.Join("/", repo.Name, "file", readme)
+			data.Readme = filepath.Join("/", repo.Name, "file", readme)
 		}
 		if licence, _ := findLicence(gr, ref); licence != "" {
-			data.Licence = path.Join("/", repo.Name, "file", licence)
+			data.Licence = filepath.Join("/", repo.Name, "file", licence)
 		}
 	}
 
@@ -140,7 +140,7 @@ func HandleCommit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	c := goit.NewGitCommand("diff", "--color=always", "-p", phash, commit.Hash.String())
-	c.Dir = goit.RepoPath(repo.Name)
+	c.Dir = goit.RepoPath(repo.Name, true)
 	out, _, err := c.Run(nil, nil)
 	if err != nil {
 		log.Println("[/repo/commit]", err.Error())

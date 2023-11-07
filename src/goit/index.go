@@ -58,7 +58,7 @@ func HandleIndex(w http.ResponseWriter, r *http.Request) {
 			}
 
 			var lastCommit string
-			if gr, err := git.PlainOpen(RepoPath(repo.Name)); err != nil {
+			if gr, err := git.PlainOpen(RepoPath(repo.Name, true)); err != nil {
 				log.Println("[/]", err.Error())
 			} else if ref, err := gr.Head(); err != nil {
 				if !errors.Is(err, plumbing.ErrReferenceNotFound) {

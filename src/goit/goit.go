@@ -5,15 +5,23 @@
 package goit
 
 import (
+	"archive/zip"
 	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"io/fs"
 	"log"
 	"os"
-	"path"
+	"path/filepath"
+	"strings"
+	"time"
 
+	"github.com/Jamozed/Goit/src/util"
 	"github.com/adrg/xdg"
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/transport"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -27,7 +35,7 @@ type Config struct {
 }
 
 var Conf = Config{
-	DataPath:   path.Join(xdg.DataHome, "goit"),
+	DataPath:   filepath.Join(xdg.DataHome, "goit"),
 	HttpAddr:   "",
 	HttpPort:   "8080",
 	GitPath:    "git",
@@ -56,13 +64,13 @@ func Goit(conf string) (err error) {
 		return fmt.Errorf("[Config] %w", err)
 	}
 
-	if dat, err := os.ReadFile(path.Join(Conf.DataPath, "favicon.png")); err != nil {
+	if dat, err := os.ReadFile(filepath.Join(Conf.DataPath, "favicon.png")); err != nil {
 		log.Println("[Favicon]", err.Error())
 	} else {
 		Favicon = dat
 	}
 
-	if db, err = sql.Open("sqlite3", path.Join(Conf.DataPath, "goit.db")); err != nil {
+	if db, err = sql.Open("sqlite3", filepath.Join(Conf.DataPath, "goit.db")); err != nil {
 		return fmt.Errorf("[Database] %w", err)
 	}
 
@@ -114,7 +122,7 @@ func Goit(conf string) (err error) {
 }
 
 func ConfPath() string {
-	if p, err := xdg.SearchConfigFile(path.Join("goit", "goit.json")); err != nil {
+	if p, err := xdg.SearchConfigFile(filepath.Join("goit", "goit.json")); err != nil {
 		log.Println("[Config]", err.Error())
 		return ""
 	} else {
@@ -122,6 +130,150 @@ func ConfPath() string {
 	}
 }
 
-func RepoPath(name string) string {
-	return path.Join(Conf.DataPath, "repos", name+".git")
+func RepoPath(name string, abs bool) string {
+	return util.If(abs, filepath.Join(Conf.DataPath, "repos", name+".git"), filepath.Join(name+".git"))
+}
+
+func Backup() error {
+	data := struct {
+		Users []User `json:"users"`
+		Repos []Repo `json:"repos"`
+	}{}
+
+	bdir := filepath.Join(Conf.DataPath, "backup")
+	if err := os.MkdirAll(bdir, 0o777); err != nil {
+		return err
+	}
+
+	/* Dump users */
+	rows, err := db.Query("SELECT id, name, name_full, pass, pass_algo, salt, is_admin FROM users")
+	if err != nil {
+		return err
+	}
+
+	for rows.Next() {
+		u := User{}
+		if err := rows.Scan(&u.Id, &u.Name, &u.FullName, &u.Pass, &u.PassAlgo, &u.Salt, &u.IsAdmin); err != nil {
+			return err
+		}
+
+		data.Users = append(data.Users, u)
+	}
+	rows.Close()
+
+	/* Dump repositories */
+	rows, err = db.Query("SELECT id, owner_id, name, description, is_private FROM repos")
+	if err != nil {
+		return err
+	}
+
+	for rows.Next() {
+		r := Repo{}
+		if err := rows.Scan(&r.Id, &r.OwnerId, &r.Name, &r.Description, &r.IsPrivate); err != nil {
+			return err
+		}
+
+		data.Repos = append(data.Repos, r)
+	}
+	rows.Close()
+
+	/* Open an output ZIP file */
+	ts := "goit_" + time.Now().UTC().Format("20060102T150405Z")
+
+	zf, err := os.Create(filepath.Join(bdir, ts+".zip"))
+	if err != nil {
+		return err
+	}
+	defer zf.Close()
+
+	zw := zip.NewWriter(zf)
+	defer zw.Close()
+
+	/* Copy repositories to ZIP */
+	td, err := os.MkdirTemp(os.TempDir(), "goit-")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(td)
+
+	for _, r := range data.Repos {
+		cd := filepath.Join(td, RepoPath(r.Name, false))
+
+		gr, err := git.PlainClone(cd, true, &git.CloneOptions{
+			URL: RepoPath(r.Name, true), Mirror: true,
+		})
+		if err != nil {
+			if errors.Is(err, transport.ErrRepositoryNotFound) {
+				continue
+			}
+
+			if errors.Is(err, transport.ErrEmptyRemoteRepository) {
+				continue
+			}
+
+			return err
+		}
+
+		if err := gr.DeleteRemote("origin"); err != nil {
+			return fmt.Errorf("%s %w", cd, err)
+		}
+
+		/* Walk duplicated repository and add it to the ZIP */
+		if err = filepath.WalkDir(cd, func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+
+			info, err := d.Info()
+			if err != nil {
+				return err
+			}
+
+			head, err := zip.FileInfoHeader(info)
+			if err != nil {
+				return err
+			}
+
+			head.Name = filepath.Join(ts, strings.TrimPrefix(path, Conf.DataPath))
+
+			if d.IsDir() {
+				head.Name += "/"
+			} else {
+				head.Method = zip.Store
+			}
+
+			w, err := zw.CreateHeader(head)
+			if err != nil {
+				return err
+			}
+
+			if !d.IsDir() {
+				fi, err := os.Open(path)
+				if err != nil {
+					return err
+				}
+
+				if _, err := io.Copy(w, fi); err != nil {
+					return err
+				}
+			}
+
+			return nil
+		}); err != nil {
+			return err
+		}
+
+		os.RemoveAll(cd)
+	}
+
+	/* Write database as JSON to ZIP */
+	if b, err := json.MarshalIndent(data, "", "\t"); err != nil {
+		return err
+	} else if w, err := zw.Create(filepath.Join(ts, "goit.json")); err != nil {
+		return err
+	} else if _, err := w.Write(b); err != nil {
+		return err
+	}
+
+	return nil
 }

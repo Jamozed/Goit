@@ -5,10 +5,11 @@
 			"name": "Debug",
 			"type": "go",
 			"request": "launch",
-			"program": "${workspaceFolder}/main.go",
+			"program": "${workspaceFolder}/src/main.go",
 			"cwd": "${workspaceFolder}/bin",
 			"mode": "debug",
 			"args": ["--debug"],
+			"postDebugTask": "clean",
 		},
 	],
 }

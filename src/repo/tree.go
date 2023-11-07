@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"path"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -45,7 +46,7 @@ func HandleTree(w http.ResponseWriter, r *http.Request) {
 		Editable: (auth && repo.OwnerId == uid),
 	}
 
-	gr, err := git.PlainOpen(goit.RepoPath(repo.Name))
+	gr, err := git.PlainOpen(goit.RepoPath(repo.Name, true))
 	if err != nil {
 		log.Println("[/repo/tree]", err.Error())
 		goit.HttpError(w, http.StatusInternalServerError)
@@ -60,10 +61,10 @@ func HandleTree(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		if readme, _ := findReadme(gr, ref); readme != "" {
-			data.Readme = path.Join("/", repo.Name, "file", readme)
+			data.Readme = filepath.Join("/", repo.Name, "file", readme)
 		}
 		if licence, _ := findLicence(gr, ref); licence != "" {
-			data.Licence = path.Join("/", repo.Name, "file", licence)
+			data.Licence = filepath.Join("/", repo.Name, "file", licence)
 		}
 
 		commit, err := gr.CommitObject(ref.Hash())
@@ -82,7 +83,7 @@ func HandleTree(w http.ResponseWriter, r *http.Request) {
 
 		if treepath != "" {
 			data.Files = append(data.Files, row{
-				Mode: "d---------", Name: "..", Path: path.Join("tree", path.Dir(treepath)),
+				Mode: "d---------", Name: "..", Path: filepath.Join("tree", path.Dir(treepath)),
 			})
 
 			tree, err = tree.Tree(treepath)
@@ -115,8 +116,8 @@ func HandleTree(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 
-				fpath = path.Join("file", treepath, v.Name)
-				rpath = path.Join(treepath, v.Name)
+				fpath = filepath.Join("file", treepath, v.Name)
+				rpath = filepath.Join(treepath, v.Name)
 				size = humanize.IBytes(uint64(file.Size))
 			} else {
 				var dirSize uint64
@@ -137,7 +138,7 @@ func HandleTree(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 
-				fpath = path.Join("tree", treepath, v.Name)
+				fpath = filepath.Join("tree", treepath, v.Name)
 				size = humanize.IBytes(dirSize)
 			}
 

@@ -1,0 +1,11 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "clean",
+			"type": "shell",
+			"command": "rm /run/user/$(id -u)/goit-8080.sock",
+			"presentation": { "reveal": "silent" }
+		},
+	],
+}
