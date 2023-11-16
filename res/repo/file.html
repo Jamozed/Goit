@@ -6,14 +6,16 @@
 		{{.File}} ({{.Size}}) {{.Mode}}
 	</header><hr>
 	<main>
-		<table class="highlight-row">
+		<table>
 			{{if .Lines}}
-				{{range $i, $l := .Lines}}
-					<tr id="{{$i}}">
-						<td class="lnum" style="text-align: right;"><a href="#{{$i}}">{{$i}}</a></td>
-						<td class="line">{{$l}}</td>
-					</tr>
-				{{end}}
+				<tr>
+					<td class="lnum" style="text-align: right;">
+						<pre>{{range $i, $l := .Lines}}<a id="{{$i}}" href="#{{$i}}">{{$i}}</a>{{end}}</pre>
+					</td>
+					<td class="line">
+						<pre>{{.Body}}</pre>
+					</td>
+				</tr>
 			{{else}}
 				<tr><td>Binary file</td></tr>
 			{{end}}

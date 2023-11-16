@@ -8,13 +8,14 @@ hr { border: 0; height: 1rem; margin: 0; }
 
 table td { padding: 0 0.4rem; }
 table td:empty::after { content: "\00a0"; }
+table td pre { margin: 0; }
 
 .highlight-row tr:hover td { background-color: #222222; }
 
-table td.lnum { padding: 0; }
+table td.lnum { padding: 0; vertical-align: top; }
 table td.lnum a { color: inherit; display: block; padding: 0 0.4rem 0 0.8rem; }
 table td.lnum a:hover { text-decoration: none; }
-table td.line { tab-size: 4; white-space: pre; }
+table td.line { tab-size: 4; vertical-align: top; }
 
 table input { border: 2px solid #333333; border-radius: 3px; background-color: #111111; padding: 2px; }
 table input[type="text"] { color: #888888; width: 24em; }

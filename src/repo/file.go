@@ -40,6 +40,7 @@ func HandleFile(w http.ResponseWriter, r *http.Request) {
 		Readme, Licence               string
 		Mode, File, Size              string
 		Lines                         []string
+		Body                          string
 		Editable                      bool
 	}{
 		Title: repo.Name + " - File", Name: repo.Name, Description: repo.Description,
@@ -113,7 +114,8 @@ func HandleFile(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			data.Lines = strings.Split(string(append(buf, buf2...)), "\n")
+			data.Body = string(append(buf, buf2...))
+			data.Lines = strings.Split(data.Body, "\n")
 		}
 	}
 
