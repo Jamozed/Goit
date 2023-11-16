@@ -95,6 +95,7 @@ func main() {
 	h.Path("/{repo:.+(?:\\.git)$}").Methods("GET").HandlerFunc(redirectDotGit)
 	h.Path("/{repo}").Methods("GET").HandlerFunc(repo.HandleLog)
 	h.Path("/{repo}/log").Methods("GET").HandlerFunc(repo.HandleLog)
+	h.Path("/{repo}/log/{path:.*}").Methods("GET").HandlerFunc(repo.HandleLog)
 	h.Path("/{repo}/commit/{hash}").Methods("GET").HandlerFunc(repo.HandleCommit)
 	h.Path("/{repo}/tree").Methods("GET").HandlerFunc(repo.HandleTree)
 	h.Path("/{repo}/tree/{path:.*}").Methods("GET").HandlerFunc(repo.HandleTree)

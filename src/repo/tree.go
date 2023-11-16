@@ -4,7 +4,6 @@ import (
 	"errors"
 	"log"
 	"net/http"
-	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -20,7 +19,7 @@ import (
 
 func HandleTree(w http.ResponseWriter, r *http.Request) {
 	auth, uid := goit.AuthCookie(w, r, true)
-	treepath := mux.Vars(r)["path"]
+	path := mux.Vars(r)["path"]
 
 	repo, err := goit.GetRepoByName(mux.Vars(r)["repo"])
 	if err != nil {
@@ -81,12 +80,12 @@ func HandleTree(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if treepath != "" {
+		if path != "" {
 			data.Files = append(data.Files, row{
-				Mode: "d---------", Name: "..", Path: filepath.Join("tree", path.Dir(treepath)),
+				Mode: "d---------", Name: "..", Path: filepath.Join("tree", filepath.Dir(path)),
 			})
 
-			tree, err = tree.Tree(treepath)
+			tree, err = tree.Tree(path)
 			if errors.Is(err, object.ErrDirectoryNotFound) {
 				goit.HttpError(w, http.StatusNotFound)
 				return
@@ -116,8 +115,8 @@ func HandleTree(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 
-				fpath = filepath.Join("file", treepath, v.Name)
-				rpath = filepath.Join(treepath, v.Name)
+				fpath = filepath.Join("file", path, v.Name)
+				rpath = filepath.Join(path, v.Name)
 				size = humanize.IBytes(uint64(file.Size))
 			} else {
 				var dirSize uint64
@@ -138,7 +137,7 @@ func HandleTree(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 
-				fpath = filepath.Join("tree", treepath, v.Name)
+				fpath = filepath.Join("tree", path, v.Name)
 				size = humanize.IBytes(dirSize)
 			}
 

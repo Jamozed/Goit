@@ -21,7 +21,8 @@
 							<td align="right" {{if .B}}style="padding-right: calc(2ch + 0.4em);"{{end}}>{{.Size}}</td>
 							<td>
 								{{if .RawPath}}
-									log blame
+									<a href="/{{$.Name}}/log/{{.RawPath}}">log</a>
+									blame
 									<a href="/{{$.Name}}/raw/{{.RawPath}}">raw</a>
 									download
 								{{end}}

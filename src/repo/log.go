@@ -18,13 +18,20 @@ import (
 )
 
 func HandleLog(w http.ResponseWriter, r *http.Request) {
-	auth, uid := goit.AuthCookie(w, r, true)
+	auth, user, err := goit.Auth(w, r, true)
+	if err != nil {
+		log.Println("[repo/log]", err.Error())
+		goit.HttpError(w, http.StatusInternalServerError)
+		return
+	}
+
+	path := mux.Vars(r)["path"]
 
 	repo, err := goit.GetRepoByName(mux.Vars(r)["repo"])
 	if err != nil {
 		goit.HttpError(w, http.StatusInternalServerError)
 		return
-	} else if repo == nil || (repo.IsPrivate && (!auth || repo.OwnerId != uid)) {
+	} else if repo == nil || (repo.IsPrivate && (!auth || repo.OwnerId != user.Id)) {
 		goit.HttpError(w, http.StatusNotFound)
 		return
 	}
@@ -48,7 +55,7 @@ func HandleLog(w http.ResponseWriter, r *http.Request) {
 	}{
 		Title: repo.Name + " - Log", Name: repo.Name, Description: repo.Description,
 		Url:      util.If(goit.Conf.UsesHttps, "https://", "http://") + r.Host + "/" + repo.Name,
-		Editable: (auth && repo.OwnerId == uid),
+		Editable: (auth && repo.OwnerId == user.Id),
 	}
 
 	gr, err := git.PlainOpen(goit.RepoPath(repo.Name, true))
@@ -83,6 +90,18 @@ func HandleLog(w http.ResponseWriter, r *http.Request) {
 
 		if stats, err := goit.DiffStats(c); err != nil {
 			log.Println("[/repo/log]", err.Error())
+		} else if path != "" {
+			for _, s := range stats {
+				if s.Name == path {
+					files = 1
+					additions += s.Addition
+					deletions += s.Deletion
+				}
+			}
+
+			if files == 0 {
+				return nil
+			}
 		} else {
 			files = len(stats)
 			for _, s := range stats {
