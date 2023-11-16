@@ -117,6 +117,8 @@ func HandleFile(w http.ResponseWriter, r *http.Request) {
 			data.Body = string(append(buf, buf2...))
 			data.Lines = strings.Split(data.Body, "\n")
 		}
+
+		rc.Close()
 	}
 
 	if err := goit.Tmpl.ExecuteTemplate(w, "repo/file", data); err != nil {

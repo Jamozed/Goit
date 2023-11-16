@@ -2,9 +2,11 @@ package repo
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"path/filepath"
 
 	"github.com/Jamozed/Goit/src/goit"
 	"github.com/go-git/go-git/v5"
@@ -13,7 +15,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func HandleRaw(w http.ResponseWriter, r *http.Request) {
+func HandleDownload(w http.ResponseWriter, r *http.Request) {
 	auth, user, err := goit.Auth(w, r, true)
 	if err != nil {
 		log.Println("[repo/raw]", err.Error())
@@ -21,7 +23,7 @@ func HandleRaw(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	treepath := mux.Vars(r)["path"]
+	path := mux.Vars(r)["path"]
 
 	repo, err := goit.GetRepoByName(mux.Vars(r)["repo"])
 	if err != nil {
@@ -56,7 +58,7 @@ func HandleRaw(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	file, err := commit.File(treepath)
+	file, err := commit.File(path)
 	if errors.Is(err, object.ErrFileNotFound) {
 		goit.HttpError(w, http.StatusNotFound)
 		return
@@ -71,17 +73,11 @@ func HandleRaw(w http.ResponseWriter, r *http.Request) {
 		goit.HttpError(w, http.StatusInternalServerError)
 		return
 	} else {
-		buf := make([]byte, min(file.Size, (10*1024*1024)))
-		if _, err := rc.Read(buf); err != nil && !errors.Is(err, io.EOF) {
-			log.Println("[/repo/file]", err.Error())
-			goit.HttpError(w, http.StatusInternalServerError)
-			return
-		}
+		w.Header().Set("Content-Disposition", "attachement; filename="+filepath.Base(path))
+		w.Header().Set("Content-Length", fmt.Sprint(file.Size))
 
-		if _, err := w.Write(buf); err != nil {
-			log.Println("[/repo/file]", err.Error())
-			goit.HttpError(w, http.StatusInternalServerError)
-			return
+		if _, err := io.Copy(w, rc); err != nil {
+			log.Println("[/repo/download]", err.Error())
 		}
 
 		rc.Close()
