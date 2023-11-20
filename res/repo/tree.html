@@ -20,8 +20,8 @@
 							<td><a href="/{{$.Name}}/{{.Path}}">{{.Name}}</a></td>
 							<td align="right" {{if .B}}style="padding-right: calc(2ch + 0.4em);"{{end}}>{{.Size}}</td>
 							<td>
-								{{if .RawPath}}
-									<a href="/{{$.Name}}/log/{{.RawPath}}">log</a>
+								<a href="/{{$.Name}}/log/{{.RawPath}}">log</a>
+								{{if .IsFile}}
 									blame
 									<a href="/{{$.Name}}/raw/{{.RawPath}}">raw</a>
 									<a href="/{{$.Name}}/download/{{.RawPath}}">download</a>
