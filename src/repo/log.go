@@ -92,7 +92,7 @@ func HandleLog(w http.ResponseWriter, r *http.Request) {
 			log.Println("[/repo/log]", err.Error())
 		} else if path != "" {
 			for _, s := range stats {
-				if strings.HasPrefix(s.Name, path) {
+				if s.Name == path || strings.HasPrefix(s.Name, path+"/") {
 					files += 1
 					additions += s.Addition
 					deletions += s.Deletion
