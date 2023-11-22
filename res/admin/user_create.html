@@ -1,19 +1,39 @@
 <!DOCTYPE html>
 <head lang="en-GB">{{template "base/head" .}}</head>
 <body>
+	<header>
+		<table>
+			<tr>
+				<td rowspan="2">
+					<a href="/"><img src="/static/favicon.png" style="max-height: 24px"></a>
+				</td>
+				<td><h1>{{.Title}}</h1></td>
+			</tr>
+			<tr><td>
+				<a href="/admin/users">Users</a>
+				| <a href="/admin/repos">Repositories</a>
+				| <a href="/admin/user/create">Create User</a>
+			</td></tr>
+		</table>
+	</header><hr>
 	<main>
-		<h1>{{.Title}}</h1>
+		<h1>{{.Title}}</h1><hr>
 		<form action="/admin/user/create" method="post">
-			<label for="username">Username:</label>
-			<input type="text" name="username"><br>
-			<label for="fullname">Full Name:</label>
-			<input type="text" name="fullname"><br>
-			<label for="password">Password:</label>
-			<input type="password" name="password"><br>
-			<label for="admin">Admin:</label>
-			<input type="checkbox" name="admin" value="true"><br>
-			<input type="submit" value="Create">
+			<table>
+				<tr><td><label for="username">Username</label></td></tr>
+				<tr><td><input type="text" name="username" value="{{.Form.Name}}" spellcheck="false"></td></tr>
+				<tr><td><label for="fullname">Full Name</label></td></tr>
+				<tr><td><input type="text" name="fullname" value="{{.Form.FullName}}" spellcheck="false"></td></tr>
+				<tr><td><label for="password">Password</label></td></tr>
+				<tr><td><input type="password" name="password"></td></tr>
+				<tr><td><label for="admin">Admin</label></td></tr>
+				<tr><td><input type="checkbox" name="admin" value="true" {{if .Form.IsAdmin}}checked{{end}}></td></tr>
+				<tr><td>
+					<input type="submit" name="submit" value="Create">
+					<a href="/admin/users" style="color: inherit;">Cancel</a>
+				</td></tr>
+				<tr><td><span style="color: #AA0000">{{.Message}}</span></td></tr>
+			</table>
 		</form>
-		<span>{{.Message}}</span>
 	</main>
 </body>

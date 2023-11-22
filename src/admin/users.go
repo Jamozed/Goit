@@ -62,37 +62,48 @@ func HandleUserCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := struct{ Title, Message string }{"Admin - Create User", ""}
+	data := struct {
+		Title, Message string
+
+		Form struct {
+			Name, FullName string
+			IsAdmin        bool
+		}
+	}{
+		Title: "Admin - Create User",
+	}
 
 	if r.Method == http.MethodPost {
-		username := strings.ToLower(r.FormValue("username"))
-		fullname := r.FormValue("fullname")
+		data.Form.Name = strings.ToLower(r.FormValue("username"))
+		data.Form.FullName = r.FormValue("fullname")
 		password := r.FormValue("password")
-		isAdmin := r.FormValue("admin") == "true"
+		data.Form.IsAdmin = r.FormValue("admin") == "true"
 
-		if username == "" {
+		if data.Form.Name == "" {
 			data.Message = "Username cannot be empty"
-		} else if slices.Contains(goit.Reserved, username) {
-			data.Message = "Username \"" + username + "\" is reserved"
-		} else if exists, err := goit.UserExists(username); err != nil {
+		} else if slices.Contains(goit.Reserved, data.Form.Name) {
+			data.Message = "Username \"" + data.Form.Name + "\" is reserved"
+		} else if exists, err := goit.UserExists(data.Form.Name); err != nil {
 			log.Println("[/admin/user/create]", err.Error())
 			goit.HttpError(w, http.StatusInternalServerError)
 			return
 		} else if exists {
-			data.Message = "Username \"" + username + "\" is taken"
+			data.Message = "Username \"" + data.Form.Name + "\" is taken"
 		} else if salt, err := goit.Salt(); err != nil {
 			log.Println("[/admin/user/create]", err.Error())
 			goit.HttpError(w, http.StatusInternalServerError)
 			return
 		} else if err := goit.CreateUser(goit.User{
-			Name: username, FullName: fullname, Pass: goit.Hash(password, salt), PassAlgo: "argon2", Salt: salt,
-			IsAdmin: isAdmin,
+			Name: data.Form.Name, FullName: data.Form.FullName, Pass: goit.Hash(password, salt), PassAlgo: "argon2",
+			Salt: salt, IsAdmin: data.Form.IsAdmin,
 		}); err != nil {
 			log.Println("[/admin/user/create]", err.Error())
 			goit.HttpError(w, http.StatusInternalServerError)
 			return
 		} else {
-			data.Message = "User \"" + username + "\" created successfully"
+			// data.Message = "User \"" + data.Form.Name + "\" created successfully"
+			http.Redirect(w, r, "/admin/users", http.StatusFound)
+			return
 		}
 	}
 
