@@ -22,6 +22,32 @@ type Repo struct {
 	IsPrivate   bool   `json:"is_private"`
 }
 
+func GetRepos() ([]Repo, error) {
+	repos := []Repo{}
+
+	rows, err := db.Query("SELECT id, owner_id, name, description, is_private FROM repos")
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		r := Repo{}
+		if err := rows.Scan(&r.Id, &r.OwnerId, &r.Name, &r.Description, &r.IsPrivate); err != nil {
+			return nil, err
+		}
+
+		repos = append(repos, r)
+	}
+
+	if rows.Err() != nil {
+		return nil, err
+	}
+
+	return repos, nil
+}
+
 func GetRepo(rid int64) (*Repo, error) {
 	r := &Repo{}
 

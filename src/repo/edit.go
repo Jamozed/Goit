@@ -106,6 +106,8 @@ func HandleEdit(w http.ResponseWriter, r *http.Request) {
 				return
 			} else if exists && data.Edit.Name != repo.Name {
 				data.Edit.Message = "Name \"" + data.Edit.Name + "\" is taken"
+			} else if len(data.Edit.Description) > 256 {
+				data.Edit.Message = "Description cannot exceed 256 characters"
 			} else if err := goit.UpdateRepo(repo.Id, goit.Repo{
 				Name: data.Edit.Name, Description: data.Edit.Description, IsPrivate: data.Edit.IsPrivate,
 			}); err != nil {

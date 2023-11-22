@@ -29,6 +29,32 @@ func HandleUserLogout(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 
+func GetUsers() ([]User, error) {
+	users := []User{}
+
+	rows, err := db.Query("SELECT id, name, name_full, pass, pass_algo, salt, is_admin FROM users")
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		u := User{}
+		if err := rows.Scan(&u.Id, &u.Name, &u.FullName, &u.Pass, &u.PassAlgo, &u.Salt, &u.IsAdmin); err != nil {
+			return nil, err
+		}
+
+		users = append(users, u)
+	}
+
+	if rows.Err() != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
 func GetUser(id int64) (*User, error) {
 	u := User{}
 
@@ -72,10 +98,21 @@ func UserExists(name string) (bool, error) {
 	}
 }
 
+func CreateUser(user User) error {
+	if _, err := db.Exec(
+		"INSERT INTO users (name, name_full, pass, pass_algo, salt, is_admin) VALUES (?, ?, ?, ?, ?, ?)",
+		user.Name, user.FullName, user.Pass, user.PassAlgo, user.Salt, user.IsAdmin,
+	); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func UpdateUser(uid int64, user User) error {
 	if _, err := db.Exec(
-		"UPDATE users SET name = ?, name_full = ? WHERE id = ?",
-		user.Name, user.FullName, uid,
+		"UPDATE users SET name = ?, name_full = ?, is_admin = ? WHERE id = ?",
+		user.Name, user.FullName, user.IsAdmin, uid,
 	); err != nil {
 		return err
 	}

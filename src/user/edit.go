@@ -56,7 +56,7 @@ func HandleEdit(w http.ResponseWriter, r *http.Request) {
 			} else if exists && data.Form.Name != user.Name {
 				data.MessageA = "Username \"" + data.Form.Name + "\" is taken"
 			} else if err := goit.UpdateUser(user.Id, goit.User{
-				Name: data.Form.Name, FullName: data.Form.FullName,
+				Name: data.Form.Name, FullName: data.Form.FullName, IsAdmin: user.IsAdmin,
 			}); err != nil {
 				log.Println("[/user/edit]", err.Error())
 				goit.HttpError(w, http.StatusInternalServerError)
