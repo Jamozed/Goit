@@ -13,6 +13,9 @@ var Index string
 //go:embed base/head.html
 var BaseHead string
 
+//go:embed admin/header.html
+var AdminHeader string
+
 //go:embed admin/index.html
 var AdminIndex string
 

@@ -16,14 +16,24 @@ import (
 )
 
 func HandleEdit(w http.ResponseWriter, r *http.Request) {
-	auth, uid := goit.AuthCookie(w, r, true)
+	auth, user, err := goit.Auth(w, r, true)
+	if err != nil {
+		log.Println("[admin/users]", err.Error())
+		goit.HttpError(w, http.StatusInternalServerError)
+		return
+	}
+
+	if !auth || !user.IsAdmin {
+		goit.HttpError(w, http.StatusNotFound)
+		return
+	}
 
 	repo, err := goit.GetRepoByName(mux.Vars(r)["repo"])
 	if err != nil {
 		log.Println("[/repo/edit]", err.Error())
 		goit.HttpError(w, http.StatusInternalServerError)
 		return
-	} else if repo == nil || (!auth || repo.OwnerId != uid) {
+	} else if repo == nil || (!auth || repo.OwnerId != user.Id) {
 		goit.HttpError(w, http.StatusNotFound)
 		return
 	}
@@ -57,7 +67,7 @@ func HandleEdit(w http.ResponseWriter, r *http.Request) {
 		Name:        repo.Name,
 		Description: repo.Description,
 		Url:         util.If(goit.Conf.UsesHttps, "https://", "http://") + r.Host + "/" + repo.Name,
-		Editable:    (auth && repo.OwnerId == uid),
+		Editable:    (auth && repo.OwnerId == user.Id),
 	}
 
 	data.Edit.Id = fmt.Sprint(repo.Id)
@@ -124,17 +134,18 @@ func HandleEdit(w http.ResponseWriter, r *http.Request) {
 
 			if data.Transfer.Owner == "" {
 				data.Transfer.Message = "New owner cannot be empty"
-			} else if user, err := goit.GetUserByName(data.Transfer.Owner); err != nil {
+			} else if u, err := goit.GetUserByName(data.Transfer.Owner); err != nil {
 				log.Println("[/repo/edit]", err.Error())
 				goit.HttpError(w, http.StatusInternalServerError)
 				return
-			} else if user == nil {
+			} else if u == nil {
 				data.Transfer.Message = "User \"" + data.Transfer.Owner + "\" does not exist"
-			} else if err := goit.ChownRepo(repo.Id, user.Id); err != nil {
+			} else if err := goit.ChownRepo(repo.Id, u.Id); err != nil {
 				log.Println("[/repo/edit]", err.Error())
 				goit.HttpError(w, http.StatusInternalServerError)
 				return
 			} else {
+				log.Println("User", user.Id, "transferred repo", repo.Id, "ownership to", u.Id)
 				http.Redirect(w, r, "/"+data.Edit.Name, http.StatusFound)
 				return
 			}
