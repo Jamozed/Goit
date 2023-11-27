@@ -13,20 +13,14 @@ import (
 )
 
 func HandleEdit(w http.ResponseWriter, r *http.Request) {
-	auth, uid := goit.AuthCookie(w, r, true)
-	if !auth {
-		goit.HttpError(w, http.StatusUnauthorized)
-		return
+	auth, user, err := goit.Auth(w, r, true)
+	if err != nil {
+		log.Println("[admin]", err.Error())
+		goit.HttpError(w, http.StatusInternalServerError)
 	}
 
-	user, err := goit.GetUser(uid)
-	if err != nil {
-		log.Println("[/user/edit]", err.Error())
-		goit.HttpError(w, http.StatusInternalServerError)
-		return
-	} else if user == nil {
-		log.Println("[/user/edit]", uid, "is a nonexistent UID")
-		goit.HttpError(w, http.StatusInternalServerError)
+	if !auth {
+		goit.HttpError(w, http.StatusUnauthorized)
 		return
 	}
 
@@ -53,7 +47,7 @@ func HandleEdit(w http.ResponseWriter, r *http.Request) {
 
 			if data.Form.Name == "" {
 				data.MessageA = "Username cannot be empty"
-			} else if slices.Contains(goit.Reserved, data.Form.Name) && uid != 0 {
+			} else if slices.Contains(goit.Reserved, data.Form.Name) && user.Id != 0 {
 				data.MessageA = "Username \"" + data.Form.Name + "\" is reserved"
 			} else if exists, err := goit.UserExists(data.Form.Name); err != nil {
 				log.Println("[/user/edit]", err.Error())

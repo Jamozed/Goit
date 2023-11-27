@@ -197,43 +197,6 @@ func Auth(w http.ResponseWriter, r *http.Request, renew bool) (bool, *User, erro
 	return true, user, nil
 }
 
-/* Authenticate a user session cookie. */
-func AuthCookie(w http.ResponseWriter, r *http.Request, renew bool) (bool, int64) {
-	if uid, s := GetSessionCookie(r); s != (Session{}) {
-		if s.Expiry.After(time.Now()) {
-			if renew && time.Until(s.Expiry) < 24*time.Hour {
-				ip, _, _ := net.SplitHostPort(r.RemoteAddr)
-				s1, err := NewSession(uid, ip, time.Now().Add(2*24*time.Hour))
-				if err != nil {
-					log.Println("[Renew Auth]", err.Error())
-				} else {
-					SetSessionCookie(w, uid, s1)
-					EndSession(uid, s.Token)
-				}
-			}
-
-			return true, uid
-		}
-
-		EndSession(uid, s.Token)
-	}
-
-	return false, -1
-}
-
-/* Authenticate a user session cookie and check admin status. */
-func AuthCookieAdmin(w http.ResponseWriter, r *http.Request, renew bool) (bool, bool, int64) {
-	if ok, uid := AuthCookie(w, r, renew); ok {
-		if user, err := GetUser(uid); err == nil && user.IsAdmin {
-			return true, true, uid
-		}
-
-		return true, false, uid
-	}
-
-	return false, false, -1
-}
-
 /* Hash a password with a salt using Argon2. */
 func Hash(pass string, salt []byte) []byte {
 	return argon2.IDKey([]byte(pass), salt, 3, 64*1024, 4, 32)

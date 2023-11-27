@@ -18,7 +18,11 @@ import (
 )
 
 func HandleFile(w http.ResponseWriter, r *http.Request) {
-	auth, uid := goit.AuthCookie(w, r, true)
+	auth, user, err := goit.Auth(w, r, true)
+	if err != nil {
+		log.Println("[admin]", err.Error())
+		goit.HttpError(w, http.StatusInternalServerError)
+	}
 
 	treepath := mux.Vars(r)["path"]
 	// if treepath == "" {
@@ -30,7 +34,7 @@ func HandleFile(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		goit.HttpError(w, http.StatusInternalServerError)
 		return
-	} else if repo == nil || (repo.IsPrivate && (!auth || repo.OwnerId != uid)) {
+	} else if repo == nil || (repo.IsPrivate && (!auth || repo.OwnerId != user.Id)) {
 		goit.HttpError(w, http.StatusNotFound)
 		return
 	}
@@ -45,7 +49,7 @@ func HandleFile(w http.ResponseWriter, r *http.Request) {
 	}{
 		Title: repo.Name + " - File", Name: repo.Name, Description: repo.Description,
 		Url:      util.If(goit.Conf.UsesHttps, "https://", "http://") + r.Host + "/" + repo.Name,
-		Editable: (auth && repo.OwnerId == uid),
+		Editable: (auth && repo.OwnerId == user.Id),
 	}
 
 	gr, err := git.PlainOpen(goit.RepoPath(repo.Name, true))

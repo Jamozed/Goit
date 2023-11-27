@@ -17,7 +17,13 @@ import (
 )
 
 func HandleLogin(w http.ResponseWriter, r *http.Request) {
-	if auth, _ := goit.AuthCookie(w, r, true); auth {
+	auth, _, err := goit.Auth(w, r, true)
+	if err != nil {
+		log.Println("[admin]", err.Error())
+		goit.HttpError(w, http.StatusInternalServerError)
+	}
+
+	if auth {
 		http.Redirect(w, r, "/", http.StatusFound)
 	}
 

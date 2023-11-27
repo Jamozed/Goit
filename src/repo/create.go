@@ -11,8 +11,13 @@ import (
 )
 
 func HandleCreate(w http.ResponseWriter, r *http.Request) {
-	ok, uid := goit.AuthCookie(w, r, true)
-	if !ok {
+	auth, user, err := goit.Auth(w, r, true)
+	if err != nil {
+		log.Println("[admin]", err.Error())
+		goit.HttpError(w, http.StatusInternalServerError)
+	}
+
+	if !auth {
 		goit.HttpError(w, http.StatusUnauthorized)
 		return
 	}
@@ -45,7 +50,7 @@ func HandleCreate(w http.ResponseWriter, r *http.Request) {
 		} else if exists {
 			data.Message = "Name \"" + data.Name + "\" is taken"
 		} else if err := goit.CreateRepo(goit.Repo{
-			OwnerId: uid, Name: data.Name, Description: data.Description, IsPrivate: data.IsPrivate,
+			OwnerId: user.Id, Name: data.Name, Description: data.Description, IsPrivate: data.IsPrivate,
 		}); err != nil {
 			log.Println("[/repo/create]", err.Error())
 			goit.HttpError(w, http.StatusInternalServerError)

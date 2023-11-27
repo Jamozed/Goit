@@ -12,7 +12,12 @@ import (
 )
 
 func HandleSessions(w http.ResponseWriter, r *http.Request) {
-	auth, uid := goit.AuthCookie(w, r, true)
+	auth, user, err := goit.Auth(w, r, true)
+	if err != nil {
+		log.Println("[admin]", err.Error())
+		goit.HttpError(w, http.StatusInternalServerError)
+	}
+
 	if !auth {
 		goit.HttpError(w, http.StatusUnauthorized)
 		return
@@ -34,14 +39,14 @@ func HandleSessions(w http.ResponseWriter, r *http.Request) {
 	goit.SessionsMutex.RLock()
 	goit.Debugln("[goit.HandleSessions] SessionsMutex rlock")
 
-	if revoke >= 0 && revoke < int64(len(goit.Sessions[uid])) {
-		var token = goit.Sessions[uid][revoke].Token
+	if revoke >= 0 && revoke < int64(len(goit.Sessions[user.Id])) {
+		var token = goit.Sessions[user.Id][revoke].Token
 		var current = token == ss.Token
 
 		goit.SessionsMutex.RUnlock()
 		goit.Debugln("[goit.HandleSessions] SessionsMutex runlock")
 
-		goit.EndSession(uid, token)
+		goit.EndSession(user.Id, token)
 
 		if current {
 			goit.EndSessionCookie(w)
@@ -53,7 +58,7 @@ func HandleSessions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for i, v := range goit.Sessions[uid] {
+	for i, v := range goit.Sessions[user.Id] {
 		data.Sessions = append(data.Sessions, row{
 			Index: fmt.Sprint(i), Ip: v.Ip, Seen: v.Seen.Format(time.DateTime), Expiry: v.Expiry.Format(time.DateTime),
 			Current: util.If(v.Token == ss.Token, "(current)", ""),
