@@ -58,8 +58,6 @@ func main() {
 		os.Exit(util.If(buf[0] == 0x01, -1, 0))
 	}
 
-	log.Println("Starting Goit", res.Version)
-
 	/* Listen for and handle SIGINT */
 	stop := make(chan struct{})
 	wait := &sync.WaitGroup{}
@@ -73,6 +71,7 @@ func main() {
 		os.Exit(0)
 	}()
 
+	/* Initialise Goit */
 	if err := goit.Goit(goit.ConfPath()); err != nil {
 		log.Fatalln(err.Error())
 	}

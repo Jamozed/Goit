@@ -18,6 +18,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Jamozed/Goit/res"
 	"github.com/Jamozed/Goit/src/util"
 	"github.com/adrg/xdg"
 	"github.com/go-git/go-git/v5"
@@ -58,6 +59,19 @@ func Goit(conf string) (err error) {
 			return fmt.Errorf("[Config] %w", err)
 		}
 	}
+
+	logPath, err := xdg.StateFile(filepath.Join("goit", fmt.Sprint("goit_", time.Now().Unix(), ".log")))
+	if err != nil {
+		log.Fatalln("[log]", err.Error())
+	}
+
+	logFile, err := os.Create(logPath)
+	if err != nil {
+		log.Fatalln("[log]", err.Error())
+	}
+
+	log.SetOutput(io.MultiWriter(os.Stderr, logFile))
+	log.Println("Starting Goit", res.Version)
 
 	log.Println("[Config] using data path:", Conf.DataPath)
 	if err := os.MkdirAll(Conf.DataPath, 0o777); err != nil {
