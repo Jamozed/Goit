@@ -19,6 +19,7 @@
 	<main>
 		<h1>{{.Title}}</h1><hr>
 		<form action="/admin/user/edit?user={{.Form.Id}}" method="post">
+			{{.CsrfField}}
 			<table>
 				<tr><td><label for="id">ID</label></td></tr>
 				<tr><td><span>{{.Form.Id}}</span></td></tr>

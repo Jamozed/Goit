@@ -2,6 +2,7 @@ package admin
 
 import (
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"slices"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/Jamozed/Goit/src/goit"
 	"github.com/Jamozed/Goit/src/util"
+	"github.com/gorilla/csrf"
 )
 
 func HandleUsers(w http.ResponseWriter, r *http.Request) {
@@ -69,8 +71,12 @@ func HandleUserCreate(w http.ResponseWriter, r *http.Request) {
 			Name, FullName string
 			IsAdmin        bool
 		}
+
+		CsrfField template.HTML
 	}{
 		Title: "Admin - Create User",
+
+		CsrfField: csrf.TemplateField(r),
 	}
 
 	if r.Method == http.MethodPost {
@@ -148,8 +154,12 @@ func HandleUserEdit(w http.ResponseWriter, r *http.Request) {
 			Id, Name, FullName string
 			IsAdmin            bool
 		}
+
+		CsrfField template.HTML
 	}{
 		Title: "Admin - Edit User",
+
+		CsrfField: csrf.TemplateField(r),
 	}
 
 	data.Form.Id = fmt.Sprint(u.Id)

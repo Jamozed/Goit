@@ -19,6 +19,7 @@
 	<main>
 		<h1>{{.Title}}</h1><hr>
 		<form action="/admin/user/create" method="post">
+			{{.CsrfField}}
 			<table>
 				<tr><td><label for="username">Username</label></td></tr>
 				<tr><td><input type="text" name="username" value="{{.Form.Name}}" spellcheck="false"></td></tr>

@@ -1,11 +1,13 @@
 package repo
 
 import (
+	"html/template"
 	"log"
 	"net/http"
 	"slices"
 
 	"github.com/Jamozed/Goit/src/goit"
+	"github.com/gorilla/csrf"
 )
 
 func HandleCreate(w http.ResponseWriter, r *http.Request) {
@@ -19,7 +21,13 @@ func HandleCreate(w http.ResponseWriter, r *http.Request) {
 		Title, Message    string
 		Name, Description string
 		IsPrivate         bool
-	}{Title: "Repository - Create"}
+
+		CsrfField template.HTML
+	}{
+		Title: "Repository - Create",
+
+		CsrfField: csrf.TemplateField(r),
+	}
 
 	if r.Method == http.MethodPost {
 		data.Name = r.FormValue("reponame")

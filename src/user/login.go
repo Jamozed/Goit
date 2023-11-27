@@ -6,12 +6,14 @@ package user
 
 import (
 	"bytes"
+	"html/template"
 	"log"
 	"net"
 	"net/http"
 	"time"
 
 	"github.com/Jamozed/Goit/src/goit"
+	"github.com/gorilla/csrf"
 )
 
 func HandleLogin(w http.ResponseWriter, r *http.Request) {
@@ -22,7 +24,13 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		Title, Message, Name string
 		FocusPw              bool
-	}{Title: "Login"}
+
+		CsrfField template.HTML
+	}{
+		Title: "Login",
+
+		CsrfField: csrf.TemplateField(r),
+	}
 
 	if r.Method == http.MethodPost {
 		data.Name = r.FormValue("username")

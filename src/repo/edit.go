@@ -3,6 +3,7 @@ package repo
 import (
 	"errors"
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"path/filepath"
@@ -12,6 +13,7 @@ import (
 	"github.com/Jamozed/Goit/src/util"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
 )
 
@@ -62,12 +64,16 @@ func HandleEdit(w http.ResponseWriter, r *http.Request) {
 
 		Transfer struct{ Owner, Message string }
 		Delete   struct{ Message string }
+
+		CsrfField template.HTML
 	}{
 		Title:       "Repository - Edit",
 		Name:        repo.Name,
 		Description: repo.Description,
 		Url:         util.If(goit.Conf.UsesHttps, "https://", "http://") + r.Host + "/" + repo.Name,
 		Editable:    (auth && repo.OwnerId == user.Id),
+
+		CsrfField: csrf.TemplateField(r),
 	}
 
 	data.Edit.Id = fmt.Sprint(repo.Id)

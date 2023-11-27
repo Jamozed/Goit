@@ -33,6 +33,7 @@ type Config struct {
 	GitPath    string `json:"git_path"`
 	IpSessions bool   `json:"ip_sessions"`
 	UsesHttps  bool   `json:"uses_https"`
+	CsrfSecret string `json:"csrf_secret"`
 }
 
 var Conf = Config{
@@ -42,6 +43,7 @@ var Conf = Config{
 	GitPath:    "git",
 	IpSessions: true,
 	UsesHttps:  false,
+	CsrfSecret: "1234567890abcdef1234567890abcdef",
 }
 
 var db *sql.DB

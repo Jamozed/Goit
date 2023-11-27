@@ -12,6 +12,7 @@
 	</header>
 	<main>
 		<form action="/user/login" method="post">
+			{{.CsrfField}}
 			<table>
 				<tr>
 					<td style="text-align: right;"><label for="username">Username</label></td>

@@ -12,6 +12,7 @@
 	</header>
 	<main>
 		<form action="/repo/create" method="post">
+			{{.CsrfField}}
 			<table>
 				<tr>
 					<td style="text-align: right;"><label for="reponame">Name</label></td>

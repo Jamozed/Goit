@@ -5,6 +5,7 @@
 	<main>
 		<h1>{{.Title}}</h1><hr>
 		<form action="/admin/repo/edit?repo={{.Edit.Id}}" method="post">
+			{{.CsrfField}}
 			<input type="hidden" name="action" value="edit">
 			<table>
 				<tr>
@@ -48,6 +49,7 @@
 		<br><h2>Transfer Ownership</h2><hr>
 		<span>- You will lose access to this repository if it is not public.</span><br><br>
 		<form action="/admin/repo/edit?repo={{.Edit.Id}}" method="post">
+			{{.CsrfField}}
 			<input type="hidden" name="action" value="transfer">
 			<table>
 				<tr><td><label for="owner">New Owner</label></td></tr>
@@ -63,6 +65,7 @@
 		<span>- This operation <b>CANNOT</b> be undone.</span><br>
 		<span>- This operation will permanently delete the {{.Name}} repository and all associated data.</span><br><br>
 		<form action="/admin/repo/edit?repo={{.Edit.Id}}" method="post">
+			{{.CsrfField}}
 			<input type="hidden" name="action" value="delete">
 			<table>
 				<tr><td><label for="reponame">To confirm, type "{{.Name}}" in the box below</label></td></tr>

@@ -3,11 +3,13 @@ package user
 import (
 	"bytes"
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"slices"
 
 	"github.com/Jamozed/Goit/src/goit"
+	"github.com/gorilla/csrf"
 )
 
 func HandleEdit(w http.ResponseWriter, r *http.Request) {
@@ -32,8 +34,12 @@ func HandleEdit(w http.ResponseWriter, r *http.Request) {
 		Title, MessageA, MessageB string
 
 		Form struct{ Id, Name, FullName string }
+
+		CsrfField template.HTML
 	}{
 		Title: "User - Edit",
+
+		CsrfField: csrf.TemplateField(r),
 	}
 
 	data.Form.Id = fmt.Sprint(user.Id)

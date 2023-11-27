@@ -25,6 +25,7 @@ import (
 	"github.com/Jamozed/Goit/src/user"
 	"github.com/Jamozed/Goit/src/util"
 	"github.com/adrg/xdg"
+	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
 )
 
@@ -136,8 +137,13 @@ func main() {
 	wait.Add(1)
 	go handleIpc(stop, wait, ipc)
 
+	protect := csrf.Protect(
+		[]byte(goit.Conf.CsrfSecret), csrf.FieldName("csrf.Token"), csrf.CookieName("csrf"),
+		csrf.Secure(util.If(goit.Conf.UsesHttps, true, false)),
+	)
+
 	/* Listen for HTTP on the specified port */
-	if err := http.ListenAndServe(goit.Conf.HttpAddr+":"+goit.Conf.HttpPort, logHttp(h)); err != nil {
+	if err := http.ListenAndServe(goit.Conf.HttpAddr+":"+goit.Conf.HttpPort, protect(logHttp(h))); err != nil {
 		log.Fatalln("[HTTP]", err.Error())
 	}
 }

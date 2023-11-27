@@ -2,6 +2,7 @@ package admin
 
 import (
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"slices"
@@ -10,6 +11,7 @@ import (
 	"github.com/Jamozed/Goit/src/goit"
 	"github.com/Jamozed/Goit/src/util"
 	"github.com/dustin/go-humanize"
+	"github.com/gorilla/csrf"
 )
 
 func HandleRepos(w http.ResponseWriter, r *http.Request) {
@@ -110,9 +112,13 @@ func HandleRepoEdit(w http.ResponseWriter, r *http.Request) {
 
 		Transfer struct{ Owner, Message string }
 		Delete   struct{ Message string }
+
+		CsrfField template.HTML
 	}{
 		Title: "Admin - Edit Repository",
 		Name:  repo.Name,
+
+		CsrfField: csrf.TemplateField(r),
 	}
 
 	data.Edit.Id = fmt.Sprint(repo.Id)

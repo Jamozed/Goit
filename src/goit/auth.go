@@ -111,7 +111,11 @@ func CleanupSessions() {
 
 /* Set a user session cookie. */
 func SetSessionCookie(w http.ResponseWriter, uid int64, s Session) {
-	c := &http.Cookie{Name: "session", Value: fmt.Sprint(uid) + "." + s.Token, Path: "/", Expires: s.Expiry}
+	c := &http.Cookie{
+		Name: "session", Value: fmt.Sprint(uid) + "." + s.Token, Path: "/", Expires: s.Expiry,
+		Secure: util.If(Conf.UsesHttps, true, false), HttpOnly: true, SameSite: http.SameSiteLaxMode,
+	}
+
 	if err := c.Valid(); err != nil {
 		log.Println("[Cookie]", err.Error())
 	}
