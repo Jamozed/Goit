@@ -1,7 +1,10 @@
 <!DOCTYPE html>
 <head lang="en-GB">{{template "base/head" .}}</head>
 <body>
-	<header>{{template "repo/header" .}}</header><hr>
+	<header>
+		{{template "repo/header" .}}<hr>
+		{{.HtmlPath}} ({{.Size}}) <a href="/{{.Name}}/download/{{.Path}}">download</a>
+	</header><hr>
 	<main>
 		<table class="highlight-row">
 			<thead>

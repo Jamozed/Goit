@@ -2,10 +2,11 @@ package repo
 
 import (
 	"errors"
+	"html/template"
 	"io"
 	"log"
 	"net/http"
-	"path/filepath"
+	"path"
 	"strings"
 
 	"github.com/Jamozed/Goit/src/goit"
@@ -42,10 +43,11 @@ func HandleFile(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		Title, Name, Description, Url string
 		Readme, Licence               string
-		Mode, File, Size              string
+		Path, Size, Mode              string
 		Lines                         []string
 		Body                          string
 		Editable                      bool
+		HtmlPath                      template.HTML
 	}{
 		Title: repo.Name + " - File", Name: repo.Name, Description: repo.Description,
 		Url:      util.If(goit.Conf.UsesHttps, "https://", "http://") + r.Host + "/" + repo.Name,
@@ -70,10 +72,10 @@ func HandleFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if readme, _ := findReadme(gr, ref); readme != "" {
-		data.Readme = filepath.Join("/", repo.Name, "file", readme)
+		data.Readme = path.Join("/", repo.Name, "file", readme)
 	}
 	if licence, _ := findLicence(gr, ref); licence != "" {
-		data.Licence = filepath.Join("/", repo.Name, "file", licence)
+		data.Licence = path.Join("/", repo.Name, "file", licence)
 	}
 
 	commit, err := gr.CommitObject(ref.Hash())
@@ -94,8 +96,20 @@ func HandleFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data.Mode = util.ModeString(uint32(file.Mode))
-	data.File = file.Name
+	data.Path = file.Name
 	data.Size = humanize.IBytes(uint64(file.Size))
+
+	parts := strings.Split(file.Name, "/")
+	htmlPath := "<b style=\"padding-left: 0.4rem;\"><a href=\"/" + repo.Name + "/tree\">" + repo.Name + "</a></b>/"
+	dirPath := ""
+
+	for i := 0; i < len(parts)-1; i += 1 {
+		dirPath = path.Join(dirPath, parts[i])
+		htmlPath += "<a href=\"/" + repo.Name + "/tree/" + dirPath + "\">" + parts[i] + "</a>/"
+	}
+	htmlPath += parts[len(parts)-1]
+
+	data.HtmlPath = template.HTML(htmlPath)
 
 	if rc, err := file.Blob.Reader(); err != nil {
 		log.Println("[/repo/file]", err.Error())

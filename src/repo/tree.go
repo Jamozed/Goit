@@ -2,9 +2,10 @@ package repo
 
 import (
 	"errors"
+	"html/template"
 	"log"
 	"net/http"
-	"path/filepath"
+	"path"
 	"sort"
 	"strings"
 
@@ -24,7 +25,7 @@ func HandleTree(w http.ResponseWriter, r *http.Request) {
 		goit.HttpError(w, http.StatusInternalServerError)
 	}
 
-	path := mux.Vars(r)["path"]
+	treepath := mux.Vars(r)["path"]
 
 	repo, err := goit.GetRepoByName(mux.Vars(r)["repo"])
 	if err != nil {
@@ -42,13 +43,27 @@ func HandleTree(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		Title, Name, Description, Url string
 		Readme, Licence               string
+		Path, Size                    string
 		Files                         []row
 		Editable                      bool
+		HtmlPath                      template.HTML
 	}{
 		Title: repo.Name + " - Tree", Name: repo.Name, Description: repo.Description,
 		Url:      util.If(goit.Conf.UsesHttps, "https://", "http://") + r.Host + "/" + repo.Name,
 		Editable: (auth && repo.OwnerId == user.Id),
 	}
+
+	parts := strings.Split(treepath, "/")
+	htmlPath := "<b style=\"padding-left: 0.4rem;\"><a href=\"/" + repo.Name + "/tree\">" + repo.Name + "</a></b>/"
+	dirPath := ""
+
+	for i := 0; i < len(parts)-1; i += 1 {
+		dirPath = path.Join(dirPath, parts[i])
+		htmlPath += "<a href=\"/" + repo.Name + "/tree/" + dirPath + "\">" + parts[i] + "</a>/"
+	}
+	htmlPath += parts[len(parts)-1]
+
+	data.HtmlPath = template.HTML(htmlPath)
 
 	gr, err := git.PlainOpen(goit.RepoPath(repo.Name, true))
 	if err != nil {
@@ -65,10 +80,10 @@ func HandleTree(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		if readme, _ := findReadme(gr, ref); readme != "" {
-			data.Readme = filepath.Join("/", repo.Name, "file", readme)
+			data.Readme = path.Join("/", repo.Name, "file", readme)
 		}
 		if licence, _ := findLicence(gr, ref); licence != "" {
-			data.Licence = filepath.Join("/", repo.Name, "file", licence)
+			data.Licence = path.Join("/", repo.Name, "file", licence)
 		}
 
 		commit, err := gr.CommitObject(ref.Hash())
@@ -85,12 +100,12 @@ func HandleTree(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if path != "" {
+		if treepath != "" {
 			data.Files = append(data.Files, row{
-				Mode: "d---------", Name: "..", Path: filepath.Join("tree", filepath.Dir(path)),
+				Mode: "d---------", Name: "..", Path: path.Join("tree", path.Dir(treepath)),
 			})
 
-			tree, err = tree.Tree(path)
+			tree, err = tree.Tree(treepath)
 			if errors.Is(err, object.ErrDirectoryNotFound) {
 				goit.HttpError(w, http.StatusNotFound)
 				return
@@ -109,6 +124,8 @@ func HandleTree(w http.ResponseWriter, r *http.Request) {
 			return tree.Entries[i].Name < tree.Entries[j].Name
 		})
 
+		var totalSize uint64
+
 		for _, v := range tree.Entries {
 			var fpath, rpath, size string
 			var isFile bool
@@ -121,11 +138,13 @@ func HandleTree(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 
-				fpath = filepath.Join("file", path, v.Name)
-				rpath = filepath.Join(path, v.Name)
+				fpath = path.Join("file", treepath, v.Name)
+				rpath = path.Join(treepath, v.Name)
 				size = humanize.IBytes(uint64(file.Size))
 
 				isFile = true
+
+				totalSize += uint64(file.Size)
 			} else {
 				var dirSize uint64
 
@@ -145,9 +164,11 @@ func HandleTree(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 
-				fpath = filepath.Join("tree", path, v.Name)
-				rpath = filepath.Join(path, v.Name)
+				fpath = path.Join("tree", treepath, v.Name)
+				rpath = path.Join(treepath, v.Name)
 				size = humanize.IBytes(dirSize)
+
+				totalSize += dirSize
 			}
 
 			data.Files = append(data.Files, row{
@@ -155,6 +176,8 @@ func HandleTree(w http.ResponseWriter, r *http.Request) {
 				IsFile: isFile, B: util.If(strings.HasSuffix(size, " B"), true, false),
 			})
 		}
+
+		data.Size = humanize.IBytes(totalSize)
 	}
 
 	if err := goit.Tmpl.ExecuteTemplate(w, "repo/tree", data); err != nil {

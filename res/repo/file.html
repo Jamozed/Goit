@@ -3,7 +3,7 @@
 <body>
 	<header>
 		{{template "repo/header" .}}<hr>
-		{{.File}} ({{.Size}}) {{.Mode}} <a href="/{{.Name}}/download/{{.File}}">download</a>
+		{{.HtmlPath}} ({{.Size}}) {{.Mode}} <a href="/{{.Name}}/download/{{.Path}}">download</a>
 	</header><hr>
 	<main>
 		<table>
