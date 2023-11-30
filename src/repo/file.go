@@ -2,6 +2,7 @@ package repo
 
 import (
 	"errors"
+	"fmt"
 	"html/template"
 	"io"
 	"log"
@@ -26,10 +27,6 @@ func HandleFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	treepath := mux.Vars(r)["path"]
-	// if treepath == "" {
-	// 	goit.HttpError(w, http.StatusNotFound)
-	// 	return
-	// }
 
 	repo, err := goit.GetRepoByName(mux.Vars(r)["repo"])
 	if err != nil {
@@ -43,7 +40,7 @@ func HandleFile(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		Title, Name, Description, Url string
 		Readme, Licence               string
-		Path, Size, Mode              string
+		Path, LineC, Size, Mode       string
 		Lines                         []string
 		Body                          string
 		Editable                      bool
@@ -138,6 +135,8 @@ func HandleFile(w http.ResponseWriter, r *http.Request) {
 
 		rc.Close()
 	}
+
+	data.LineC = fmt.Sprint(len(data.Lines), " lines")
 
 	if err := goit.Tmpl.ExecuteTemplate(w, "repo/file", data); err != nil {
 		log.Println("[/repo/file]", err.Error())
