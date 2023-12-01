@@ -12,10 +12,10 @@ import (
 
 	"github.com/Jamozed/Goit/src/goit"
 	"github.com/Jamozed/Goit/src/util"
+	"github.com/go-chi/chi/v5"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
-	"github.com/gorilla/mux"
 )
 
 func HandleDownload(w http.ResponseWriter, r *http.Request) {
@@ -26,9 +26,9 @@ func HandleDownload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	path := mux.Vars(r)["path"]
+	tpath := chi.URLParam(r, "*")
 
-	repo, err := goit.GetRepoByName(mux.Vars(r)["repo"])
+	repo, err := goit.GetRepoByName(chi.URLParam(r, "repo"))
 	if err != nil {
 		goit.HttpError(w, http.StatusInternalServerError)
 		return
@@ -61,7 +61,7 @@ func HandleDownload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	file, err := commit.File(path)
+	file, err := commit.File(tpath)
 	if errors.Is(err, object.ErrFileNotFound) {
 		/* Possibly a directory, search file tree for prefix */
 		var files []string
@@ -75,7 +75,7 @@ func HandleDownload(w http.ResponseWriter, r *http.Request) {
 		}
 
 		iter.ForEach(func(f *object.File) error {
-			if path == "" || strings.HasPrefix(f.Name, path+"/") {
+			if tpath == "" || strings.HasPrefix(f.Name, tpath+"/") {
 				files = append(files, f.Name)
 				zSize += uint64(f.Size)
 			}
@@ -90,7 +90,7 @@ func HandleDownload(w http.ResponseWriter, r *http.Request) {
 
 		/* Build and write ZIP of directory */
 		w.Header().Set(
-			"Content-Disposition", "attachment; filename="+util.If(path == "", repo.Name, filepath.Base(path))+".zip",
+			"Content-Disposition", "attachment; filename="+util.If(tpath == "", repo.Name, filepath.Base(tpath))+".zip",
 		)
 		// w.Header().Set("Content-Length", fmt.Sprint(zSize))
 
@@ -134,7 +134,7 @@ func HandleDownload(w http.ResponseWriter, r *http.Request) {
 		goit.HttpError(w, http.StatusInternalServerError)
 		return
 	} else {
-		w.Header().Set("Content-Disposition", "attachement; filename="+filepath.Base(path))
+		w.Header().Set("Content-Disposition", "attachement; filename="+filepath.Base(tpath))
 		w.Header().Set("Content-Length", fmt.Sprint(file.Size))
 
 		if _, err := io.Copy(w, rc); err != nil {

@@ -12,10 +12,10 @@ import (
 	"github.com/Jamozed/Goit/src/goit"
 	"github.com/Jamozed/Goit/src/util"
 	"github.com/dustin/go-humanize"
+	"github.com/go-chi/chi/v5"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
-	"github.com/gorilla/mux"
 )
 
 func HandleTree(w http.ResponseWriter, r *http.Request) {
@@ -25,9 +25,9 @@ func HandleTree(w http.ResponseWriter, r *http.Request) {
 		goit.HttpError(w, http.StatusInternalServerError)
 	}
 
-	treepath := mux.Vars(r)["path"]
+	tpath := chi.URLParam(r, "*")
 
-	repo, err := goit.GetRepoByName(mux.Vars(r)["repo"])
+	repo, err := goit.GetRepoByName(chi.URLParam(r, "repo"))
 	if err != nil {
 		goit.HttpError(w, http.StatusInternalServerError)
 		return
@@ -53,7 +53,7 @@ func HandleTree(w http.ResponseWriter, r *http.Request) {
 		Editable: (auth && repo.OwnerId == user.Id),
 	}
 
-	parts := strings.Split(treepath, "/")
+	parts := strings.Split(tpath, "/")
 	htmlPath := "<b style=\"padding-left: 0.4rem;\"><a href=\"/" + repo.Name + "/tree\">" + repo.Name + "</a></b>/"
 	dirPath := ""
 
@@ -100,12 +100,12 @@ func HandleTree(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if treepath != "" {
+		if tpath != "" {
 			data.Files = append(data.Files, row{
-				Mode: "d---------", Name: "..", Path: path.Join("tree", path.Dir(treepath)),
+				Mode: "d---------", Name: "..", Path: path.Join("tree", path.Dir(tpath)),
 			})
 
-			tree, err = tree.Tree(treepath)
+			tree, err = tree.Tree(tpath)
 			if errors.Is(err, object.ErrDirectoryNotFound) {
 				goit.HttpError(w, http.StatusNotFound)
 				return
@@ -138,8 +138,8 @@ func HandleTree(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 
-				fpath = path.Join("file", treepath, v.Name)
-				rpath = path.Join(treepath, v.Name)
+				fpath = path.Join("file", tpath, v.Name)
+				rpath = path.Join(tpath, v.Name)
 				size = humanize.IBytes(uint64(file.Size))
 
 				isFile = true
@@ -164,8 +164,8 @@ func HandleTree(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 
-				fpath = path.Join("tree", treepath, v.Name)
-				rpath = path.Join(treepath, v.Name)
+				fpath = path.Join("tree", tpath, v.Name)
+				rpath = path.Join(tpath, v.Name)
 				size = humanize.IBytes(dirSize)
 
 				totalSize += dirSize

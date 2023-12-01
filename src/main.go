@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -25,8 +26,9 @@ import (
 	"github.com/Jamozed/Goit/src/user"
 	"github.com/Jamozed/Goit/src/util"
 	"github.com/adrg/xdg"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/gorilla/csrf"
-	"github.com/gorilla/mux"
 )
 
 func main() {
@@ -77,43 +79,65 @@ func main() {
 		log.Fatalln(err.Error())
 	}
 
-	h := mux.NewRouter()
-	h.StrictSlash(true)
+	h := chi.NewRouter()
+	h.NotFound(goit.HttpNotFound)
+	h.Use(middleware.RedirectSlashes)
 
-	h.Path("/").HandlerFunc(goit.HandleIndex)
-	h.Path("/user/login").Methods("GET", "POST").HandlerFunc(user.HandleLogin)
-	h.Path("/user/logout").Methods("GET", "POST").HandlerFunc(goit.HandleUserLogout)
-	h.Path("/user/sessions").Methods("GET", "POST").HandlerFunc(user.HandleSessions)
-	h.Path("/user/edit").Methods("GET", "POST").HandlerFunc(user.HandleEdit)
-	h.Path("/repo/create").Methods("GET", "POST").HandlerFunc(repo.HandleCreate)
-	h.Path("/admin").Methods("GET").HandlerFunc(admin.HandleIndex)
-	h.Path("/admin/users").Methods("GET").HandlerFunc(admin.HandleUsers)
-	h.Path("/admin/user/create").Methods("GET", "POST").HandlerFunc(admin.HandleUserCreate)
-	h.Path("/admin/user/edit").Methods("GET", "POST").HandlerFunc(admin.HandleUserEdit)
-	h.Path("/admin/repos").Methods("GET").HandlerFunc(admin.HandleRepos)
-	h.Path("/admin/repo/edit").Methods("GET", "POST").HandlerFunc(admin.HandleRepoEdit)
+	if goit.Debug {
+		h.Use(middleware.Logger)
+	} else {
+		h.Use(logHttp)
+	}
 
-	h.Path("/{repo:.+(?:\\.git)$}").Methods("GET").HandlerFunc(redirectDotGit)
-	h.Path("/{repo}").Methods("GET").HandlerFunc(repo.HandleLog)
-	h.Path("/{repo}/log").Methods("GET").HandlerFunc(repo.HandleLog)
-	h.Path("/{repo}/log/{path:.*}").Methods("GET").HandlerFunc(repo.HandleLog)
-	h.Path("/{repo}/commit/{hash}").Methods("GET").HandlerFunc(repo.HandleCommit)
-	h.Path("/{repo}/tree").Methods("GET").HandlerFunc(repo.HandleTree)
-	h.Path("/{repo}/tree/{path:.*}").Methods("GET").HandlerFunc(repo.HandleTree)
-	h.Path("/{repo}/file/{path:.*}").Methods("GET").HandlerFunc(repo.HandleFile)
-	h.Path("/{repo}/raw/{path:.*}").Methods("GET").HandlerFunc(repo.HandleRaw)
-	h.Path("/{repo}/download").Methods("GET").HandlerFunc(repo.HandleDownload)
-	h.Path("/{repo}/download/{path:.*}").Methods("GET").HandlerFunc(repo.HandleDownload)
-	h.Path("/{repo}/refs").Methods("GET").HandlerFunc(repo.HandleRefs)
-	h.Path("/{repo}/edit").Methods("GET", "POST").HandlerFunc(repo.HandleEdit)
-	h.Path("/{repo}/info/refs").Methods("GET").HandlerFunc(goit.HandleInfoRefs)
-	h.Path("/{repo}/git-upload-pack").Methods("POST").HandlerFunc(goit.HandleUploadPack)
-	h.Path("/{repo}/git-receive-pack").Methods("POST").HandlerFunc(goit.HandleReceivePack)
+	h.Use(csrf.Protect(
+		[]byte(goit.Conf.CsrfSecret), csrf.FieldName("csrf.Token"), csrf.CookieName("csrf"),
+		csrf.Secure(util.If(goit.Conf.UsesHttps, true, false)),
+	))
 
-	h.Path("/static/style.css").Methods("GET").HandlerFunc(handleStyle)
-	h.Path("/static/favicon.png").Methods("GET").HandlerFunc(handleFavicon)
+	h.Get("/", goit.HandleIndex)
+	h.Get("/user/login", user.HandleLogin)
+	h.Post("/user/login", user.HandleLogin)
+	h.Get("/user/logout", goit.HandleUserLogout)
+	h.Post("/user/logout", goit.HandleUserLogout)
+	h.Get("/user/sessions", user.HandleSessions)
+	h.Post("/user/sessions", user.HandleSessions)
+	h.Get("/user/edit", user.HandleEdit)
+	h.Post("/user/edit", user.HandleEdit)
+	h.Get("/repo/create", repo.HandleCreate)
+	h.Post("/repo/create", repo.HandleCreate)
+	h.Get("/admin", admin.HandleIndex)
+	h.Get("/admin/users", admin.HandleUsers)
+	h.Get("/admin/user/create", admin.HandleUserCreate)
+	h.Post("/admin/user/create", admin.HandleUserCreate)
+	h.Get("/admin/user/edit", admin.HandleUserEdit)
+	h.Post("/admin/user/edit", admin.HandleUserEdit)
+	h.Get("/admin/repos", admin.HandleRepos)
+	h.Get("/admin/repo/edit", admin.HandleRepoEdit)
+	h.Post("/admin/repo/edit", admin.HandleRepoEdit)
 
-	h.PathPrefix("/").HandlerFunc(goit.HttpNotFound)
+	h.Get("/static/style.css", handleStyle)
+	h.Get("/static/favicon.png", handleFavicon)
+	h.Get("/favicon.ico", goit.HttpNotFound)
+
+	h.Get("/{repo:.+(?:\\.git)$}", redirectDotGit)
+	h.Get("/{repo}", repo.HandleLog)
+	h.Get("/{repo}/log", repo.HandleLog)
+	h.Get("/{repo}/log/*", repo.HandleLog)
+	h.Get("/{repo}/commit/{hash}", repo.HandleCommit)
+	h.Get("/{repo}/tree", repo.HandleTree)
+	h.Get("/{repo}/tree/*", repo.HandleTree)
+	h.Get("/{repo}/file/*", repo.HandleFile)
+	h.Get("/{repo}/raw/*", repo.HandleRaw)
+	h.Get("/{repo}/download", repo.HandleDownload)
+	h.Get("/{repo}/download/*", repo.HandleDownload)
+	h.Get("/{repo}/refs", repo.HandleRefs)
+	h.Get("/{repo}/edit", repo.HandleEdit)
+	h.Post("/{repo}/edit", repo.HandleEdit)
+	h.Get("/{repo}/info/refs", goit.HandleInfoRefs)
+	h.Get("/{repo}/git-upload-pack", goit.HandleUploadPack)
+	h.Post("/{repo}/git-upload-pack", goit.HandleUploadPack)
+	h.Get("/{repo}/git-receive-pack", goit.HandleReceivePack)
+	h.Post("/{repo}/git-receive-pack", goit.HandleReceivePack)
 
 	/* Create a ticker to periodically cleanup expired sessions */
 	tick := time.NewTicker(1 * time.Hour)
@@ -137,13 +161,8 @@ func main() {
 	wait.Add(1)
 	go handleIpc(stop, wait, ipc)
 
-	protect := csrf.Protect(
-		[]byte(goit.Conf.CsrfSecret), csrf.FieldName("csrf.Token"), csrf.CookieName("csrf"),
-		csrf.Secure(util.If(goit.Conf.UsesHttps, true, false)),
-	)
-
 	/* Listen for HTTP on the specified port */
-	if err := http.ListenAndServe(goit.Conf.HttpAddr+":"+goit.Conf.HttpPort, protect(logHttp(h))); err != nil {
+	if err := http.ListenAndServe(goit.Conf.HttpAddr+":"+goit.Conf.HttpPort, h); err != nil {
 		log.Fatalln("[HTTP]", err.Error())
 	}
 }

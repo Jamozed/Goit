@@ -11,10 +11,10 @@ import (
 
 	"github.com/Jamozed/Goit/src/goit"
 	"github.com/Jamozed/Goit/src/util"
+	"github.com/go-chi/chi/v5"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/gorilla/csrf"
-	"github.com/gorilla/mux"
 )
 
 func HandleEdit(w http.ResponseWriter, r *http.Request) {
@@ -30,7 +30,7 @@ func HandleEdit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	repo, err := goit.GetRepoByName(mux.Vars(r)["repo"])
+	repo, err := goit.GetRepoByName(chi.URLParam(r, "repo"))
 	if err != nil {
 		log.Println("[/repo/edit]", err.Error())
 		goit.HttpError(w, http.StatusInternalServerError)

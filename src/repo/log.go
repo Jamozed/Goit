@@ -11,10 +11,10 @@ import (
 
 	"github.com/Jamozed/Goit/src/goit"
 	"github.com/Jamozed/Goit/src/util"
+	"github.com/go-chi/chi/v5"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
-	"github.com/gorilla/mux"
 )
 
 func HandleLog(w http.ResponseWriter, r *http.Request) {
@@ -25,9 +25,9 @@ func HandleLog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	path := mux.Vars(r)["path"]
+	tpath := chi.URLParam(r, "*")
 
-	repo, err := goit.GetRepoByName(mux.Vars(r)["repo"])
+	repo, err := goit.GetRepoByName(chi.URLParam(r, "repo"))
 	if err != nil {
 		goit.HttpError(w, http.StatusInternalServerError)
 		return
@@ -88,11 +88,12 @@ func HandleLog(w http.ResponseWriter, r *http.Request) {
 	} else if err := iter.ForEach(func(c *object.Commit) error {
 		var files, additions, deletions int
 
+		/* TODO speed this up or cache it, diff calculations are quite slow */
 		if stats, err := goit.DiffStats(c); err != nil {
 			log.Println("[/repo/log]", err.Error())
-		} else if path != "" {
+		} else if tpath != "" {
 			for _, s := range stats {
-				if s.Name == path || strings.HasPrefix(s.Name, path+"/") {
+				if s.Name == tpath || strings.HasPrefix(s.Name, tpath+"/") {
 					files += 1
 					additions += s.Addition
 					deletions += s.Deletion

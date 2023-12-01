@@ -6,9 +6,9 @@ require (
 	github.com/adrg/xdg v0.4.0
 	github.com/buildkite/terminal-to-html/v3 v3.9.1
 	github.com/dustin/go-humanize v1.0.1
+	github.com/go-chi/chi/v5 v5.0.10
 	github.com/go-git/go-git/v5 v5.10.1
 	github.com/gorilla/csrf v1.7.2
-	github.com/gorilla/mux v1.8.1
 	github.com/mattn/go-sqlite3 v1.14.18
 	golang.org/x/crypto v0.16.0
 )

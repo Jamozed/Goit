@@ -14,9 +14,9 @@ import (
 	"github.com/Jamozed/Goit/src/goit"
 	"github.com/Jamozed/Goit/src/util"
 	"github.com/buildkite/terminal-to-html/v3"
+	"github.com/go-chi/chi/v5"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/gorilla/mux"
 )
 
 func HandleCommit(w http.ResponseWriter, r *http.Request) {
@@ -26,7 +26,7 @@ func HandleCommit(w http.ResponseWriter, r *http.Request) {
 		goit.HttpError(w, http.StatusInternalServerError)
 	}
 
-	repo, err := goit.GetRepoByName(mux.Vars(r)["repo"])
+	repo, err := goit.GetRepoByName(chi.URLParam(r, "repo"))
 	if err != nil {
 		goit.HttpError(w, http.StatusInternalServerError)
 		return
@@ -79,7 +79,7 @@ func HandleCommit(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	commit, err := gr.CommitObject(plumbing.NewHash(mux.Vars(r)["hash"]))
+	commit, err := gr.CommitObject(plumbing.NewHash(chi.URLParam(r, "hash")))
 	if errors.Is(err, plumbing.ErrObjectNotFound) {
 		goit.HttpError(w, http.StatusNotFound)
 		return

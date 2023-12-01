@@ -15,9 +15,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/go-git/go-git/v5/plumbing/format/diff"
 	"github.com/go-git/go-git/v5/plumbing/object"
-	"github.com/gorilla/mux"
 )
 
 type gitCommand struct {
@@ -81,7 +81,7 @@ func HandleReceivePack(w http.ResponseWriter, r *http.Request) {
 }
 
 func gitHttpBase(w http.ResponseWriter, r *http.Request, service string) *Repo {
-	reponame := mux.Vars(r)["repo"]
+	reponame := chi.URLParam(r, "repo")
 
 	/* Check that the Git service and protocol version are supported */
 	if service != "git-upload-pack" && service != "git-receive-pack" {
