@@ -31,6 +31,8 @@ import (
 	"github.com/gorilla/csrf"
 )
 
+var protect func(http.Handler) http.Handler
+
 func main() {
 	var backup bool
 
@@ -89,55 +91,62 @@ func main() {
 		h.Use(logHttp)
 	}
 
-	h.Use(csrf.Protect(
+	protect = csrf.Protect(
 		[]byte(goit.Conf.CsrfSecret), csrf.FieldName("csrf.Token"), csrf.CookieName("csrf"),
 		csrf.Secure(util.If(goit.Conf.UsesHttps, true, false)),
-	))
+	)
 
-	h.Get("/", goit.HandleIndex)
-	h.Get("/user/login", user.HandleLogin)
-	h.Post("/user/login", user.HandleLogin)
-	h.Get("/user/logout", goit.HandleUserLogout)
-	h.Post("/user/logout", goit.HandleUserLogout)
-	h.Get("/user/sessions", user.HandleSessions)
-	h.Post("/user/sessions", user.HandleSessions)
-	h.Get("/user/edit", user.HandleEdit)
-	h.Post("/user/edit", user.HandleEdit)
-	h.Get("/repo/create", repo.HandleCreate)
-	h.Post("/repo/create", repo.HandleCreate)
-	h.Get("/admin", admin.HandleIndex)
-	h.Get("/admin/users", admin.HandleUsers)
-	h.Get("/admin/user/create", admin.HandleUserCreate)
-	h.Post("/admin/user/create", admin.HandleUserCreate)
-	h.Get("/admin/user/edit", admin.HandleUserEdit)
-	h.Post("/admin/user/edit", admin.HandleUserEdit)
-	h.Get("/admin/repos", admin.HandleRepos)
-	h.Get("/admin/repo/edit", admin.HandleRepoEdit)
-	h.Post("/admin/repo/edit", admin.HandleRepoEdit)
+	h.Group(func(r chi.Router) {
+		r.Use(protect)
 
-	h.Get("/static/style.css", handleStyle)
-	h.Get("/static/favicon.png", handleFavicon)
-	h.Get("/favicon.ico", goit.HttpNotFound)
+		r.Get("/", goit.HandleIndex)
+		r.Get("/user/login", user.HandleLogin)
+		r.Post("/user/login", user.HandleLogin)
+		r.Get("/user/logout", goit.HandleUserLogout)
+		r.Post("/user/logout", goit.HandleUserLogout)
+		r.Get("/user/sessions", user.HandleSessions)
+		r.Post("/user/sessions", user.HandleSessions)
+		r.Get("/user/edit", user.HandleEdit)
+		r.Post("/user/edit", user.HandleEdit)
+		r.Get("/repo/create", repo.HandleCreate)
+		r.Post("/repo/create", repo.HandleCreate)
+		r.Get("/admin", admin.HandleIndex)
+		r.Get("/admin/users", admin.HandleUsers)
+		r.Get("/admin/user/create", admin.HandleUserCreate)
+		r.Post("/admin/user/create", admin.HandleUserCreate)
+		r.Get("/admin/user/edit", admin.HandleUserEdit)
+		r.Post("/admin/user/edit", admin.HandleUserEdit)
+		r.Get("/admin/repos", admin.HandleRepos)
+		r.Get("/admin/repo/edit", admin.HandleRepoEdit)
+		r.Post("/admin/repo/edit", admin.HandleRepoEdit)
 
-	h.Get("/{repo:.+(?:\\.git)$}", redirectDotGit)
-	h.Get("/{repo}", repo.HandleLog)
-	h.Get("/{repo}/log", repo.HandleLog)
-	h.Get("/{repo}/log/*", repo.HandleLog)
-	h.Get("/{repo}/commit/{hash}", repo.HandleCommit)
-	h.Get("/{repo}/tree", repo.HandleTree)
-	h.Get("/{repo}/tree/*", repo.HandleTree)
-	h.Get("/{repo}/file/*", repo.HandleFile)
-	h.Get("/{repo}/raw/*", repo.HandleRaw)
-	h.Get("/{repo}/download", repo.HandleDownload)
-	h.Get("/{repo}/download/*", repo.HandleDownload)
-	h.Get("/{repo}/refs", repo.HandleRefs)
-	h.Get("/{repo}/edit", repo.HandleEdit)
-	h.Post("/{repo}/edit", repo.HandleEdit)
-	h.Get("/{repo}/info/refs", goit.HandleInfoRefs)
-	h.Get("/{repo}/git-upload-pack", goit.HandleUploadPack)
-	h.Post("/{repo}/git-upload-pack", goit.HandleUploadPack)
-	h.Get("/{repo}/git-receive-pack", goit.HandleReceivePack)
-	h.Post("/{repo}/git-receive-pack", goit.HandleReceivePack)
+		r.Get("/static/style.css", handleStyle)
+		r.Get("/static/favicon.png", handleFavicon)
+		r.Get("/favicon.ico", goit.HttpNotFound)
+	})
+
+	/* TODO figure out how to use a subrouter after manually parsing the repo path */
+	h.HandleFunc("/*", HandleRepo)
+
+	/* Old repository routing, doesn't support directories */
+	// h.Get("/{repo}", repo.HandleLog)
+	// h.Get("/{repo}/log", repo.HandleLog)
+	// h.Get("/{repo}/log/*", repo.HandleLog)
+	// h.Get("/{repo}/commit/{hash}", repo.HandleCommit)
+	// h.Get("/{repo}/tree", repo.HandleTree)
+	// h.Get("/{repo}/tree/*", repo.HandleTree)
+	// h.Get("/{repo}/file/*", repo.HandleFile)
+	// h.Get("/{repo}/raw/*", repo.HandleRaw)
+	// h.Get("/{repo}/download", repo.HandleDownload)
+	// h.Get("/{repo}/download/*", repo.HandleDownload)
+	// h.Get("/{repo}/refs", repo.HandleRefs)
+	// h.Get("/{repo}/edit", repo.HandleEdit)
+	// h.Post("/{repo}/edit", repo.HandleEdit)
+	// h.Get("/{repo}/info/refs", goit.HandleInfoRefs)
+	// h.Get("/{repo}/git-upload-pack", goit.HandleUploadPack)
+	// h.Post("/{repo}/git-upload-pack", goit.HandleUploadPack)
+	// h.Get("/{repo}/git-receive-pack", goit.HandleReceivePack)
+	// h.Post("/{repo}/git-receive-pack", goit.HandleReceivePack)
 
 	/* Create a ticker to periodically cleanup expired sessions */
 	tick := time.NewTicker(1 * time.Hour)
@@ -193,10 +202,6 @@ func handleFavicon(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func redirectDotGit(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, strings.TrimSuffix(r.URL.Path, ".git"), http.StatusMovedPermanently)
-}
-
 /* Handle IPC messages. */
 func handleIpc(stop chan struct{}, wait *sync.WaitGroup, ipc net.Listener) {
 	defer wait.Done()
@@ -237,5 +242,105 @@ func handleIpc(stop chan struct{}, wait *sync.WaitGroup, ipc net.Listener) {
 
 			c.Close()
 		}
+	}
+}
+
+func HandleRepo(w http.ResponseWriter, r *http.Request) {
+	parts := strings.Split(r.URL.Path, "/")
+
+	repos, err := goit.GetRepos()
+	if err != nil {
+		goit.HttpError(w, http.StatusInternalServerError)
+		return
+	}
+
+	var rpath string
+	for _, p := range parts {
+		rpath = path.Join(rpath, p)
+
+		for _, r := range repos {
+			if rpath == r.Name {
+				goto found
+			}
+		}
+	}
+
+	goit.HttpError(w, http.StatusNotFound)
+	return
+
+found:
+	spath := strings.TrimPrefix(r.URL.Path, "/"+rpath)
+
+	rctx := chi.RouteContext(r.Context())
+	if rctx == nil {
+		log.Println("[route] NULL route context")
+		goit.HttpError(w, http.StatusInternalServerError)
+		return
+	}
+
+	rctx.URLParams.Add("repo", rpath)
+	rctx.URLParams.Add("*", "")
+
+	switch r.Method {
+	case http.MethodGet:
+		switch {
+		case strings.HasPrefix(spath, "/log"), len(spath) == 0:
+			rctx.URLParams.Add("*", strings.TrimLeft(strings.TrimPrefix(spath, "/log"), "/"))
+			protect(http.HandlerFunc(repo.HandleLog)).ServeHTTP(w, r)
+
+		case strings.HasPrefix(spath, "/commit/"):
+			hash := strings.TrimPrefix(spath, "/commit/")
+			if strings.Contains(hash, "/") {
+				goit.HttpError(w, http.StatusNotFound)
+			}
+
+			rctx.URLParams.Add("hash", hash)
+			protect(http.HandlerFunc(repo.HandleCommit)).ServeHTTP(w, r)
+
+		case strings.HasPrefix(spath, "/tree"):
+			rctx.URLParams.Add("*", strings.TrimLeft(strings.TrimPrefix(spath, "/tree"), "/"))
+			protect(http.HandlerFunc(repo.HandleTree)).ServeHTTP(w, r)
+
+		case strings.HasPrefix(spath, "/file/"):
+			rctx.URLParams.Add("*", strings.TrimPrefix(spath, "/file/"))
+			protect(http.HandlerFunc(repo.HandleFile)).ServeHTTP(w, r)
+
+		case strings.HasPrefix(spath, "/raw/"):
+			rctx.URLParams.Add("*", strings.TrimPrefix(spath, "/raw/"))
+			protect(http.HandlerFunc(repo.HandleRaw)).ServeHTTP(w, r)
+
+		case strings.HasPrefix(spath, "/download"):
+			rctx.URLParams.Add("*", strings.TrimLeft(strings.TrimPrefix(spath, "/download"), "/"))
+			protect(http.HandlerFunc(repo.HandleDownload)).ServeHTTP(w, r)
+
+		case spath == "/refs":
+			protect(http.HandlerFunc(repo.HandleRefs)).ServeHTTP(w, r)
+		case spath == "/edit":
+			protect(http.HandlerFunc(repo.HandleEdit)).ServeHTTP(w, r)
+
+		case spath == "/info/refs":
+			goit.HandleInfoRefs(w, r)
+		case spath == "/git-upload-pack":
+			goit.HandleUploadPack(w, r)
+		case spath == "/git-receive-pack":
+			goit.HandleReceivePack(w, r)
+
+		default:
+			goit.HttpError(w, http.StatusNotFound)
+		}
+
+	case http.MethodPost:
+		switch {
+		case spath == "/edit":
+			protect(http.HandlerFunc(repo.HandleEdit)).ServeHTTP(w, r)
+
+		case spath == "/git-upload-pack":
+			goit.HandleUploadPack(w, r)
+		case spath == "/git-receive-pack":
+			goit.HandleReceivePack(w, r)
+		}
+
+	default:
+		goit.HttpError(w, http.StatusNotFound)
 	}
 }
