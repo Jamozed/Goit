@@ -136,8 +136,8 @@ func HandleRepoEdit(w http.ResponseWriter, r *http.Request) {
 
 			if data.Edit.Name == "" {
 				data.Edit.Message = "Name cannot be empty"
-			} else if slices.Contains(goit.Reserved, data.Edit.Name) {
-				data.Edit.Message = "Name \"" + data.Edit.Name + "\" is reserved"
+			} else if slices.Contains(goit.Reserved, data.Edit.Name) || !goit.IsLegal(data.Name) {
+				data.Edit.Message = "Name \"" + data.Edit.Name + "\" is illegal"
 			} else if exists, err := goit.RepoExists(data.Edit.Name); err != nil {
 				log.Println("[/admin/repo/edit]", err.Error())
 				goit.HttpError(w, http.StatusInternalServerError)

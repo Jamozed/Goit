@@ -47,8 +47,8 @@ func HandleEdit(w http.ResponseWriter, r *http.Request) {
 
 			if data.Form.Name == "" {
 				data.MessageA = "Username cannot be empty"
-			} else if slices.Contains(goit.Reserved, data.Form.Name) && user.Id != 0 {
-				data.MessageA = "Username \"" + data.Form.Name + "\" is reserved"
+			} else if slices.Contains(goit.Reserved, data.Form.Name) && user.Id != 0 || !goit.IsLegal(data.Form.Name) {
+				data.MessageA = "Username \"" + data.Form.Name + "\" is illegal"
 			} else if exists, err := goit.UserExists(data.Form.Name); err != nil {
 				log.Println("[/user/edit]", err.Error())
 				goit.HttpError(w, http.StatusInternalServerError)

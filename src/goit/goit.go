@@ -15,6 +15,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -94,7 +95,7 @@ func Goit(conf string) (err error) {
 		`CREATE TABLE IF NOT EXISTS users (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			name TEXT UNIQUE NOT NULL,
-			name_full TEXT UNIQUE NOT NULL,
+			name_full TEXT NOT NULL,
 			pass BLOB NOT NULL,
 			pass_algo TEXT NOT NULL,
 			salt BLOB NOT NULL,
@@ -148,6 +149,16 @@ func ConfPath() string {
 
 func RepoPath(name string, abs bool) string {
 	return util.If(abs, filepath.Join(Conf.DataPath, "repos", name+".git"), filepath.Join(name+".git"))
+}
+
+func IsLegal(s string) bool {
+	for i := 0; i < len(s); i += 1 {
+		if !slices.Contains([]byte("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_.~/"), s[i]) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func Backup() error {

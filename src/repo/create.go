@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"slices"
+	"strings"
 
 	"github.com/Jamozed/Goit/src/goit"
 	"github.com/gorilla/csrf"
@@ -41,8 +42,8 @@ func HandleCreate(w http.ResponseWriter, r *http.Request) {
 
 		if data.Name == "" {
 			data.Message = "Name cannot be empty"
-		} else if slices.Contains(goit.Reserved, data.Name) {
-			data.Message = "Name \"" + data.Name + "\" is reserved"
+		} else if slices.Contains(goit.Reserved, strings.SplitN(data.Name, "/", 2)[0]) || !goit.IsLegal(data.Name) {
+			data.Message = "Name \"" + data.Name + "\" is illegal"
 		} else if exists, err := goit.RepoExists(data.Name); err != nil {
 			log.Println("[/repo/create]", err.Error())
 			goit.HttpError(w, http.StatusInternalServerError)
