@@ -1,4 +1,3 @@
-// auth.go
 // Copyright (C) 2023, Jakob Wakeling
 // All rights reserved.
 

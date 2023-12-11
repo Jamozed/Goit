@@ -1,3 +1,6 @@
+// Copyright (C) 2023, Jakob Wakeling
+// All rights reserved.
+
 package repo
 
 import (
