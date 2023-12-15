@@ -10,7 +10,9 @@ import (
 	"os"
 	"strings"
 
+	"github.com/Jamozed/Goit/src/util"
 	"github.com/go-git/go-git/v5"
+	gitconfig "github.com/go-git/go-git/v5/config"
 )
 
 type Repo struct {
@@ -18,13 +20,15 @@ type Repo struct {
 	OwnerId     int64  `json:"owner_id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
+	Upstream    string `json:"upstream"`
 	IsPrivate   bool   `json:"is_private"`
+	IsMirror    bool   `json:"is_mirror"`
 }
 
 func GetRepos() ([]Repo, error) {
 	repos := []Repo{}
 
-	rows, err := db.Query("SELECT id, owner_id, name, description, is_private FROM repos")
+	rows, err := db.Query("SELECT id, owner_id, name, description, upstream, is_private, is_mirror FROM repos")
 	if err != nil {
 		return nil, err
 	}
@@ -33,7 +37,9 @@ func GetRepos() ([]Repo, error) {
 
 	for rows.Next() {
 		r := Repo{}
-		if err := rows.Scan(&r.Id, &r.OwnerId, &r.Name, &r.Description, &r.IsPrivate); err != nil {
+		if err := rows.Scan(
+			&r.Id, &r.OwnerId, &r.Name, &r.Description, &r.Upstream, &r.IsPrivate, &r.IsMirror,
+		); err != nil {
 			return nil, err
 		}
 
@@ -51,8 +57,8 @@ func GetRepo(rid int64) (*Repo, error) {
 	r := &Repo{}
 
 	if err := db.QueryRow(
-		"SELECT id, owner_id, name, description, is_private FROM repos WHERE id = ?", rid,
-	).Scan(&r.Id, &r.OwnerId, &r.Name, &r.Description, &r.IsPrivate); err != nil {
+		"SELECT id, owner_id, name, description, upstream, is_private, is_mirror FROM repos WHERE id = ?", rid,
+	).Scan(&r.Id, &r.OwnerId, &r.Name, &r.Description, &r.Upstream, &r.IsPrivate, &r.IsMirror); err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
@@ -67,8 +73,8 @@ func GetRepoByName(name string) (*Repo, error) {
 	r := &Repo{}
 
 	if err := db.QueryRow(
-		"SELECT id, owner_id, name, description, is_private FROM repos WHERE name = ?", name,
-	).Scan(&r.Id, &r.OwnerId, &r.Name, &r.Description, &r.IsPrivate); err != nil {
+		"SELECT id, owner_id, name, description, upstream, is_private, is_mirror FROM repos WHERE name = ?", name,
+	).Scan(&r.Id, &r.OwnerId, &r.Name, &r.Description, &r.Upstream, &r.IsPrivate, &r.IsMirror); err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
@@ -79,32 +85,47 @@ func GetRepoByName(name string) (*Repo, error) {
 	return r, nil
 }
 
-func CreateRepo(repo Repo) error {
+func CreateRepo(repo Repo) (int64, error) {
 	tx, err := db.Begin()
 	if err != nil {
-		return err
+		return -1, err
 	}
 
-	if _, err := tx.Exec(
-		`INSERT INTO repos (owner_id, name, name_lower, description, is_private)
-		VALUES (?, ?, ?, ?, ?)`,
-		repo.OwnerId, repo.Name, strings.ToLower(repo.Name), repo.Description, repo.IsPrivate,
-	); err != nil {
+	res, err := tx.Exec(
+		`INSERT INTO repos (owner_id, name, name_lower, description, upstream, is_private, is_mirror)
+		VALUES (?, ?, ?, ?, ?, ?, ?)`, repo.OwnerId, repo.Name, strings.ToLower(repo.Name), repo.Description,
+		repo.Upstream, repo.IsPrivate, repo.IsMirror,
+	)
+	if err != nil {
 		tx.Rollback()
-		return err
+		return -1, err
 	}
 
-	if _, err := git.PlainInit(RepoPath(repo.Name, true), true); err != nil {
+	r, err := git.PlainInit(RepoPath(repo.Name, true), true)
+	if err != nil {
 		tx.Rollback()
-		return err
+		return -1, err
 	}
 
 	if err := tx.Commit(); err != nil {
 		os.RemoveAll(RepoPath(repo.Name, true))
-		return err
+		return -1, err
 	}
 
-	return nil
+	if repo.Upstream != "" {
+		if _, err := r.CreateRemote(&gitconfig.RemoteConfig{
+			Name:   "origin",
+			URLs:   []string{repo.Upstream},
+			Mirror: util.If(repo.IsMirror, true, false),
+			Fetch:  []gitconfig.RefSpec{gitconfig.RefSpec("+refs/heads/*:refs/heads/*")},
+		}); err != nil {
+			log.Println("[repo/upstream]", err.Error())
+		}
+	}
+
+	rid, _ := res.LastInsertId()
+
+	return rid, nil
 }
 
 func DelRepo(rid int64) error {
@@ -150,8 +171,9 @@ func UpdateRepo(rid int64, repo Repo) error {
 	}
 
 	if _, err := tx.Exec(
-		"UPDATE repos SET name = ?, name_lower = ?, description = ?, is_private = ? WHERE id = ?",
-		repo.Name, strings.ToLower(repo.Name), repo.Description, repo.IsPrivate, rid,
+		`UPDATE repos SET name = ?, name_lower = ?, description = ?, upstream = ?, is_private = ?, is_mirror = ?
+		WHERE id = ?`, repo.Name, strings.ToLower(repo.Name), repo.Description, repo.Upstream, repo.IsPrivate,
+		repo.IsMirror, rid,
 	); err != nil {
 		tx.Rollback()
 		return err
@@ -175,6 +197,24 @@ func UpdateRepo(rid int64, repo Repo) error {
 
 func ChownRepo(rid int64, uid int64) error {
 	if _, err := db.Exec("UPDATE repos SET owner_id = ? WHERE id = ?", uid, rid); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func Pull(rid int64) error {
+	repo, err := GetRepo(rid)
+	if err != nil {
+		return err
+	}
+
+	r, err := git.PlainOpen(RepoPath(repo.Name, true))
+	if err != nil {
+		return err
+	}
+
+	if err := r.Fetch(&git.FetchOptions{}); err != nil {
 		return err
 	}
 

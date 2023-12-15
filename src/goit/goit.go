@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/Jamozed/Goit/res"
+	"github.com/Jamozed/Goit/src/cron"
 	"github.com/Jamozed/Goit/src/util"
 	"github.com/adrg/xdg"
 	"github.com/go-git/go-git/v5"
@@ -48,6 +49,7 @@ var Conf = Config{
 
 var db *sql.DB
 var Favicon []byte
+var Cron *cron.Cron
 
 var Reserved []string = []string{"admin", "repo", "static", "user"}
 
@@ -90,31 +92,9 @@ func Goit(conf string) (err error) {
 		return fmt.Errorf("[Database] %w", err)
 	}
 
-	if _, err = db.Exec(
-		`CREATE TABLE IF NOT EXISTS users (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			name TEXT UNIQUE NOT NULL,
-			name_full TEXT NOT NULL,
-			pass BLOB NOT NULL,
-			pass_algo TEXT NOT NULL,
-			salt BLOB NOT NULL,
-			is_admin BOOLEAN NOT NULL
-		)`,
-	); err != nil {
-		return fmt.Errorf("[CREATE:users] %w", err)
-	}
-
-	if _, err = db.Exec(
-		`CREATE TABLE IF NOT EXISTS repos (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			owner_id INTEGER NOT NULL,
-			name TEXT UNIQUE NOT NULL,
-			name_lower TEXT UNIQUE NOT NULL,
-			description TEXT NOT NULL,
-			is_private BOOLEAN NOT NULL
-		)`,
-	); err != nil {
-		return fmt.Errorf("[CREATE repos] %w", err)
+	/* Update the database if necessary */
+	if err := dbUpdate(db); err != nil {
+		return fmt.Errorf("[Database] %w", err)
 	}
 
 	/* Create an admin user if one does not exist */
@@ -133,6 +113,10 @@ func Goit(conf string) (err error) {
 			err = nil /* ignored */
 		}
 	}
+
+	/* Initialise and start the cron service */
+	Cron = cron.New()
+	Cron.Start()
 
 	return nil
 }

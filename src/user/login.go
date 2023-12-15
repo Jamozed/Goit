@@ -65,6 +65,8 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		log.Println("[login]", user.Name, "logged in from", ip)
+
 		goit.SetSessionCookie(w, user.Id, sess)
 		http.Redirect(w, r, "/", http.StatusFound)
 		return

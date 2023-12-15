@@ -36,7 +36,7 @@ func main() {
 	var backup bool
 
 	flag.BoolVar(&backup, "backup", false, "Perform a backup")
-	flag.BoolVar(&goit.Debug, "debug", false, "Enable debug logging")
+	flag.BoolVar(&util.Debug, "debug", false, "Enable debug logging")
 	flag.Parse()
 
 	if backup /* IPC client */ {
@@ -71,6 +71,7 @@ func main() {
 	go func() {
 		<-c
 		close(stop)
+		goit.Cron.Stop()
 		wait.Wait()
 		os.Exit(0)
 	}()
@@ -84,7 +85,7 @@ func main() {
 	h.NotFound(goit.HttpNotFound)
 	h.Use(middleware.RedirectSlashes)
 
-	if goit.Debug {
+	if util.Debug {
 		h.Use(middleware.Logger)
 	} else {
 		h.Use(logHttp)
@@ -109,6 +110,8 @@ func main() {
 		r.Post("/user/edit", user.HandleEdit)
 		r.Get("/repo/create", repo.HandleCreate)
 		r.Post("/repo/create", repo.HandleCreate)
+		r.Get("/repo/import", repo.HandleImport)
+		r.Post("/repo/import", repo.HandleImport)
 		r.Get("/admin", admin.HandleIndex)
 		r.Get("/admin/users", admin.HandleUsers)
 		r.Get("/admin/user/create", admin.HandleUserCreate)

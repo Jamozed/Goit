@@ -40,14 +40,14 @@ func HandleSessions(w http.ResponseWriter, r *http.Request) {
 	}{Title: "User - Sessions"}
 
 	goit.SessionsMutex.RLock()
-	goit.Debugln("[goit.HandleSessions] SessionsMutex rlock")
+	util.Debugln("[goit.HandleSessions] SessionsMutex rlock")
 
 	if revoke >= 0 && revoke < int64(len(goit.Sessions[user.Id])) {
 		var token = goit.Sessions[user.Id][revoke].Token
 		var current = token == ss.Token
 
 		goit.SessionsMutex.RUnlock()
-		goit.Debugln("[goit.HandleSessions] SessionsMutex runlock")
+		util.Debugln("[goit.HandleSessions] SessionsMutex runlock")
 
 		goit.EndSession(user.Id, token)
 
@@ -69,7 +69,7 @@ func HandleSessions(w http.ResponseWriter, r *http.Request) {
 	}
 
 	goit.SessionsMutex.RUnlock()
-	goit.Debugln("[goit.HandleSessions] SessionsMutex runlock")
+	util.Debugln("[goit.HandleSessions] SessionsMutex runlock")
 
 	if err := goit.Tmpl.ExecuteTemplate(w, "user/sessions", data); err != nil {
 		log.Println("[/user/login]", err.Error())

@@ -11,9 +11,25 @@
 		</table>
 	</header>
 	<main>
-		<form action="/repo/create" method="post">
+		<form action="/repo/import" method="post">
 			{{.CsrfField}}
 			<table>
+				<tr>
+					<td style="text-align: right;"><label for="url">URL</label></td>
+					<td><input type="text" name="url"></td>
+				</tr>
+				<tr>
+					<td style="text-align: right;"><label for="username">Username</label></td>
+					<td><input type="text" name="username"></td>
+				</tr>
+				<tr>
+					<td style="text-align: right;"><label for="password">Password</label></td>
+					<td><input type="password" name="password"></td>
+				</tr>
+				<tr>
+					<td style="text-align: right;"><label for="mirror">Mirror</label></td>
+					<td><input type="checkbox" name="mirror" value="mirror" {{if .IsMirror}}checked{{end}}></td>
+				</tr>
 				<tr>
 					<td style="text-align: right;"><label for="reponame">Name</label></td>
 					<td><input type="text" name="reponame"></td>
@@ -34,7 +50,7 @@
 				<tr>
 					<td></td>
 					<td>
-						<input type="submit" value="Create">
+						<input type="submit" value="Import">
 						<a href="/" style="color: inherit;">Cancel</a>
 					</td>
 				</tr>

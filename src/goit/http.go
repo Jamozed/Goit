@@ -32,6 +32,7 @@ func init() {
 
 	template.Must(Tmpl.New("repo/header").Parse(res.RepoHeader))
 	template.Must(Tmpl.New("repo/create").Parse(res.RepoCreate))
+	template.Must(Tmpl.New("repo/import").Parse(res.RepoImport))
 	template.Must(Tmpl.New("repo/edit").Parse(res.RepoEdit))
 
 	template.Must(Tmpl.New("repo/log").Parse(res.RepoLog))

@@ -1,7 +1,7 @@
 // Copyright (C) 2023, Jakob Wakeling
 // All rights reserved.
 
-package goit
+package util
 
 import "log"
 

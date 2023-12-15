@@ -11,7 +11,7 @@ A simple and lightweight Git web server.
 - File log, blame (planned), and raw views
 - Public and private repositories
 - Read and write permissions for non owners (planned)
-- Repository mirroring (pull and/or push) (planned)
+- Repository importing and mirroring
 
 ## Usage
 
