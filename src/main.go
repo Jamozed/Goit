@@ -150,14 +150,6 @@ func main() {
 	// h.Get("/{repo}/git-receive-pack", goit.HandleReceivePack)
 	// h.Post("/{repo}/git-receive-pack", goit.HandleReceivePack)
 
-	/* Create a ticker to periodically cleanup expired sessions */
-	tick := time.NewTicker(1 * time.Hour)
-	go func() {
-		for range tick.C {
-			goit.CleanupSessions()
-		}
-	}()
-
 	/* Listen for IPC */
 	ipc, err := net.Listen("unix", filepath.Join(xdg.RuntimeDir, "goit-"+goit.Conf.HttpPort+".sock"))
 	if err != nil {

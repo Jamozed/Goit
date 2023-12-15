@@ -12,6 +12,7 @@ import (
 
 	"github.com/Jamozed/Goit/src/cron"
 	"github.com/Jamozed/Goit/src/goit"
+	"github.com/Jamozed/Goit/src/util"
 	"github.com/gorilla/csrf"
 )
 
@@ -66,13 +67,15 @@ func HandleImport(w http.ResponseWriter, r *http.Request) {
 			goit.HttpError(w, http.StatusInternalServerError)
 			return
 		} else {
-			goit.Cron.Add(cron.Immediate, func() {
-				if err := goit.Pull(rid); err != nil {
-					log.Println("[/repo/import:cron]", err.Error())
-				}
-			})
+			if data.Url != "" {
+				goit.Cron.Add(util.If(data.IsMirror, cron.Daily, cron.Immediate), func() {
+					if err := goit.Pull(rid); err != nil {
+						log.Println("[cron:import]", err.Error())
+					}
+				})
 
-			goit.Cron.Update()
+				goit.Cron.Update()
+			}
 
 			http.Redirect(w, r, "/"+data.Name, http.StatusFound)
 			return

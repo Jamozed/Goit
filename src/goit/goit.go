@@ -118,12 +118,34 @@ func Goit(conf string) (err error) {
 	Cron = cron.New()
 	Cron.Start()
 
+	/* Periodically clean up expired sessions */
+	Cron.Add(cron.Hourly, func() { CleanupSessions() })
+
+	/* Add cron jobs for mirror repositories */
+	repos, err := GetRepos()
+	if err != nil {
+		return err
+	}
+
+	for _, r := range repos {
+		if r.IsMirror {
+			util.Debugln("Adding cron job for", r.Name)
+			Cron.Add(cron.Daily, func() {
+				if err := Pull(r.Id); err != nil {
+					log.Println("[cron:mirror]", err.Error())
+				}
+			})
+		}
+	}
+
+	Cron.Update()
+
 	return nil
 }
 
 func ConfPath() string {
 	if p, err := xdg.SearchConfigFile(filepath.Join("goit", "goit.json")); err != nil {
-		log.Println("[Config]", err.Error())
+		log.Println("[config]", err.Error())
 		return ""
 	} else {
 		return p

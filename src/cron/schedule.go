@@ -9,9 +9,19 @@ import (
 
 type Schedule struct{ Month, Day, Weekday, Hour, Minute, Second int64 }
 
-var Immediate = Schedule{-1, -1, -1, -1, -1, -1}
+var (
+	Immediate = Schedule{-1, -1, -1, -1, -1, -1}
+	Yearly    = Schedule{1, 1, -1, 0, 0, 0}
+	Monthly   = Schedule{-1, 1, -1, 0, 0, 0}
+	Weekly    = Schedule{-1, -1, 1, 0, 0, 0}
+	Daily     = Schedule{-1, -1, -1, 0, 0, 0}
+	Hourly    = Schedule{-1, -1, -1, -1, 0, 0}
+	Minutely  = Schedule{-1, -1, -1, -1, -1, 0}
+)
 
 func (s Schedule) Next(t time.Time) time.Time {
+	t = t.Add(1 * time.Second)
+
 	added := false
 
 wrap:
