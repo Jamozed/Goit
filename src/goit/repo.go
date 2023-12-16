@@ -142,6 +142,9 @@ func DelRepo(rid int64) error {
 		return err
 	}
 
+	Cron.RemoveFor(rid)
+	Cron.Update()
+
 	return nil
 }
 

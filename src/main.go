@@ -110,8 +110,6 @@ func main() {
 		r.Post("/user/edit", user.HandleEdit)
 		r.Get("/repo/create", repo.HandleCreate)
 		r.Post("/repo/create", repo.HandleCreate)
-		r.Get("/repo/import", repo.HandleImport)
-		r.Post("/repo/import", repo.HandleImport)
 		r.Get("/admin", admin.HandleIndex)
 		r.Get("/admin/users", admin.HandleUsers)
 		r.Get("/admin/user/create", admin.HandleUserCreate)

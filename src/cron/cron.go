@@ -7,6 +7,7 @@ import (
 	"log"
 	"slices"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/Jamozed/Goit/src/util"
@@ -16,7 +17,7 @@ type Cron struct {
 	jobs    []Job
 	stop    chan struct{}
 	update  chan struct{}
-	running bool
+	running atomic.Bool
 	mutex   sync.Mutex
 	lastId  uint64
 	waiter  sync.WaitGroup
@@ -24,6 +25,7 @@ type Cron struct {
 
 type Job struct {
 	id       uint64
+	rid      int64
 	schedule Schedule
 	next     time.Time
 	fn       func()
@@ -45,11 +47,9 @@ func (c *Cron) Start() {
 	defer c.mutex.Unlock()
 	defer util.Debugln("[cron.Start] Cron mutex unlock")
 
-	if c.running {
+	if !c.running.CompareAndSwap(false, true) {
 		return
 	}
-
-	c.running = true
 
 	for _, job := range c.jobs {
 		job.next = job.schedule.Next(time.Now().UTC())
@@ -85,12 +85,13 @@ func (c *Cron) Start() {
 						break
 					}
 
-					log.Println("[cron] running job", job.id)
+					log.Println("[cron] running job", job.id, job.rid)
 
+					j := job
 					c.waiter.Add(1)
 					go func() {
 						defer c.waiter.Done()
-						job.fn()
+						j.fn()
 					}()
 
 					if !job.schedule.IsImmediate() {
@@ -101,8 +102,8 @@ func (c *Cron) Start() {
 
 				c.jobs = tmp
 
-				c.mutex.Unlock()
 				util.Debugln("[cron.now] Cron mutex unlock")
+				c.mutex.Unlock()
 
 				c._update()
 
@@ -111,10 +112,12 @@ func (c *Cron) Start() {
 
 				c.mutex.Lock()
 				util.Debugln("[cron.stop] Cron mutex lock")
+
 				c.waiter.Wait()
-				c.running = false
-				c.mutex.Unlock()
+				c.running.Store(false)
+
 				util.Debugln("[cron.stop] Cron mutex unlock")
+				c.mutex.Unlock()
 
 				return
 
@@ -126,12 +129,7 @@ func (c *Cron) Start() {
 }
 
 func (c *Cron) Stop() {
-	c.mutex.Lock()
-	util.Debugln("[cron.Stop] Cron mutex lock")
-	defer c.mutex.Unlock()
-	defer util.Debugln("[cron.Stop] Cron mutex unlock")
-
-	if !c.running {
+	if !c.running.Load() {
 		return
 	}
 
@@ -139,12 +137,7 @@ func (c *Cron) Stop() {
 }
 
 func (c *Cron) Update() {
-	c.mutex.Lock()
-	util.Debugln("[cron.Update] Cron mutex lock")
-	defer c.mutex.Unlock()
-	defer util.Debugln("[cron.Update] Cron mutex unlock")
-
-	if !c.running {
+	if !c.running.Load() {
 		return
 	}
 
@@ -163,7 +156,7 @@ func (c *Cron) _update() {
 	})
 }
 
-func (c *Cron) Add(schedule Schedule, fn func()) uint64 {
+func (c *Cron) Add(rid int64, schedule Schedule, fn func()) uint64 {
 	c.mutex.Lock()
 	util.Debugln("[cron.Add] Cron mutex lock")
 	defer c.mutex.Unlock()
@@ -171,9 +164,27 @@ func (c *Cron) Add(schedule Schedule, fn func()) uint64 {
 
 	c.lastId += 1
 
-	job := Job{id: c.lastId, schedule: schedule, fn: fn}
+	job := Job{id: c.lastId, rid: rid, schedule: schedule, fn: fn}
 	job.next = job.schedule.Next(time.Now().UTC())
 	c.jobs = append(c.jobs, job)
 
 	return job.id
+}
+
+func (c *Cron) RemoveFor(rid int64) {
+	c.mutex.Lock()
+	util.Debugln("[cron.RemoveFor] Cron mutex lock")
+	defer c.mutex.Unlock()
+	defer util.Debugln("[cron.RemoveFor] Cron mutex unlock")
+
+	tmp := c.jobs[:0]
+	for _, job := range c.jobs {
+		if job.rid != rid {
+			tmp = append(tmp, job)
+		} else {
+			log.Println("[cron] removing job", job.id, "for", job.rid)
+		}
+	}
+
+	c.jobs = tmp
 }

@@ -32,6 +32,22 @@
 					</td>
 				</tr>
 				<tr>
+					<td style="text-align: right;"><label for="url">URL</label></td>
+					<td><input type="text" name="url"></td>
+				</tr>
+				<!-- <tr>
+					<td style="text-align: right;"><label for="username">Username</label></td>
+					<td><input type="text" name="username"></td>
+				</tr>
+				<tr>
+					<td style="text-align: right;"><label for="password">Password</label></td>
+					<td><input type="password" name="password"></td>
+				</tr> -->
+				<tr>
+					<td style="text-align: right;"><label for="mirror">Mirror</label></td>
+					<td><input type="checkbox" name="mirror" value="mirror" {{if .IsMirror}}checked{{end}}></td>
+				</tr>
+				<tr>
 					<td></td>
 					<td>
 						<input type="submit" value="Create">

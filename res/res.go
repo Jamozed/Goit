@@ -52,9 +52,6 @@ var RepoHeader string
 //go:embed repo/create.html
 var RepoCreate string
 
-//go:embed repo/import.html
-var RepoImport string
-
 //go:embed repo/edit.html
 var RepoEdit string
 

@@ -21,14 +21,23 @@ table input { border: 2px solid #333333; border-radius: 3px; background-color: #
 table input[type="text"] { color: #888888; width: 24em; }
 table input[type="password"] { color: #888888; width: 24em; }
 table input[type="submit"] { color: #FF7E00; padding: 2px 1.6em; }
+table input[type="checkbox"] {
+	appearance: none; border: 2px solid #333333; border-radius: 3px; display:block; height: 1.375rem; margin: 0;
+	padding: 2px; width: 1.375rem;
+}
+table input[type="checkbox"]:hover { background-color: #222222; cursor: pointer; }
+table input[type="checkbox"]::after { content: ""; display: none; position:relative; }
+table input[type="checkbox"]:checked::after {
+	display: block; background-color: #FF7E00; border: solid #FF7E00; border-radius: 3px; height: 60%; width: 60%;
+}
 
 table select {
 	border: 2px solid #333333; border-radius: 3px; background-color: #111111; color: #888888; padding: 2px;
 	width: 24em;
 }
 table textarea {
-	border: 2px solid #333333; border-radius: 3px; background-color: #111111; color: #888888; max-height: 18rem;
-	min-height: 6rem; padding: 2px; resize: vertical; width: 24em;
+	border: 2px solid #333333; border-radius: 3px; background-color: #111111; color: #888888; display: block;
+	max-height: 18rem; min-height: 6rem; padding: 2px; resize: vertical; width: 24em;
 }
 
 .term-fg1 { font-weight: bold; } /* Bold */

@@ -119,7 +119,7 @@ func Goit(conf string) (err error) {
 	Cron.Start()
 
 	/* Periodically clean up expired sessions */
-	Cron.Add(cron.Hourly, func() { CleanupSessions() })
+	Cron.Add(-1, cron.Hourly, CleanupSessions)
 
 	/* Add cron jobs for mirror repositories */
 	repos, err := GetRepos()
@@ -129,11 +129,12 @@ func Goit(conf string) (err error) {
 
 	for _, r := range repos {
 		if r.IsMirror {
-			util.Debugln("Adding cron job for", r.Name)
-			Cron.Add(cron.Daily, func() {
+			util.Debugln("Adding mirror cron job for", r.Name)
+			Cron.Add(r.Id, cron.Daily, func() {
 				if err := Pull(r.Id); err != nil {
 					log.Println("[cron:mirror]", err.Error())
 				}
+				log.Println("[cron:mirror] updated", r.Name)
 			})
 		}
 	}
