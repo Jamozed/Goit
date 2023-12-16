@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"slices"
 
+	"github.com/Jamozed/Goit/src/cron"
 	"github.com/Jamozed/Goit/src/goit"
 	"github.com/Jamozed/Goit/src/util"
 	"github.com/go-chi/chi/v5"
@@ -60,9 +61,9 @@ func HandleEdit(w http.ResponseWriter, r *http.Request) {
 		Editable                      bool
 
 		Edit struct {
-			Id, Owner, Name, Description string
-			IsPrivate                    bool
-			Message                      string
+			Id, Owner, Name, Description, Upstream string
+			IsPrivate, IsMirror                    bool
+			Message                                string
 		}
 
 		Transfer struct{ Owner, Message string }
@@ -83,7 +84,9 @@ func HandleEdit(w http.ResponseWriter, r *http.Request) {
 	data.Edit.Owner = owner.FullName + " (" + owner.Name + ")[" + fmt.Sprint(owner.Id) + "]"
 	data.Edit.Name = repo.Name
 	data.Edit.Description = repo.Description
+	data.Edit.Upstream = repo.Upstream
 	data.Edit.IsPrivate = repo.IsPrivate
+	data.Edit.IsMirror = repo.IsMirror
 
 	gr, err := git.PlainOpen(goit.RepoPath(repo.Name, true))
 	if err != nil {
@@ -113,7 +116,9 @@ func HandleEdit(w http.ResponseWriter, r *http.Request) {
 		case "edit":
 			data.Edit.Name = r.FormValue("reponame")
 			data.Edit.Description = r.FormValue("description")
+			data.Edit.Upstream = r.FormValue("upstream")
 			data.Edit.IsPrivate = r.FormValue("visibility") == "private"
+			data.Edit.IsMirror = r.FormValue("mirror") == "mirror"
 
 			if data.Edit.Name == "" {
 				data.Edit.Message = "Name cannot be empty"
@@ -128,12 +133,37 @@ func HandleEdit(w http.ResponseWriter, r *http.Request) {
 			} else if len(data.Edit.Description) > 256 {
 				data.Edit.Message = "Description cannot exceed 256 characters"
 			} else if err := goit.UpdateRepo(repo.Id, goit.Repo{
-				Name: data.Edit.Name, Description: data.Edit.Description, IsPrivate: data.Edit.IsPrivate,
+				Name: data.Edit.Name, Description: data.Edit.Description, Upstream: data.Edit.Upstream,
+				IsPrivate: data.Edit.IsPrivate, IsMirror: data.Edit.IsMirror,
 			}); err != nil {
 				log.Println("[/repo/edit]", err.Error())
 				goit.HttpError(w, http.StatusInternalServerError)
 				return
 			} else {
+				if (data.Edit.Upstream == "" && repo.Upstream != "") || !data.Edit.IsMirror {
+					goit.Cron.RemoveFor(repo.Id)
+					goit.Cron.Update()
+				} else if data.Edit.Upstream != "" && data.Edit.IsMirror &&
+					(data.Edit.Upstream != repo.Upstream || !repo.IsMirror) {
+					goit.Cron.RemoveFor(repo.Id)
+
+					goit.Cron.Add(repo.Id, cron.Immediate, func() {
+						if err := goit.Pull(repo.Id); err != nil {
+							log.Println("[cron:import]", err.Error())
+						}
+						log.Println("[cron:import] imported", data.Name)
+					})
+
+					goit.Cron.Add(repo.Id, cron.Daily, func() {
+						if err := goit.Pull(repo.Id); err != nil {
+							log.Println("[cron:mirror]", err.Error())
+						}
+						log.Println("[cron:mirror] updated", data.Edit.Name)
+					})
+
+					goit.Cron.Update()
+				}
+
 				http.Redirect(w, r, "/"+data.Edit.Name+"/edit", http.StatusFound)
 				return
 			}

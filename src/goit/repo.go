@@ -189,9 +189,46 @@ func UpdateRepo(rid int64, repo Repo) error {
 		}
 	}
 
+	/* If the upstream URL has been removed, remove the remote */
+	if repo.Upstream == "" && old.Upstream != "" {
+		r, err := git.PlainOpen(RepoPath(repo.Name, true))
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+
+		if err := r.DeleteRemote("origin"); err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	/* If the upstream URL has been added or changed, update the remote */
+	if repo.Upstream != "" && repo.Upstream != old.Upstream {
+		r, err := git.PlainOpen(RepoPath(repo.Name, true))
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+
+		if err := r.DeleteRemote("origin"); err != nil && !errors.Is(err, git.ErrRemoteNotFound) {
+			tx.Rollback()
+			return err
+		}
+
+		if _, err := r.CreateRemote(&gitconfig.RemoteConfig{
+			Name:   "origin",
+			URLs:   []string{repo.Upstream},
+			Mirror: util.If(repo.IsMirror, true, false),
+			Fetch:  []gitconfig.RefSpec{gitconfig.RefSpec("+refs/heads/*:refs/heads/*")},
+		}); err != nil {
+			log.Println("[repo/update]", err.Error())
+		}
+	}
+
 	if err := tx.Commit(); err != nil {
 		os.Rename(RepoPath(repo.Name, true), RepoPath(old.Name, true))
-		log.Println("[repo/update]", "error while renaming, check repo \""+old.Name+"\"/\""+repo.Name+"\"")
+		log.Println("[repo/update]", "error while editing, check repo \""+old.Name+"\"/\""+repo.Name+"\"")
 		return err
 	}
 

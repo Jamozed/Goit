@@ -168,6 +168,7 @@ func (c *Cron) Add(rid int64, schedule Schedule, fn func()) uint64 {
 	job.next = job.schedule.Next(time.Now().UTC())
 	c.jobs = append(c.jobs, job)
 
+	log.Println("[cron] added job", job.id, "for", job.rid)
 	return job.id
 }
 
