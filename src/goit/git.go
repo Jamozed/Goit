@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/format/diff"
 	"github.com/go-git/go-git/v5/plumbing/object"
 )
@@ -226,7 +227,13 @@ type DiffStat struct {
 	IsBinary   bool
 }
 
+var diffs = map[plumbing.Hash][]DiffStat{}
+
 func DiffStats(c *object.Commit) ([]DiffStat, error) {
+	if stats, ok := diffs[c.Hash]; ok {
+		return stats, nil
+	}
+
 	from, err := c.Tree()
 	if err != nil {
 		return nil, err
@@ -303,5 +310,6 @@ func DiffStats(c *object.Commit) ([]DiffStat, error) {
 		stats = append(stats, stat)
 	}
 
+	diffs[c.Hash] = stats
 	return stats, nil
 }
