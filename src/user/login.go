@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"html/template"
 	"log"
-	"net"
 	"net/http"
 	"time"
 
@@ -46,10 +45,7 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 			goto execute
 		}
 
-		ip, _, _ := net.SplitHostPort(r.RemoteAddr)
-		if fip := r.Header.Get("X-Forwarded-For"); fip != "" {
-			ip = fip
-		}
+		ip := goit.Ip(r)
 
 		user, err := goit.GetUserByName(data.Name)
 		if err != nil {

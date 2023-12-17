@@ -6,6 +6,7 @@ package goit
 import (
 	"fmt"
 	"html/template"
+	"net"
 	"net/http"
 
 	"github.com/Jamozed/Goit/res"
@@ -49,4 +50,13 @@ func HttpError(w http.ResponseWriter, code int) {
 
 func HttpNotFound(w http.ResponseWriter, r *http.Request) {
 	HttpError(w, http.StatusNotFound)
+}
+
+func Ip(r *http.Request) string {
+	if fip := r.Header.Get("X-Forwarded-For"); Conf.IpForwarded && fip != "" {
+		return fip
+	}
+
+	ip, _, _ := net.SplitHostPort(r.RemoteAddr)
+	return ip
 }

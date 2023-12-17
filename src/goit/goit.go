@@ -28,23 +28,25 @@ import (
 )
 
 type Config struct {
-	DataPath   string `json:"data_path"`
-	HttpAddr   string `json:"http_addr"`
-	HttpPort   string `json:"http_port"`
-	GitPath    string `json:"git_path"`
-	IpSessions bool   `json:"ip_sessions"`
-	UsesHttps  bool   `json:"uses_https"`
-	CsrfSecret string `json:"csrf_secret"`
+	DataPath    string `json:"data_path"`
+	HttpAddr    string `json:"http_addr"`
+	HttpPort    string `json:"http_port"`
+	GitPath     string `json:"git_path"`
+	IpSessions  bool   `json:"ip_sessions"`
+	UsesHttps   bool   `json:"uses_https"`
+	IpForwarded bool   `json:"ip_forwarded"`
+	CsrfSecret  string `json:"csrf_secret"`
 }
 
 var Conf = Config{
-	DataPath:   filepath.Join(xdg.DataHome, "goit"),
-	HttpAddr:   "",
-	HttpPort:   "8080",
-	GitPath:    "git",
-	IpSessions: true,
-	UsesHttps:  false,
-	CsrfSecret: "1234567890abcdef1234567890abcdef",
+	DataPath:    filepath.Join(xdg.DataHome, "goit"),
+	HttpAddr:    "",
+	HttpPort:    "8080",
+	GitPath:     "git",
+	IpSessions:  true,
+	UsesHttps:   false,
+	IpForwarded: false,
+	CsrfSecret:  "1234567890abcdef1234567890abcdef",
 }
 
 var db *sql.DB

@@ -84,12 +84,7 @@ func main() {
 	h := chi.NewRouter()
 	h.NotFound(goit.HttpNotFound)
 	h.Use(middleware.RedirectSlashes)
-
-	if util.Debug {
-		h.Use(middleware.Logger)
-	} else {
-		h.Use(logHttp)
-	}
+	h.Use(logHttp)
 
 	protect = csrf.Protect(
 		[]byte(goit.Conf.CsrfSecret), csrf.FieldName("csrf.Token"), csrf.CookieName("csrf"),
@@ -164,22 +159,28 @@ func main() {
 
 	/* Listen for HTTP on the specified port */
 	if err := http.ListenAndServe(goit.Conf.HttpAddr+":"+goit.Conf.HttpPort, h); err != nil {
-		log.Fatalln("[HTTP]", err.Error())
+		log.Fatalln("[http]", err.Error())
 	}
 }
 
-func logHttp(handler http.Handler) http.Handler {
+func logHttp(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Println("[HTTP]", r.RemoteAddr, r.Method, r.URL.String())
-		// log.Println("[HTTP]", r.Header)
-		handler.ServeHTTP(w, r)
+		t1 := time.Now()
+		next.ServeHTTP(w, r)
+
+		ip := r.RemoteAddr
+		if fip := r.Header.Get("X-Forwarded-For"); goit.Conf.IpForwarded && fip != "" {
+			ip = fip
+		}
+
+		log.Println("[http]", r.Method, r.URL.String(), "from", ip, "in", time.Since(t1))
 	})
 }
 
 func handleStyle(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/css")
 	if _, err := w.Write([]byte(res.Style)); err != nil {
-		log.Println("[Style]", err.Error())
+		log.Println("[style]", err.Error())
 	}
 }
 
@@ -189,7 +190,7 @@ func handleFavicon(w http.ResponseWriter, r *http.Request) {
 	} else {
 		w.Header().Set("Content-Type", "image/png")
 		if _, err := w.Write(goit.Favicon); err != nil {
-			log.Println("[Favicon]", err.Error())
+			log.Println("[favicon]", err.Error())
 		}
 	}
 }

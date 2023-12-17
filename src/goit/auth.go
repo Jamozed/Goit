@@ -8,7 +8,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log"
-	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -183,7 +182,8 @@ func Auth(w http.ResponseWriter, r *http.Request, renew bool) (bool, *User, erro
 
 	/* Renew the session if appropriate */
 	if renew && time.Until(s.Expiry) < 24*time.Hour {
-		ip, _, _ := net.SplitHostPort(r.RemoteAddr)
+		ip := Ip(r)
+
 		s1, err := NewSession(uid, ip, time.Now().Add(2*24*time.Hour))
 		if err != nil {
 			log.Println("[auth/renew]", err.Error())
