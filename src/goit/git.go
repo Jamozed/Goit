@@ -263,7 +263,9 @@ func DiffStats(c *object.Commit) ([]DiffStat, error) {
 		}
 
 		from, to := fp.Files()
-		if from == nil /* Added */ {
+		if from == nil && to == nil {
+			continue
+		} else if from == nil /* Added */ {
 			stat.Name = to.Path()
 			stat.Status = "A"
 		} else if to == nil /* Deleted */ {
