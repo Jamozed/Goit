@@ -46,6 +46,11 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 			goto execute
 		}
 
+		ip, _, _ := net.SplitHostPort(r.RemoteAddr)
+		if fip := r.Header.Get("X-Forwarded-For"); fip != "" {
+			ip = fip
+		}
+
 		user, err := goit.GetUserByName(data.Name)
 		if err != nil {
 			log.Println("[/user/login]", err.Error())
@@ -54,10 +59,12 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 		} else if user == nil || !bytes.Equal(goit.Hash(password, user.Salt), user.Pass) {
 			data.Message = "Invalid credentials"
 			data.FocusPw = true
+
+			log.Println("[login] login attempt with", data.Name, "from", ip)
+
 			goto execute
 		}
 
-		ip, _, _ := net.SplitHostPort(r.RemoteAddr)
 		sess, err := goit.NewSession(user.Id, ip, time.Now().Add(2*24*time.Hour))
 		if err != nil {
 			log.Println("[/user/login]", err.Error())
