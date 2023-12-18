@@ -10,7 +10,9 @@ import (
 	"net/http"
 	"slices"
 	"strconv"
+	"strings"
 
+	"github.com/Jamozed/Goit/src/cron"
 	"github.com/Jamozed/Goit/src/goit"
 	"github.com/Jamozed/Goit/src/util"
 	"github.com/dustin/go-humanize"
@@ -68,7 +70,7 @@ func HandleRepos(w http.ResponseWriter, r *http.Request) {
 func HandleRepoEdit(w http.ResponseWriter, r *http.Request) {
 	auth, user, err := goit.Auth(w, r, true)
 	if err != nil {
-		log.Println("[admin/users]", err.Error())
+		log.Println("[/admin/repo/edit]", err.Error())
 		goit.HttpError(w, http.StatusInternalServerError)
 		return
 	}
@@ -78,7 +80,7 @@ func HandleRepoEdit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := strconv.ParseInt(r.URL.Query().Get("repo"), 10, 64)
+	id, err := strconv.ParseInt(r.FormValue("repo"), 10, 64)
 	if err != nil {
 		goit.HttpError(w, http.StatusNotFound)
 		return
@@ -101,7 +103,6 @@ func HandleRepoEdit(w http.ResponseWriter, r *http.Request) {
 		return
 	} else if owner == nil {
 		log.Println("[/admin/repo/edit]", repo.Id, "is owned by a nonexistent user")
-		/* TODO have admin adopt the orphaned repository */
 		owner = &goit.User{}
 	}
 
@@ -109,8 +110,9 @@ func HandleRepoEdit(w http.ResponseWriter, r *http.Request) {
 		Title, Name string
 
 		Edit struct {
-			Id, Owner, Name, Description, Message string
-			IsPrivate                             bool
+			Id, Owner, Name, Description, Upstream string
+			IsPrivate, IsMirror                    bool
+			Message                                string
 		}
 
 		Transfer struct{ Owner, Message string }
@@ -128,14 +130,18 @@ func HandleRepoEdit(w http.ResponseWriter, r *http.Request) {
 	data.Edit.Owner = owner.FullName + " (" + owner.Name + ")[" + fmt.Sprint(owner.Id) + "]"
 	data.Edit.Name = repo.Name
 	data.Edit.Description = repo.Description
+	data.Edit.Upstream = repo.Upstream
 	data.Edit.IsPrivate = repo.IsPrivate
+	data.Edit.IsMirror = repo.IsMirror
 
 	if r.Method == http.MethodPost {
 		switch r.FormValue("action") {
 		case "edit":
 			data.Edit.Name = r.FormValue("reponame")
 			data.Edit.Description = r.FormValue("description")
+			data.Edit.Upstream = r.FormValue("upstream")
 			data.Edit.IsPrivate = r.FormValue("visibility") == "private"
+			data.Edit.IsMirror = r.FormValue("mirror") == "mirror"
 
 			if data.Edit.Name == "" {
 				data.Edit.Message = "Name cannot be empty"
@@ -145,17 +151,42 @@ func HandleRepoEdit(w http.ResponseWriter, r *http.Request) {
 				log.Println("[/admin/repo/edit]", err.Error())
 				goit.HttpError(w, http.StatusInternalServerError)
 				return
-			} else if exists && data.Edit.Name != repo.Name {
+			} else if exists && !strings.EqualFold(data.Edit.Name, repo.Name) {
 				data.Edit.Message = "Name \"" + data.Edit.Name + "\" is taken"
 			} else if len(data.Edit.Description) > 256 {
 				data.Edit.Message = "Description cannot exceed 256 characters"
 			} else if err := goit.UpdateRepo(repo.Id, goit.Repo{
-				Name: data.Edit.Name, Description: data.Edit.Description, IsPrivate: data.Edit.IsPrivate,
+				Name: data.Edit.Name, Description: data.Edit.Description, Upstream: data.Edit.Upstream,
+				IsPrivate: data.Edit.IsPrivate, IsMirror: data.Edit.IsMirror,
 			}); err != nil {
 				log.Println("[/admin/repo/edit]", err.Error())
 				goit.HttpError(w, http.StatusInternalServerError)
 				return
 			} else {
+				if (data.Edit.Upstream == "" && repo.Upstream != "") || !data.Edit.IsMirror {
+					goit.Cron.RemoveFor(repo.Id)
+					goit.Cron.Update()
+				} else if data.Edit.Upstream != "" && data.Edit.IsMirror &&
+					(data.Edit.Upstream != repo.Upstream || !repo.IsMirror) {
+					goit.Cron.RemoveFor(repo.Id)
+
+					goit.Cron.Add(repo.Id, cron.Immediate, func() {
+						if err := goit.Pull(repo.Id); err != nil {
+							log.Println("[cron:import]", err.Error())
+						}
+						log.Println("[cron:import] imported", data.Name)
+					})
+
+					goit.Cron.Add(repo.Id, cron.Daily, func() {
+						if err := goit.Pull(repo.Id); err != nil {
+							log.Println("[cron:mirror]", err.Error())
+						}
+						log.Println("[cron:mirror] updated", data.Edit.Name)
+					})
+
+					goit.Cron.Update()
+				}
+
 				data.Edit.Message = "Repository \"" + repo.Name + "\" updated successfully"
 			}
 

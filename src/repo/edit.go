@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"slices"
+	"strings"
 
 	"github.com/Jamozed/Goit/src/cron"
 	"github.com/Jamozed/Goit/src/goit"
@@ -24,12 +25,12 @@ import (
 func HandleEdit(w http.ResponseWriter, r *http.Request) {
 	auth, user, err := goit.Auth(w, r, true)
 	if err != nil {
-		log.Println("[admin/users]", err.Error())
+		log.Println("[/repo/edit]", err.Error())
 		goit.HttpError(w, http.StatusInternalServerError)
 		return
 	}
 
-	if !auth || !user.IsAdmin {
+	if !auth {
 		goit.HttpError(w, http.StatusNotFound)
 		return
 	}
@@ -128,7 +129,7 @@ func HandleEdit(w http.ResponseWriter, r *http.Request) {
 				log.Println("[/repo/edit]", err.Error())
 				goit.HttpError(w, http.StatusInternalServerError)
 				return
-			} else if exists && data.Edit.Name != repo.Name {
+			} else if exists && !strings.EqualFold(data.Edit.Name, repo.Name) {
 				data.Edit.Message = "Name \"" + data.Edit.Name + "\" is taken"
 			} else if len(data.Edit.Description) > 256 {
 				data.Edit.Message = "Description cannot exceed 256 characters"
