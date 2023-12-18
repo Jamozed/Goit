@@ -48,12 +48,13 @@ func HandleTree(w http.ResponseWriter, r *http.Request) {
 		Readme, Licence               string
 		Path, Size                    string
 		Files                         []row
-		Editable                      bool
+		Editable, IsMirror            bool
 		HtmlPath                      template.HTML
 	}{
 		Title: repo.Name + " - Tree", Name: repo.Name, Description: repo.Description,
 		Url:      util.If(goit.Conf.UsesHttps, "https://", "http://") + r.Host + "/" + repo.Name,
 		Editable: (auth && repo.OwnerId == user.Id),
+		IsMirror: repo.IsMirror,
 	}
 
 	parts := strings.Split(tpath, "/")

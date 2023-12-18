@@ -52,11 +52,12 @@ func HandleCommit(w http.ResponseWriter, r *http.Request) {
 		Stats                         []stat
 		Summary                       string
 		Diff                          template.HTML
-		Editable                      bool
+		Editable, IsMirror            bool
 	}{
 		Title: repo.Name + " - Log", Name: repo.Name, Description: repo.Description,
 		Url:      util.If(goit.Conf.UsesHttps, "https://", "http://") + r.Host + "/" + repo.Name,
 		Editable: (auth && repo.OwnerId == user.Id),
+		IsMirror: repo.IsMirror,
 	}
 
 	gr, err := git.PlainOpen(goit.RepoPath(repo.Name, true))

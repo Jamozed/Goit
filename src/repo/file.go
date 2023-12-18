@@ -46,12 +46,13 @@ func HandleFile(w http.ResponseWriter, r *http.Request) {
 		Path, LineC, Size, Mode       string
 		Lines                         []string
 		Body                          string
-		Editable                      bool
+		Editable, IsMirror            bool
 		HtmlPath                      template.HTML
 	}{
 		Title: repo.Name + " - File", Name: repo.Name, Description: repo.Description,
 		Url:      util.If(goit.Conf.UsesHttps, "https://", "http://") + r.Host + "/" + repo.Name,
 		Editable: (auth && repo.OwnerId == user.Id),
+		IsMirror: repo.IsMirror,
 	}
 
 	gr, err := git.PlainOpen(goit.RepoPath(repo.Name, true))

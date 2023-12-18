@@ -3,7 +3,7 @@
 		<td rowspan="2">
 			<a href="/"><img style="max-height: 24px;" src="/static/favicon.png"></a>
 		</td>
-		<td><h1>{{.Name}}</h1></td>
+		<td><h1 style="display: inline;">{{.Name}}</h1>{{if .IsMirror}} (mirror){{end}}</td>
 	</tr>
 	<tr>
 		<td>{{.Description}}</td>

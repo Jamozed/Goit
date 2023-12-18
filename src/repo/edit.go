@@ -59,7 +59,7 @@ func HandleEdit(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		Title, Name, Description, Url string
 		Readme, Licence               string
-		Editable                      bool
+		Editable, IsMirror            bool
 
 		Edit struct {
 			Id, Owner, Name, Description, Upstream string
@@ -77,6 +77,7 @@ func HandleEdit(w http.ResponseWriter, r *http.Request) {
 		Description: repo.Description,
 		Url:         util.If(goit.Conf.UsesHttps, "https://", "http://") + r.Host + "/" + repo.Name,
 		Editable:    (auth && repo.OwnerId == user.Id),
+		IsMirror:    repo.IsMirror,
 
 		CsrfField: csrf.TemplateField(r),
 	}
