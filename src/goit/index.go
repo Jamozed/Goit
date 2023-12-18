@@ -7,6 +7,8 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/Jamozed/Goit/src/util"
@@ -36,54 +38,54 @@ func HandleIndex(w http.ResponseWriter, r *http.Request) {
 		data.Admin = user.IsAdmin
 	}
 
-	rows, err := db.Query("SELECT id, owner_id, name, description, is_private FROM repos")
+	repos, err := GetRepos()
 	if err != nil {
 		log.Println("[/]", err.Error())
 		HttpError(w, http.StatusInternalServerError)
 		return
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		repo := Repo{}
-
-		if err := rows.Scan(&repo.Id, &repo.OwnerId, &repo.Name, &repo.Description, &repo.IsPrivate); err != nil {
-			log.Println("[/]", err.Error())
-		} else if !repo.IsPrivate || (auth && user.Id == repo.OwnerId) {
-			owner, err := GetUser(repo.OwnerId)
-			if err != nil {
-				log.Println("[/]", err.Error())
-			}
-
-			/* Only display repositories matching user query if present */
-			if userQuery != "" && owner.Name != userQuery {
-				continue
-			}
-
-			var lastCommit string
-			if gr, err := git.PlainOpen(RepoPath(repo.Name, true)); err != nil {
-				log.Println("[/]", err.Error())
-			} else if ref, err := gr.Head(); err != nil {
-				if !errors.Is(err, plumbing.ErrReferenceNotFound) {
-					log.Println("[/]", err.Error())
-				}
-			} else if commit, err := gr.CommitObject(ref.Hash()); err != nil {
-				log.Println("[/]", err.Error())
-			} else {
-				lastCommit = commit.Author.When.UTC().Format(time.DateTime)
-			}
-
-			data.Repos = append(data.Repos, row{
-				Name: repo.Name, Description: repo.Description, Owner: owner.Name,
-				Visibility: util.If(repo.IsPrivate, "private", "public"), LastCommit: lastCommit,
-			})
+	rtemp := repos[:0]
+	for _, repo := range repos {
+		if !repo.IsPrivate || (auth && user.Id == repo.OwnerId) {
+			rtemp = append(rtemp, repo)
 		}
 	}
+	repos = rtemp
 
-	if err := rows.Err(); err != nil {
-		log.Println("[/]", err.Error())
-		HttpError(w, http.StatusInternalServerError)
-		return
+	sort.Slice(repos, func(i, j int) bool {
+		/* TODO sort capitals like AaBbCc etc. */
+		return strings.ToLower(repos[i].Name) < strings.ToLower(repos[j].Name)
+	})
+
+	for _, repo := range repos {
+		owner, err := GetUser(repo.OwnerId)
+		if err != nil {
+			log.Println("[/]", err.Error())
+		}
+
+		/* Only display repositories matching user query if present */
+		if userQuery != "" && owner.Name != userQuery {
+			continue
+		}
+
+		var lastCommit string
+		if gr, err := git.PlainOpen(RepoPath(repo.Name, true)); err != nil {
+			log.Println("[/]", err.Error())
+		} else if ref, err := gr.Head(); err != nil {
+			if !errors.Is(err, plumbing.ErrReferenceNotFound) {
+				log.Println("[/]", err.Error())
+			}
+		} else if commit, err := gr.CommitObject(ref.Hash()); err != nil {
+			log.Println("[/]", err.Error())
+		} else {
+			lastCommit = commit.Author.When.UTC().Format(time.DateTime)
+		}
+
+		data.Repos = append(data.Repos, row{
+			Name: repo.Name, Description: repo.Description, Owner: owner.Name,
+			Visibility: util.If(repo.IsPrivate, "private", "public"), LastCommit: lastCommit,
+		})
 	}
 
 	if err := Tmpl.ExecuteTemplate(w, "index", data); err != nil {
