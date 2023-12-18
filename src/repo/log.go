@@ -91,7 +91,6 @@ func HandleLog(w http.ResponseWriter, r *http.Request) {
 	} else if err := iter.ForEach(func(c *object.Commit) error {
 		var files, additions, deletions int
 
-		/* TODO speed this up or cache it, diff calculations are quite slow */
 		if stats, err := goit.DiffStats(c); err != nil {
 			log.Println("[/repo/log]", err.Error())
 		} else if tpath != "" {

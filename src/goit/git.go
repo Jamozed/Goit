@@ -13,6 +13,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -228,11 +229,14 @@ type DiffStat struct {
 }
 
 var diffs = map[plumbing.Hash][]DiffStat{}
+var diffsLock sync.RWMutex
 
 func DiffStats(c *object.Commit) ([]DiffStat, error) {
+	diffsLock.RLock()
 	if stats, ok := diffs[c.Hash]; ok {
 		return stats, nil
 	}
+	diffsLock.RUnlock()
 
 	from, err := c.Tree()
 	if err != nil {
@@ -310,6 +314,9 @@ func DiffStats(c *object.Commit) ([]DiffStat, error) {
 		stats = append(stats, stat)
 	}
 
+	diffsLock.Lock()
 	diffs[c.Hash] = stats
+	diffsLock.Unlock()
+
 	return stats, nil
 }
