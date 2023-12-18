@@ -234,6 +234,7 @@ var diffsLock sync.RWMutex
 func DiffStats(c *object.Commit) ([]DiffStat, error) {
 	diffsLock.RLock()
 	if stats, ok := diffs[c.Hash]; ok {
+		diffsLock.RUnlock()
 		return stats, nil
 	}
 	diffsLock.RUnlock()
