@@ -82,7 +82,8 @@ func (c *Cron) Start() {
 				tmp := c.jobs[:0]
 				for _, job := range c.jobs {
 					if job.next.After(now) || job.next.IsZero() {
-						break
+						tmp = append(tmp, job)
+						continue
 					}
 
 					log.Println("[cron] running job", job.id, job.rid)
