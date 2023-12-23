@@ -4,13 +4,13 @@ go 1.21.0
 
 require (
 	github.com/adrg/xdg v0.4.0
-	github.com/buildkite/terminal-to-html/v3 v3.9.1
+	github.com/buildkite/terminal-to-html/v3 v3.10.1
 	github.com/dustin/go-humanize v1.0.1
-	github.com/go-chi/chi/v5 v5.0.10
-	github.com/go-git/go-git/v5 v5.10.1
+	github.com/go-chi/chi/v5 v5.0.11
+	github.com/go-git/go-git/v5 v5.11.0
 	github.com/gorilla/csrf v1.7.2
-	github.com/mattn/go-sqlite3 v1.14.18
-	golang.org/x/crypto v0.16.0
+	github.com/mattn/go-sqlite3 v1.14.19
+	golang.org/x/crypto v0.17.0
 )
 
 require (
@@ -33,6 +33,6 @@ require (
 	golang.org/x/mod v0.14.0 // indirect
 	golang.org/x/net v0.19.0 // indirect
 	golang.org/x/sys v0.15.0 // indirect
-	golang.org/x/tools v0.16.0 // indirect
+	golang.org/x/tools v0.16.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )
