@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
 )
 
 func HandleRefs(w http.ResponseWriter, r *http.Request) {
@@ -93,26 +95,41 @@ func HandleRefs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if iter, err := gr.Tags(); err != nil {
-		log.Println("[Repo:Refs]", err.Error())
+		log.Println("[/repo/refs]", err.Error())
 		goit.HttpError(w, http.StatusInternalServerError)
 		return
 	} else if err := iter.ForEach(func(r *plumbing.Reference) error {
-		commit, err := gr.CommitObject(r.Hash())
-		if err != nil {
-			return err
+		var c *object.Commit
+
+		if tag, err := gr.TagObject(r.Hash()); err != nil {
+			if !errors.Is(err, plumbing.ErrObjectNotFound) {
+				return err
+			}
+		} else {
+			if c, err = gr.CommitObject(tag.Target); err != nil {
+				return err
+			}
+		}
+
+		if c == nil {
+			if c, err = gr.CommitObject(r.Hash()); err != nil {
+				return err
+			}
 		}
 
 		data.Tags = append(data.Tags, row{
-			Name: r.Name().Short(), Message: strings.SplitN(commit.Message, "\n", 2)[0], Author: commit.Author.Name,
-			LastCommit: commit.Author.When.UTC().Format(time.DateTime), Hash: r.Hash().String(),
+			Name: r.Name().Short(), Message: strings.SplitN(c.Message, "\n", 2)[0], Author: c.Author.Name,
+			LastCommit: c.Author.When.UTC().Format(time.DateTime), Hash: r.Hash().String(),
 		})
 
 		return nil
 	}); err != nil {
-		log.Println("[Repo:Refs]", err.Error())
+		log.Println("[/repo/refs]", err.Error())
 		goit.HttpError(w, http.StatusInternalServerError)
 		return
 	}
+
+	slices.Reverse(data.Tags)
 
 	if err := goit.Tmpl.ExecuteTemplate(w, "repo/refs", data); err != nil {
 		log.Println("[/repo/refs]", err.Error())
