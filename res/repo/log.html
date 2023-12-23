@@ -31,5 +31,20 @@
 				{{end}}
 			</tbody>
 		</table>
+		<footer>
+			{{if gt .PrevOffset 0}}
+				<a href="/{{$.Name}}/log?o={{.PrevOffset}}">[prev]</a>
+			{{else if eq .PrevOffset 0}}
+				<a href="/{{$.Name}}/log">[prev]</a>
+			{{else}}
+				<span>[prev]</span>
+			{{end}}
+			<span>{{.Page}}</span>
+			{{if .NextOffset}}
+				<a href="/{{$.Name}}/log?o={{.NextOffset}}">[next]</a>
+			{{else}}
+				<span>[next]</span>
+			{{end}}
+		</footer>
 	</main>
 </body>

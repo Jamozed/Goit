@@ -6,9 +6,11 @@ package repo
 import (
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -17,8 +19,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/object"
 )
+
+const PAGE = 100
 
 func HandleLog(w http.ResponseWriter, r *http.Request) {
 	auth, user, err := goit.Auth(w, r, true)
@@ -39,15 +42,15 @@ func HandleLog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// var offset uint64 = 0
-	// if o := r.URL.Query().Get("o"); o != "" {
-	// 	if i, err := strconv.ParseUint(o, 10, 64); err != nil {
-	// 		goit.HttpError(w, http.StatusBadRequest)
-	// 		return
-	// 	} else {
-	// 		offset = i
-	// 	}
-	// }
+	offset := int64(0)
+	if o := r.URL.Query().Get("o"); o != "" {
+		if i, err := strconv.ParseInt(o, 10, 64); err != nil {
+			goit.HttpError(w, http.StatusBadRequest)
+			return
+		} else {
+			offset = i
+		}
+	}
 
 	type row struct{ Hash, Date, Message, Author, Files, Additions, Deletions string }
 	data := struct {
@@ -55,11 +58,15 @@ func HandleLog(w http.ResponseWriter, r *http.Request) {
 		Readme, Licence               string
 		Commits                       []row
 		Editable, IsMirror            bool
+		Page, PrevOffset, NextOffset  int64
 	}{
 		Title: repo.Name + " - Log", Name: repo.Name, Description: repo.Description,
-		Url:      util.If(goit.Conf.UsesHttps, "https://", "http://") + r.Host + "/" + repo.Name,
-		Editable: (auth && repo.OwnerId == user.Id),
-		IsMirror: repo.IsMirror,
+		Url:        util.If(goit.Conf.UsesHttps, "https://", "http://") + r.Host + "/" + repo.Name,
+		Editable:   (auth && repo.OwnerId == user.Id),
+		IsMirror:   repo.IsMirror,
+		Page:       offset/PAGE + 1,
+		PrevOffset: util.Max(offset-PAGE, -1),
+		NextOffset: offset + PAGE,
 	}
 
 	gr, err := git.PlainOpen(goit.RepoPath(repo.Name, true))
@@ -78,53 +85,63 @@ func HandleLog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if readme, _ := findReadme(gr, ref); readme != "" {
+	if readme, _ := findPattern(gr, ref, readmePattern); readme != "" {
 		data.Readme = filepath.Join("/", repo.Name, "file", readme)
 	}
-	if licence, _ := findLicence(gr, ref); licence != "" {
+	if licence, _ := findPattern(gr, ref, licencePattern); licence != "" {
 		data.Licence = filepath.Join("/", repo.Name, "file", licence)
 	}
 
-	if iter, err := gr.Log(&git.LogOptions{From: ref.Hash()}); err != nil {
+	if iter, err := gr.Log(&git.LogOptions{
+		From: ref.Hash(), Order: git.LogOrderCommitterTime, PathFilter: func(s string) bool {
+			return tpath == "" || s == tpath || strings.HasPrefix(s, tpath+"/")
+		},
+	}); err != nil {
 		log.Println("[/repo/log]", err.Error())
 		goit.HttpError(w, http.StatusInternalServerError)
 		return
-	} else if err := iter.ForEach(func(c *object.Commit) error {
-		var files, additions, deletions int
+	} else {
+		for i := int64(0); i < offset; i += 1 {
+			if _, err := iter.Next(); err != nil && !errors.Is(err, io.EOF) {
+				log.Println("[/repo/log]", err.Error())
+				goit.HttpError(w, http.StatusInternalServerError)
+				return
+			}
+		}
 
-		if stats, err := goit.DiffStats(c); err != nil {
-			log.Println("[/repo/log]", err.Error())
-		} else if tpath != "" {
-			for _, s := range stats {
-				if s.Name == tpath || strings.HasPrefix(s.Name, tpath+"/") {
-					files += 1
+		for i := 0; i < PAGE; i += 1 {
+			c, err := iter.Next()
+			if errors.Is(err, io.EOF) {
+				data.NextOffset = 0
+				break
+			} else if err != nil {
+				log.Println("[/repo/log]", err.Error())
+				goit.HttpError(w, http.StatusInternalServerError)
+				return
+			}
+
+			var files, additions, deletions int
+
+			if stats, err := goit.DiffStats(c); err != nil {
+				log.Println("[/repo/log]", err.Error())
+			} else {
+				files = len(stats)
+				for _, s := range stats {
 					additions += s.Addition
 					deletions += s.Deletion
 				}
 			}
 
-			if files == 0 {
-				return nil
-			}
-		} else {
-			files = len(stats)
-			for _, s := range stats {
-				additions += s.Addition
-				deletions += s.Deletion
-			}
+			data.Commits = append(data.Commits, row{
+				Hash: c.Hash.String(), Date: c.Author.When.UTC().Format(time.DateTime),
+				Message: strings.SplitN(c.Message, "\n", 2)[0], Author: c.Author.Name, Files: fmt.Sprint(files),
+				Additions: "+" + fmt.Sprint(additions), Deletions: "-" + fmt.Sprint(deletions),
+			})
 		}
 
-		data.Commits = append(data.Commits, row{
-			Hash: c.Hash.String(), Date: c.Author.When.UTC().Format(time.DateTime),
-			Message: strings.SplitN(c.Message, "\n", 2)[0], Author: c.Author.Name, Files: fmt.Sprint(files),
-			Additions: "+" + fmt.Sprint(additions), Deletions: "-" + fmt.Sprint(deletions),
-		})
-
-		return nil
-	}); err != nil {
-		log.Println("[/repo/log]", err.Error())
-		goit.HttpError(w, http.StatusInternalServerError)
-		return
+		if _, err := iter.Next(); errors.Is(err, io.EOF) {
+			data.NextOffset = 0
+		}
 	}
 
 execute:

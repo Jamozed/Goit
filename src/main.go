@@ -86,6 +86,16 @@ func main() {
 	h.Use(middleware.RedirectSlashes)
 	h.Use(logHttp)
 
+	h.Use(func(h http.Handler) http.Handler {
+		return http.TimeoutHandler(h, 90*time.Second,
+			`<!DOCTYPE html><head lang="en-GB">
+		<meta charset="UTF-8"><title>503 Service Unavailable</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<link rel="stylesheet" type="text/css" href="/static/style.css">
+		<link rel="icon" type="image/png" href="/static/favicon.png">
+		</head><body><b>503 Service Unavailable</b></body>`)
+	})
+
 	protect = csrf.Protect(
 		[]byte(goit.Conf.CsrfSecret), csrf.FieldName("csrf.Token"), csrf.CookieName("csrf"),
 		csrf.Secure(util.If(goit.Conf.UsesHttps, true, false)),

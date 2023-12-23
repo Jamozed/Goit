@@ -8,8 +8,6 @@ import (
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/object"
-	"github.com/go-git/go-git/v5/plumbing/storer"
 )
 
 type HeaderFields struct {
@@ -20,54 +18,23 @@ type HeaderFields struct {
 var readmePattern = regexp.MustCompile(`(?i)^readme(?:\.?(?:md|txt))?$`)
 var licencePattern = regexp.MustCompile(`(?i)^licence(?:\.?(?:md|txt))?$`)
 
-func findReadme(gr *git.Repository, ref *plumbing.Reference) (string, error) {
-	commit, err := gr.CommitObject(ref.Hash())
+/* Find a file that matches a regular expression in the root level of a reference. */
+func findPattern(gr *git.Repository, ref *plumbing.Reference, re *regexp.Regexp) (string, error) {
+	c, err := gr.CommitObject(ref.Hash())
 	if err != nil {
 		return "", err
 	}
 
-	iter, err := commit.Files()
+	t, err := c.Tree()
 	if err != nil {
 		return "", err
 	}
 
-	var filename string
-	if err := iter.ForEach(func(f *object.File) error {
-		if readmePattern.MatchString(f.Name) {
-			filename = f.Name
-			return storer.ErrStop
+	for _, e := range t.Entries {
+		if re.MatchString(e.Name) {
+			return e.Name, nil
 		}
-
-		return nil
-	}); err != nil {
-		return "", err
 	}
 
-	return filename, nil
-}
-
-func findLicence(gr *git.Repository, ref *plumbing.Reference) (string, error) {
-	commit, err := gr.CommitObject(ref.Hash())
-	if err != nil {
-		return "", err
-	}
-
-	iter, err := commit.Files()
-	if err != nil {
-		return "", err
-	}
-
-	var filename string
-	if err := iter.ForEach(func(f *object.File) error {
-		if licencePattern.MatchString(f.Name) {
-			filename = f.Name
-			return storer.ErrStop
-		}
-
-		return nil
-	}); err != nil {
-		return "", err
-	}
-
-	return filename, nil
+	return "", nil
 }

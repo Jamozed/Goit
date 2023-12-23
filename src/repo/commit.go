@@ -75,10 +75,10 @@ func HandleCommit(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		if readme, _ := findReadme(gr, ref); readme != "" {
+		if readme, _ := findPattern(gr, ref, readmePattern); readme != "" {
 			data.Readme = filepath.Join("/", repo.Name, "file", readme)
 		}
-		if licence, _ := findLicence(gr, ref); licence != "" {
+		if licence, _ := findPattern(gr, ref, licencePattern); licence != "" {
 			data.Licence = filepath.Join("/", repo.Name, "file", licence)
 		}
 	}

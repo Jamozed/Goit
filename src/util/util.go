@@ -4,6 +4,7 @@
 package util
 
 import (
+	"cmp"
 	"errors"
 	"io/fs"
 	"net/http"
@@ -17,9 +18,22 @@ const ModeNotRegular = os.ModeSymlink | os.ModeDevice | os.ModeNamedPipe | os.Mo
 func If[T any](cond bool, a, b T) T {
 	if cond {
 		return a
-	} else {
-		return b
 	}
+	return b
+}
+
+func Min[T cmp.Ordered](a, b T) T {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func Max[T cmp.Ordered](a, b T) T {
+	if a > b {
+		return a
+	}
+	return b
 }
 
 /* Return the named cookie or nil if not found or invalid. */
