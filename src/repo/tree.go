@@ -44,17 +44,13 @@ func HandleTree(w http.ResponseWriter, r *http.Request) {
 		IsFile, B                       bool
 	}
 	data := struct {
-		Title, Name, Description, Url string
-		Readme, Licence               string
-		Path, Size                    string
-		Files                         []row
-		Editable, IsMirror            bool
-		HtmlPath                      template.HTML
+		HeaderFields
+		Title, Path, Size string
+		Files             []row
+		HtmlPath          template.HTML
 	}{
-		Title: repo.Name + " - Tree", Name: repo.Name, Description: repo.Description,
-		Url:      util.If(goit.Conf.UsesHttps, "https://", "http://") + r.Host + "/" + repo.Name,
-		Editable: (auth && repo.OwnerId == user.Id),
-		IsMirror: repo.IsMirror,
+		Title:        repo.Name + " - Tree",
+		HeaderFields: GetHeaderFields(auth, user, repo, r.Host),
 	}
 
 	parts := strings.Split(tpath, "/")
@@ -67,6 +63,7 @@ func HandleTree(w http.ResponseWriter, r *http.Request) {
 	}
 	htmlPath += parts[len(parts)-1]
 
+	data.Path = tpath
 	data.HtmlPath = template.HTML(htmlPath)
 
 	gr, err := git.PlainOpen(goit.RepoPath(repo.Name, true))

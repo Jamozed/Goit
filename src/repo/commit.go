@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"github.com/Jamozed/Goit/src/goit"
-	"github.com/Jamozed/Goit/src/util"
 	"github.com/buildkite/terminal-to-html/v3"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-git/go-git/v5"
@@ -44,20 +43,17 @@ func HandleCommit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := struct {
-		Title, Name, Description, Url string
-		Readme, Licence               string
-		Author, Date, Commit          string
-		Parents                       []string
-		MessageSubject, MessageBody   string
-		Stats                         []stat
-		Summary                       string
-		Diff                          template.HTML
-		Editable, IsMirror            bool
+		HeaderFields
+		Title                       string
+		Author, Date, Commit        string
+		Parents                     []string
+		MessageSubject, MessageBody string
+		Stats                       []stat
+		Summary                     string
+		Diff                        template.HTML
 	}{
-		Title: repo.Name + " - Log", Name: repo.Name, Description: repo.Description,
-		Url:      util.If(goit.Conf.UsesHttps, "https://", "http://") + r.Host + "/" + repo.Name,
-		Editable: (auth && repo.OwnerId == user.Id),
-		IsMirror: repo.IsMirror,
+		Title:        repo.Name + " - Log",
+		HeaderFields: GetHeaderFields(auth, user, repo, r.Host),
 	}
 
 	gr, err := git.PlainOpen(goit.RepoPath(repo.Name, true))

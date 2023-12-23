@@ -41,18 +41,14 @@ func HandleFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := struct {
-		Title, Name, Description, Url string
-		Readme, Licence               string
-		Path, LineC, Size, Mode       string
-		Lines                         []string
-		Body                          string
-		Editable, IsMirror            bool
-		HtmlPath                      template.HTML
+		HeaderFields
+		Title, Path, LineC, Size, Mode string
+		Lines                          []string
+		Body                           string
+		HtmlPath                       template.HTML
 	}{
-		Title: repo.Name + " - File", Name: repo.Name, Description: repo.Description,
-		Url:      util.If(goit.Conf.UsesHttps, "https://", "http://") + r.Host + "/" + repo.Name,
-		Editable: (auth && repo.OwnerId == user.Id),
-		IsMirror: repo.IsMirror,
+		Title:        repo.Name + " - File",
+		HeaderFields: GetHeaderFields(auth, user, repo, r.Host),
 	}
 
 	gr, err := git.PlainOpen(goit.RepoPath(repo.Name, true))

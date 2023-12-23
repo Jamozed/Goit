@@ -15,7 +15,6 @@ import (
 
 	"github.com/Jamozed/Goit/src/cron"
 	"github.com/Jamozed/Goit/src/goit"
-	"github.com/Jamozed/Goit/src/util"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -57,9 +56,8 @@ func HandleEdit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := struct {
-		Title, Name, Description, Url string
-		Readme, Licence               string
-		Editable, IsMirror            bool
+		HeaderFields
+		Title string
 
 		Edit struct {
 			Id, Owner, Name, Description, Upstream string
@@ -72,12 +70,8 @@ func HandleEdit(w http.ResponseWriter, r *http.Request) {
 
 		CsrfField template.HTML
 	}{
-		Title:       "Repository - Edit",
-		Name:        repo.Name,
-		Description: repo.Description,
-		Url:         util.If(goit.Conf.UsesHttps, "https://", "http://") + r.Host + "/" + repo.Name,
-		Editable:    (auth && repo.OwnerId == user.Id),
-		IsMirror:    repo.IsMirror,
+		Title:        "Repository - Edit",
+		HeaderFields: GetHeaderFields(auth, user, repo, r.Host),
 
 		CsrfField: csrf.TemplateField(r),
 	}

@@ -6,13 +6,25 @@ package repo
 import (
 	"regexp"
 
+	"github.com/Jamozed/Goit/src/goit"
+	"github.com/Jamozed/Goit/src/util"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 )
 
 type HeaderFields struct {
-	Name, Description, Url, Readme, Licence string
-	Editable                                bool
+	Name, Description, Url  string
+	Readme, Licence, Mirror string
+	Editable                bool
+}
+
+func GetHeaderFields(auth bool, user *goit.User, repo *goit.Repo, host string) HeaderFields {
+	return HeaderFields{
+		Name: repo.Name, Description: repo.Description,
+		Url:      util.If(goit.Conf.UsesHttps, "https://", "http://") + host + "/" + repo.Name,
+		Editable: (auth && repo.OwnerId == user.Id),
+		Mirror:   util.If(repo.IsMirror, repo.Upstream, ""),
+	}
 }
 
 var readmePattern = regexp.MustCompile(`(?i)^readme(?:\.?(?:md|txt))?$`)

@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/Jamozed/Goit/src/goit"
-	"github.com/Jamozed/Goit/src/util"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -38,15 +37,12 @@ func HandleRefs(w http.ResponseWriter, r *http.Request) {
 
 	type row struct{ Name, Message, Author, LastCommit, Hash string }
 	data := struct {
-		Title, Name, Description, Url string
-		Readme, Licence               string
-		Branches, Tags                []row
-		Editable, IsMirror            bool
+		HeaderFields
+		Title          string
+		Branches, Tags []row
 	}{
-		Title: repo.Name + " - References", Name: repo.Name, Description: repo.Description,
-		Url:      util.If(goit.Conf.UsesHttps, "https://", "http://") + r.Host + "/" + repo.Name,
-		Editable: (auth && repo.OwnerId == user.Id),
-		IsMirror: repo.IsMirror,
+		Title:        repo.Name + " - References",
+		HeaderFields: GetHeaderFields(auth, user, repo, r.Host),
 	}
 
 	gr, err := git.PlainOpen(goit.RepoPath(repo.Name, true))

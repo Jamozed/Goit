@@ -1,15 +1,17 @@
 <table>
 	<tr>
-		<td rowspan="2">
-			<a href="/"><img style="max-height: 24px;" src="/static/favicon.png"></a>
-		</td>
-		<td><h1 style="display: inline;">{{.Name}}</h1>{{if .IsMirror}} (mirror){{end}}</td>
+		<td rowspan="2"><a href="/"><img style="max-height: 24px;" src="/static/favicon.png"></a></td>
+		<td><h1 style="display: inline;">{{.Name}}</h1></td>
 	</tr>
+	{{if .Description}}<tr><td>{{.Description}}</td></tr>{{end}}
+	{{if .Mirror}}
+		<tr>
+			{{if .Description}}<td></td>{{end}}
+			<td>Mirror of <a href="{{.Mirror}}">{{.Mirror}}</a></td>
+		</tr>
+	{{end}}
 	<tr>
-		<td>{{.Description}}</td>
-	</tr>
-	<tr>
-		<td></td>
+		{{if or (.Description) (.Mirror)}}<td></td>{{end}}
 		<td>git clone <a href="{{.Url}}">{{.Url}}</a></td>
 	</tr>
 	<tr>

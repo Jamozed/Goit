@@ -54,16 +54,14 @@ func HandleLog(w http.ResponseWriter, r *http.Request) {
 
 	type row struct{ Hash, Date, Message, Author, Files, Additions, Deletions string }
 	data := struct {
-		Title, Name, Description, Url string
-		Readme, Licence               string
-		Commits                       []row
-		Editable, IsMirror            bool
-		Page, PrevOffset, NextOffset  int64
+		HeaderFields
+		Title                        string
+		Commits                      []row
+		Page, PrevOffset, NextOffset int64
 	}{
-		Title: repo.Name + " - Log", Name: repo.Name, Description: repo.Description,
-		Url:        util.If(goit.Conf.UsesHttps, "https://", "http://") + r.Host + "/" + repo.Name,
-		Editable:   (auth && repo.OwnerId == user.Id),
-		IsMirror:   repo.IsMirror,
+		Title:        repo.Name + " - Log",
+		HeaderFields: GetHeaderFields(auth, user, repo, r.Host),
+
 		Page:       offset/PAGE + 1,
 		PrevOffset: util.Max(offset-PAGE, -1),
 		NextOffset: offset + PAGE,
