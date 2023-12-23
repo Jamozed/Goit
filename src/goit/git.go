@@ -231,6 +231,9 @@ type DiffStat struct {
 var diffs = map[plumbing.Hash][]DiffStat{}
 var diffsLock sync.RWMutex
 
+var Sizes = map[plumbing.Hash]uint64{}
+var SizesLock sync.RWMutex
+
 func DiffStats(c *object.Commit) ([]DiffStat, error) {
 	diffsLock.RLock()
 	if stats, ok := diffs[c.Hash]; ok {

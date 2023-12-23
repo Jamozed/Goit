@@ -132,44 +132,66 @@ func HandleTree(w http.ResponseWriter, r *http.Request) {
 			var isFile bool
 
 			if v.Mode&0o40000 == 0 {
-				file, err := tree.File(v.Name)
-				if err != nil {
-					log.Println("[/repo/tree]", err.Error())
-					goit.HttpError(w, http.StatusInternalServerError)
-					return
-				}
-
 				fpath = path.Join("file", tpath, v.Name)
 				rpath = path.Join(tpath, v.Name)
-				size = humanize.IBytes(uint64(file.Size))
-
 				isFile = true
 
-				totalSize += uint64(file.Size)
+				goit.SizesLock.RLock()
+				sz, ok := goit.Sizes[v.Hash]
+				goit.SizesLock.RUnlock()
+
+				if !ok {
+					file, err := tree.File(v.Name)
+					if err != nil {
+						log.Println("[/repo/tree]", err.Error())
+						goit.HttpError(w, http.StatusInternalServerError)
+						return
+					}
+
+					sz = uint64(file.Size)
+
+					goit.SizesLock.Lock()
+					goit.Sizes[v.Hash] = sz
+					goit.SizesLock.Unlock()
+				}
+
+				size = humanize.IBytes(sz)
+				totalSize += sz
 			} else {
-				var dirSize uint64
-
-				dirt, err := tree.Tree(v.Name)
-				if err != nil {
-					log.Println("[/repo/tree]", err.Error())
-					goit.HttpError(w, http.StatusInternalServerError)
-					return
-				}
-
-				if err := dirt.Files().ForEach(func(f *object.File) error {
-					dirSize += uint64(f.Size)
-					return nil
-				}); err != nil {
-					log.Println("[/repo/tree]", err.Error())
-					goit.HttpError(w, http.StatusInternalServerError)
-					return
-				}
-
 				fpath = path.Join("tree", tpath, v.Name)
 				rpath = path.Join(tpath, v.Name)
-				size = humanize.IBytes(dirSize)
 
-				totalSize += dirSize
+				goit.SizesLock.RLock()
+				sz, ok := goit.Sizes[v.Hash]
+				goit.SizesLock.RUnlock()
+
+				if !ok {
+					dirt, err := tree.Tree(v.Name)
+					if err != nil {
+						log.Println("[/repo/tree]", err.Error())
+						goit.HttpError(w, http.StatusInternalServerError)
+						return
+					}
+
+					var dirSize uint64
+					if err := dirt.Files().ForEach(func(f *object.File) error {
+						dirSize += uint64(f.Size)
+						return nil
+					}); err != nil {
+						log.Println("[/repo/tree]", err.Error())
+						goit.HttpError(w, http.StatusInternalServerError)
+						return
+					}
+
+					sz = dirSize
+
+					goit.SizesLock.Lock()
+					goit.Sizes[v.Hash] = sz
+					goit.SizesLock.Unlock()
+				}
+
+				size = humanize.IBytes(sz)
+				totalSize += sz
 			}
 
 			data.Files = append(data.Files, row{
