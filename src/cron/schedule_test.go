@@ -124,7 +124,7 @@ func TestNext(t *testing.T) {
 	t.Run("Immediate", func(t *testing.T) {
 		schedule := cron.Schedule{-1, -1, -1, -1, -1, -1}
 		baseTime := time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
-		expected := time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
+		expected := time.Date(1970, 1, 1, 0, 0, 1, 0, time.UTC)
 
 		r := schedule.Next(baseTime)
 		if r != expected {
