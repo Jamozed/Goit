@@ -8,6 +8,7 @@ import (
 	"errors"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/Jamozed/Goit/src/util"
@@ -183,6 +184,11 @@ func UpdateRepo(rid int64, repo Repo) error {
 	}
 
 	if repo.Name != old.Name {
+		if err := os.MkdirAll(filepath.Dir(RepoPath(repo.Name, true)), 0o777); err != nil {
+			tx.Rollback()
+			return err
+		}
+
 		if err := os.Rename(RepoPath(old.Name, true), RepoPath(repo.Name, true)); err != nil {
 			tx.Rollback()
 			return err
