@@ -97,9 +97,7 @@ func HandleCommit(w http.ResponseWriter, r *http.Request) {
 		data.Parents = append(data.Parents, h.String())
 	}
 
-	message := strings.SplitN(commit.Message, "\n", 2)
-	data.MessageSubject = message[0]
-	data.MessageBody = message[1]
+	data.MessageSubject, data.MessageBody, _ = strings.Cut(commit.Message, "\n")
 
 	st, err := goit.DiffStats(commit)
 	if err != nil {
