@@ -76,6 +76,7 @@ func HandleLog(w http.ResponseWriter, r *http.Request) {
 
 	ref, err := gr.Head()
 	if errors.Is(err, plumbing.ErrReferenceNotFound) {
+		data.NextOffset = 0
 		goto execute
 	} else if err != nil {
 		log.Println("[/repo/log]", err.Error())
@@ -100,7 +101,12 @@ func HandleLog(w http.ResponseWriter, r *http.Request) {
 		return
 	} else {
 		for i := int64(0); i < offset; i += 1 {
-			if _, err := iter.Next(); err != nil && !errors.Is(err, io.EOF) {
+			if _, err := iter.Next(); err != nil {
+				if errors.Is(err, io.EOF) {
+					data.NextOffset = 0
+					goto execute
+				}
+
 				log.Println("[/repo/log]", err.Error())
 				goit.HttpError(w, http.StatusInternalServerError)
 				return
@@ -111,7 +117,7 @@ func HandleLog(w http.ResponseWriter, r *http.Request) {
 			c, err := iter.Next()
 			if errors.Is(err, io.EOF) {
 				data.NextOffset = 0
-				break
+				goto execute
 			} else if err != nil {
 				log.Println("[/repo/log]", err.Error())
 				goit.HttpError(w, http.StatusInternalServerError)

@@ -40,7 +40,7 @@
 				<span>[prev]</span>
 			{{end}}
 			<span>{{.Page}}</span>
-			{{if .NextOffset}}
+			{{if gt .NextOffset 0}}
 				<a href="/{{$.Name}}/log?o={{.NextOffset}}">[next]</a>
 			{{else}}
 				<span>[next]</span>
