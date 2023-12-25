@@ -35,7 +35,10 @@ func HandleRefs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	type row struct{ Name, Message, Author, LastCommit, Hash string }
+	type row struct {
+		Name, Hash, Message, Author, LastCommit string
+		Commits                                 uint64
+	}
 	data := struct {
 		HeaderFields
 		Title          string
@@ -78,9 +81,14 @@ func HandleRefs(w http.ResponseWriter, r *http.Request) {
 			return err
 		}
 
+		commits, err := goit.CommitCount(repo.Name, r.Name().Short(), r.Hash())
+		if err != nil {
+			return err
+		}
+
 		data.Branches = append(data.Branches, row{
-			Name: r.Name().Short(), Message: strings.SplitN(commit.Message, "\n", 2)[0], Author: commit.Author.Name,
-			LastCommit: commit.Author.When.UTC().Format(time.DateTime), Hash: r.Hash().String(),
+			Name: r.Name().Short(), Hash: r.Hash().String(), Message: strings.SplitN(commit.Message, "\n", 2)[0],
+			Author: commit.Author.Name, LastCommit: commit.Author.When.UTC().Format(time.DateTime), Commits: commits,
 		})
 
 		return nil

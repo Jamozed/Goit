@@ -324,3 +324,38 @@ func DiffStats(c *object.Commit) ([]DiffStat, error) {
 
 	return stats, nil
 }
+
+type countPair struct {
+	hash  plumbing.Hash
+	count uint64
+}
+
+var counts = map[string]countPair{}
+var countsLock sync.RWMutex
+
+func CommitCount(repo, branch string, hash plumbing.Hash) (uint64, error) {
+	countsLock.RLock()
+	if count, ok := counts[repo+"/"+branch]; ok && count.hash == hash {
+		countsLock.RUnlock()
+		return count.count, nil
+	}
+	countsLock.RUnlock()
+
+	c := NewGitCommand("rev-list", "--count", branch)
+	c.Dir = RepoPath(repo, true)
+	out, _, err := c.Run(nil, nil)
+	if err != nil {
+		return 0, err
+	}
+
+	count, err := strconv.ParseUint(strings.TrimSpace(string(out)), 10, 64)
+	if err != nil {
+		return 0, err
+	}
+
+	countsLock.Lock()
+	counts[repo+"/"+branch] = countPair{hash, count}
+	countsLock.Unlock()
+
+	return count, nil
+}

@@ -11,6 +11,7 @@
 					<td><b>Message</b></td>
 					<td><b>Author</b></td>
 					<td><b>Last Commit</b></td>
+					<td><b>Commits</b></td>
 				</tr>
 			</thead>
 			<tbody>
@@ -20,6 +21,7 @@
 					<td><a href="/{{$.Name}}/commit/{{.Hash}}">{{.Message}}</a></td>
 					<td>{{.Author}}</td>
 					<td>{{.LastCommit}}</td>
+					<td>{{.Commits}}</td>
 				</tr>
 			{{else}}
 				<tr><td colspan="4">No branches</td></tr>
