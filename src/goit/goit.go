@@ -55,6 +55,8 @@ var Cron *cron.Cron
 
 var Reserved []string = []string{"admin", "repo", "static", "user"}
 
+var StartTime = time.Now()
+
 func Goit(conf string) (err error) {
 	if dat, err := os.ReadFile(conf); err != nil {
 		if !errors.Is(err, os.ErrNotExist) {

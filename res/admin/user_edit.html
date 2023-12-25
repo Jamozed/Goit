@@ -1,21 +1,7 @@
 <!DOCTYPE html>
 <head lang="en-GB">{{template "base/head" .}}</head>
 <body>
-	<header>
-		<table>
-			<tr>
-				<td rowspan="2">
-					<a href="/"><img src="/static/favicon.png" style="max-height: 24px"></a>
-				</td>
-				<td><h1>{{.Title}}</h1></td>
-			</tr>
-			<tr><td>
-				<a href="/admin/users">Users</a>
-				| <a href="/admin/repos">Repositories</a>
-				| <a href="/admin/user/create">Create User</a>
-			</td></tr>
-		</table>
-	</header><hr>
+	<header>{{template "admin/header" .}}</header><hr>
 	<main>
 		<h1>{{.Title}}</h1><hr>
 		<form action="/admin/user/edit?user={{.Form.Id}}" method="post">

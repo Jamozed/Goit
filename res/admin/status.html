@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<head lang="en-GB">{{template "base/head" .}}</head>
+<body>
+	<header>{{template "admin/header" .}}</header><hr>
+	<main>
+		<table>
+			<tr>
+				<td style="text-align: right;"><b>Version</b></td>
+				<td>{{.Version}}</td>
+			</tr>
+			<tr>
+				<td style="text-align: right;"><b>Uptime</b></td>
+				<td>{{.Uptime}}</td>
+			</tr>
+			<tr>
+				<td style="text-align: right;"><b>Goroutines</b></td>
+				<td>{{.Goroutines}}</td>
+			</tr>
+			<tr>
+				<td style="text-align: right;"><b>Memory</b></td>
+				<td>{{.Memory}}</td>
+			</tr>
+			<tr>
+				<td style="text-align: right;"><b>Stack Usage</b></td>
+				<td>{{.Stack}}</td>
+			</tr>
+			<tr>
+				<td style="text-align: right;"><b>Heap Usage</b></td>
+				<td>{{.Heap}}</td>
+			</tr>
+		</table>
+	</main>
+</body>
