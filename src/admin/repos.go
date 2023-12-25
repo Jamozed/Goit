@@ -110,9 +110,10 @@ func HandleRepoEdit(w http.ResponseWriter, r *http.Request) {
 		Title, Name string
 
 		Edit struct {
-			Id, Owner, Name, Description, Upstream string
-			IsPrivate, IsMirror                    bool
-			Message                                string
+			Id, Owner, Name, Description string
+			DefaultBranch, Upstream      string
+			IsPrivate, IsMirror          bool
+			Message                      string
 		}
 
 		Transfer struct{ Owner, Message string }
@@ -130,6 +131,7 @@ func HandleRepoEdit(w http.ResponseWriter, r *http.Request) {
 	data.Edit.Owner = owner.FullName + " (" + owner.Name + ")[" + fmt.Sprint(owner.Id) + "]"
 	data.Edit.Name = repo.Name
 	data.Edit.Description = repo.Description
+	data.Edit.DefaultBranch = repo.DefaultBranch
 	data.Edit.Upstream = repo.Upstream
 	data.Edit.IsPrivate = repo.IsPrivate
 	data.Edit.IsMirror = repo.IsMirror
@@ -139,6 +141,7 @@ func HandleRepoEdit(w http.ResponseWriter, r *http.Request) {
 		case "edit":
 			data.Edit.Name = r.FormValue("reponame")
 			data.Edit.Description = r.FormValue("description")
+			data.Edit.DefaultBranch = util.If(r.FormValue("branch") == "", "master", r.FormValue("branch"))
 			data.Edit.Upstream = r.FormValue("upstream")
 			data.Edit.IsPrivate = r.FormValue("visibility") == "private"
 			data.Edit.IsMirror = r.FormValue("mirror") == "mirror"
@@ -156,8 +159,8 @@ func HandleRepoEdit(w http.ResponseWriter, r *http.Request) {
 			} else if len(data.Edit.Description) > 256 {
 				data.Edit.Message = "Description cannot exceed 256 characters"
 			} else if err := goit.UpdateRepo(repo.Id, goit.Repo{
-				Name: data.Edit.Name, Description: data.Edit.Description, Upstream: data.Edit.Upstream,
-				IsPrivate: data.Edit.IsPrivate, IsMirror: data.Edit.IsMirror,
+				Name: data.Edit.Name, Description: data.Edit.Description, DefaultBranch: data.Edit.DefaultBranch,
+				Upstream: data.Edit.Upstream, IsPrivate: data.Edit.IsPrivate, IsMirror: data.Edit.IsMirror,
 			}); err != nil {
 				log.Println("[/admin/repo/edit]", err.Error())
 				goit.HttpError(w, http.StatusInternalServerError)

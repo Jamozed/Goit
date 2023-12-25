@@ -32,7 +32,7 @@ import (
 */
 
 func dbUpdate(db *sql.DB) error {
-	latestVersion := 1
+	latestVersion := 2
 
 	var version int
 	if err := db.QueryRow("PRAGMA user_version").Scan(&version); err != nil {
@@ -68,6 +68,7 @@ func dbUpdate(db *sql.DB) error {
 				name TEXT UNIQUE NOT NULL,
 				name_lower TEXT UNIQUE NOT NULL,
 				description TEXT NOT NULL,
+				default_branch TEXT NOT NULL,
 				upstream TEXT NOT NULL,
 				is_private BOOLEAN NOT NULL,
 				is_mirror BOOLEAN NOT NULL
@@ -83,8 +84,25 @@ func dbUpdate(db *sql.DB) error {
 
 	for {
 		switch version {
+		case 1: /* 1 -> 2 */
+			log.Println("Migrating database from version 1 to 2")
+
+			if _, err := db.Exec(
+				"ALTER TABLE repos ADD COLUMN default_branch TEXT NOT NULL DEFAULT 'master'",
+			); err != nil {
+				return err
+			}
+
+			version = 2
 		default: /* No required migrations */
-			return nil
+			goto done
 		}
 	}
+
+done:
+	if _, err := db.Exec(fmt.Sprint("PRAGMA user_version = ", version)); err != nil {
+		return err
+	}
+
+	return nil
 }

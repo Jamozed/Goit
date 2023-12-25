@@ -14,22 +14,26 @@ import (
 	"github.com/Jamozed/Goit/src/util"
 	"github.com/go-git/go-git/v5"
 	gitconfig "github.com/go-git/go-git/v5/config"
+	"github.com/go-git/go-git/v5/plumbing"
 )
 
 type Repo struct {
-	Id          int64  `json:"id"`
-	OwnerId     int64  `json:"owner_id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Upstream    string `json:"upstream"`
-	IsPrivate   bool   `json:"is_private"`
-	IsMirror    bool   `json:"is_mirror"`
+	Id            int64  `json:"id"`
+	OwnerId       int64  `json:"owner_id"`
+	Name          string `json:"name"`
+	Description   string `json:"description"`
+	DefaultBranch string `json:"default_branch"`
+	Upstream      string `json:"upstream"`
+	IsPrivate     bool   `json:"is_private"`
+	IsMirror      bool   `json:"is_mirror"`
 }
 
 func GetRepos() ([]Repo, error) {
 	repos := []Repo{}
 
-	rows, err := db.Query("SELECT id, owner_id, name, description, upstream, is_private, is_mirror FROM repos")
+	rows, err := db.Query(
+		"SELECT id, owner_id, name, description, default_branch, upstream, is_private, is_mirror FROM repos",
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +43,7 @@ func GetRepos() ([]Repo, error) {
 	for rows.Next() {
 		r := Repo{}
 		if err := rows.Scan(
-			&r.Id, &r.OwnerId, &r.Name, &r.Description, &r.Upstream, &r.IsPrivate, &r.IsMirror,
+			&r.Id, &r.OwnerId, &r.Name, &r.Description, &r.DefaultBranch, &r.Upstream, &r.IsPrivate, &r.IsMirror,
 		); err != nil {
 			return nil, err
 		}
@@ -58,8 +62,11 @@ func GetRepo(rid int64) (*Repo, error) {
 	r := &Repo{}
 
 	if err := db.QueryRow(
-		"SELECT id, owner_id, name, description, upstream, is_private, is_mirror FROM repos WHERE id = ?", rid,
-	).Scan(&r.Id, &r.OwnerId, &r.Name, &r.Description, &r.Upstream, &r.IsPrivate, &r.IsMirror); err != nil {
+		`SELECT id, owner_id, name, description, default_branch, upstream, is_private, is_mirror FROM repos
+		WHERE id = ?`, rid,
+	).Scan(
+		&r.Id, &r.OwnerId, &r.Name, &r.Description, &r.DefaultBranch, &r.Upstream, &r.IsPrivate, &r.IsMirror,
+	); err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
@@ -74,8 +81,11 @@ func GetRepoByName(name string) (*Repo, error) {
 	r := &Repo{}
 
 	if err := db.QueryRow(
-		"SELECT id, owner_id, name, description, upstream, is_private, is_mirror FROM repos WHERE name = ?", name,
-	).Scan(&r.Id, &r.OwnerId, &r.Name, &r.Description, &r.Upstream, &r.IsPrivate, &r.IsMirror); err != nil {
+		`SELECT id, owner_id, name, description, default_branch, upstream, is_private, is_mirror FROM repos
+		WHERE name = ?`, name,
+	).Scan(
+		&r.Id, &r.OwnerId, &r.Name, &r.Description, &r.DefaultBranch, &r.Upstream, &r.IsPrivate, &r.IsMirror,
+	); err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
@@ -93,9 +103,9 @@ func CreateRepo(repo Repo) (int64, error) {
 	}
 
 	res, err := tx.Exec(
-		`INSERT INTO repos (owner_id, name, name_lower, description, upstream, is_private, is_mirror)
-		VALUES (?, ?, ?, ?, ?, ?, ?)`, repo.OwnerId, repo.Name, strings.ToLower(repo.Name), repo.Description,
-		repo.Upstream, repo.IsPrivate, repo.IsMirror,
+		`INSERT INTO repos (owner_id, name, name_lower, description, default_branch, upstream, is_private, is_mirror)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, repo.OwnerId, repo.Name, strings.ToLower(repo.Name), repo.Description,
+		repo.DefaultBranch, repo.Upstream, repo.IsPrivate, repo.IsMirror,
 	)
 	if err != nil {
 		tx.Rollback()
@@ -108,7 +118,9 @@ func CreateRepo(repo Repo) (int64, error) {
 		return -1, err
 	}
 
-	if err := tx.Commit(); err != nil {
+	ref := plumbing.NewSymbolicReference(plumbing.HEAD, plumbing.NewBranchReferenceName(repo.DefaultBranch))
+	if err := r.Storer.SetReference(ref); err != nil {
+		tx.Rollback()
 		os.RemoveAll(RepoPath(repo.Name, true))
 		return -1, err
 	}
@@ -120,12 +132,18 @@ func CreateRepo(repo Repo) (int64, error) {
 			Mirror: util.If(repo.IsMirror, true, false),
 			Fetch:  []gitconfig.RefSpec{gitconfig.RefSpec("+refs/heads/*:refs/heads/*")},
 		}); err != nil {
-			log.Println("[repo/upstream]", err.Error())
+			tx.Rollback()
+			os.RemoveAll(RepoPath(repo.Name, true))
+			return -1, err
 		}
 	}
 
-	rid, _ := res.LastInsertId()
+	if err := tx.Commit(); err != nil {
+		os.RemoveAll(RepoPath(repo.Name, true))
+		return -1, err
+	}
 
+	rid, _ := res.LastInsertId()
 	return rid, nil
 }
 
@@ -175,9 +193,9 @@ func UpdateRepo(rid int64, repo Repo) error {
 	}
 
 	if _, err := tx.Exec(
-		`UPDATE repos SET name = ?, name_lower = ?, description = ?, upstream = ?, is_private = ?, is_mirror = ?
-		WHERE id = ?`, repo.Name, strings.ToLower(repo.Name), repo.Description, repo.Upstream, repo.IsPrivate,
-		repo.IsMirror, rid,
+		`UPDATE repos SET name = ?, name_lower = ?, description = ?, default_branch = ?, upstream = ?, is_private = ?,
+		is_mirror = ? WHERE id = ?`, repo.Name, strings.ToLower(repo.Name), repo.Description, repo.DefaultBranch,
+		repo.Upstream, repo.IsPrivate, repo.IsMirror, rid,
 	); err != nil {
 		tx.Rollback()
 		return err
@@ -195,12 +213,31 @@ func UpdateRepo(rid int64, repo Repo) error {
 		}
 	}
 
-	/* If the upstream URL has been removed, remove the remote */
-	if repo.Upstream == "" && old.Upstream != "" {
-		r, err := git.PlainOpen(RepoPath(repo.Name, true))
-		if err != nil {
+	var r *git.Repository
+	if repo.DefaultBranch != old.DefaultBranch {
+		if r == nil {
+			r, err = git.PlainOpen(RepoPath(repo.Name, true))
+			if err != nil {
+				tx.Rollback()
+				return err
+			}
+		}
+
+		ref := plumbing.NewSymbolicReference(plumbing.HEAD, plumbing.NewBranchReferenceName(repo.DefaultBranch))
+		if err := r.Storer.SetReference(ref); err != nil {
 			tx.Rollback()
 			return err
+		}
+	}
+
+	/* If the upstream URL has been removed, remove the remote */
+	if repo.Upstream == "" && old.Upstream != "" {
+		if r == nil {
+			r, err = git.PlainOpen(RepoPath(repo.Name, true))
+			if err != nil {
+				tx.Rollback()
+				return err
+			}
 		}
 
 		if err := r.DeleteRemote("origin"); err != nil {
@@ -211,10 +248,12 @@ func UpdateRepo(rid int64, repo Repo) error {
 
 	/* If the upstream URL has been added or changed, update the remote */
 	if repo.Upstream != "" && repo.Upstream != old.Upstream {
-		r, err := git.PlainOpen(RepoPath(repo.Name, true))
-		if err != nil {
-			tx.Rollback()
-			return err
+		if r == nil {
+			r, err = git.PlainOpen(RepoPath(repo.Name, true))
+			if err != nil {
+				tx.Rollback()
+				return err
+			}
 		}
 
 		if err := r.DeleteRemote("origin"); err != nil && !errors.Is(err, git.ErrRemoteNotFound) {
