@@ -4,6 +4,7 @@ go 1.21.0
 
 require (
 	github.com/adrg/xdg v0.4.0
+	github.com/alecthomas/chroma v0.10.0
 	github.com/buildkite/terminal-to-html/v3 v3.10.1
 	github.com/dustin/go-humanize v1.0.1
 	github.com/go-chi/chi/v5 v5.0.11
@@ -19,6 +20,7 @@ require (
 	github.com/ProtonMail/go-crypto v0.0.0-20230923063757-afb1ddc0824c // indirect
 	github.com/cloudflare/circl v1.3.6 // indirect
 	github.com/cyphar/filepath-securejoin v0.2.4 // indirect
+	github.com/dlclark/regexp2 v1.4.0 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
 	github.com/go-git/go-billy/v5 v5.5.0 // indirect

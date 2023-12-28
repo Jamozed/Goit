@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<head lang="en-GB">{{template "base/head" .}}</head>
+<head lang="en-GB">{{template "base/head" .}}{{.BodyCss}}</head>
 <body>
 	<header>
 		{{template "repo/header" .}}<hr>
@@ -12,9 +12,7 @@
 					<td class="lnum" style="text-align: right;">
 						<pre>{{range $i, $l := .Lines}}<a id="{{$i}}" href="#{{$i}}">{{$i}}</a>{{end}}</pre>
 					</td>
-					<td class="line">
-						<pre>{{.Body}}</pre>
-					</td>
+					<td class="line">{{.HtmlBody}}</td>
 				</tr>
 			{{else}}
 				<tr><td>Binary file</td></tr>

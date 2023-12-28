@@ -44,10 +44,9 @@ func HandleFile(w http.ResponseWriter, r *http.Request) {
 		HeaderFields
 		Title, Path, LineC, Size, Mode string
 		Lines                          []string
-		Body                           string
-		HtmlPath                       template.HTML
+		HtmlBody, HtmlPath, BodyCss    template.HTML
 	}{
-		Title:        repo.Name + " - File",
+		Title:        repo.Name + " - " + tpath,
 		HeaderFields: GetHeaderFields(auth, user, repo, r.Host),
 	}
 
@@ -129,8 +128,17 @@ func HandleFile(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			data.Body = string(append(buf, buf2...))
-			data.Lines = strings.Split(data.Body, "\n")
+			body := string(append(buf, buf2...))
+			buf, css, err := Highlight(file.Name, body)
+			if err != nil {
+				log.Println("[/repo/file]", err.Error())
+				goit.HttpError(w, http.StatusInternalServerError)
+				return
+			}
+
+			data.HtmlBody = template.HTML(buf)
+			data.BodyCss = template.HTML("<style>" + css + "</style>")
+			data.Lines = strings.Split(body, "\n")
 		}
 
 		rc.Close()
