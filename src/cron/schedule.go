@@ -4,7 +4,10 @@
 package cron
 
 import (
+	"fmt"
 	"time"
+
+	"github.com/Jamozed/Goit/src/util"
 )
 
 type Schedule struct{ Month, Day, Weekday, Hour, Minute, Second int64 }
@@ -95,4 +98,20 @@ wrap:
 
 func (s Schedule) IsImmediate() bool {
 	return s == Immediate
+}
+
+func (s Schedule) String() string {
+	if s.IsImmediate() {
+		return "immediate"
+	}
+
+	return fmt.Sprintf(
+		"%s %s %s %s %s %s",
+		util.If(s.Month == -1, "*", fmt.Sprint(s.Month)),
+		util.If(s.Day == -1, "*", fmt.Sprint(s.Day)),
+		util.If(s.Weekday == -1, "*", fmt.Sprint(s.Weekday)),
+		util.If(s.Hour == -1, "*", fmt.Sprint(s.Hour)),
+		util.If(s.Minute == -1, "*", fmt.Sprint(s.Minute)),
+		util.If(s.Second == -1, "*", fmt.Sprint(s.Second)),
+	)
 }

@@ -125,6 +125,7 @@ func main() {
 		r.Get("/admin/repos", admin.HandleRepos)
 		r.Get("/admin/repo/edit", admin.HandleRepoEdit)
 		r.Post("/admin/repo/edit", admin.HandleRepoEdit)
+		r.Get("/admin/cron", admin.HandleCron)
 
 		r.Get("/static/style.css", handleStyle)
 		r.Get("/static/favicon.png", handleFavicon)

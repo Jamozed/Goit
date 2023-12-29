@@ -5,6 +5,7 @@ a { color: #FF7E00; text-decoration: none; }
 a:hover { text-decoration: underline; }
 h1, h2 { font-size: 1em; margin: 0; }
 hr { border: 0; height: 1rem; margin: 0; }
+main > span { padding: 0 0.4rem; }
 
 footer { padding: 0.4rem 0.4rem 1rem; }
 

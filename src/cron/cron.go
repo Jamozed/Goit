@@ -24,11 +24,11 @@ type Cron struct {
 }
 
 type Job struct {
-	id       uint64
-	rid      int64
-	schedule Schedule
-	next     time.Time
-	fn       func()
+	Id         uint64
+	Rid        int64
+	Schedule   Schedule
+	Next, Last time.Time
+	fn         func()
 }
 
 const maxDuration time.Duration = 1<<63 - 1
@@ -52,7 +52,7 @@ func (c *Cron) Start() {
 	}
 
 	for _, job := range c.jobs {
-		job.next = job.schedule.Next(time.Now().UTC())
+		job.Next = job.Schedule.Next(time.Now().UTC())
 	}
 
 	go func() {
@@ -65,7 +65,7 @@ func (c *Cron) Start() {
 			if len(c.jobs) == 0 {
 				timer = time.NewTimer(maxDuration)
 			} else {
-				timer = time.NewTimer(c.jobs[0].next.Sub(time.Now().UTC()))
+				timer = time.NewTimer(c.jobs[0].Next.Sub(time.Now().UTC()))
 			}
 
 			c.mutex.Unlock()
@@ -81,12 +81,12 @@ func (c *Cron) Start() {
 
 				tmp := c.jobs[:0]
 				for _, job := range c.jobs {
-					if job.next.After(now) || job.next.IsZero() {
+					if job.Next.After(now) || job.Next.IsZero() {
 						tmp = append(tmp, job)
 						continue
 					}
 
-					log.Println("[cron] running job", job.id, job.rid)
+					log.Println("[cron] running job", job.Id, job.Rid)
 
 					j := job
 					c.waiter.Add(1)
@@ -95,8 +95,9 @@ func (c *Cron) Start() {
 						j.fn()
 					}()
 
-					if !job.schedule.IsImmediate() {
-						job.next = job.schedule.Next(now)
+					if !job.Schedule.IsImmediate() {
+						job.Next = job.Schedule.Next(now)
+						job.Last = now
 						tmp = append(tmp, job)
 					}
 				}
@@ -153,8 +154,19 @@ func (c *Cron) _update() {
 
 	now := time.Now().UTC()
 	slices.SortFunc(c.jobs, func(a, b Job) int {
-		return a.schedule.Next(now).Compare(b.schedule.Next(now))
+		return a.Schedule.Next(now).Compare(b.Schedule.Next(now))
 	})
+}
+
+func (c *Cron) Jobs() []Job {
+	c.mutex.Lock()
+	util.Debugln("[cron.Jobs] Cron mutex lock")
+	defer c.mutex.Unlock()
+	defer util.Debugln("[cron.Jobs] Cron mutex unlock")
+
+	jobs := make([]Job, len(c.jobs))
+	copy(jobs, c.jobs)
+	return jobs
 }
 
 func (c *Cron) Add(rid int64, schedule Schedule, fn func()) uint64 {
@@ -165,12 +177,12 @@ func (c *Cron) Add(rid int64, schedule Schedule, fn func()) uint64 {
 
 	c.lastId += 1
 
-	job := Job{id: c.lastId, rid: rid, schedule: schedule, fn: fn}
-	job.next = job.schedule.Next(time.Now().UTC())
+	job := Job{Id: c.lastId, Rid: rid, Schedule: schedule, fn: fn}
+	job.Next = job.Schedule.Next(time.Now().UTC())
 	c.jobs = append(c.jobs, job)
 
-	log.Println("[cron] added job", job.id, "for", job.rid)
-	return job.id
+	log.Println("[cron] added job", job.Id, "for", job.Rid)
+	return job.Id
 }
 
 func (c *Cron) RemoveFor(rid int64) {
@@ -181,10 +193,10 @@ func (c *Cron) RemoveFor(rid int64) {
 
 	tmp := c.jobs[:0]
 	for _, job := range c.jobs {
-		if job.rid != rid {
+		if job.Rid != rid {
 			tmp = append(tmp, job)
 		} else {
-			log.Println("[cron] removing job", job.id, "for", job.rid)
+			log.Println("[cron] removing job", job.Id, "for", job.Rid)
 		}
 	}
 

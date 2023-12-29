@@ -34,6 +34,9 @@ var AdminRepos string
 //go:embed admin/repo_edit.html
 var AdminRepoEdit string
 
+//go:embed admin/cron.html
+var AdminCron string
+
 //go:embed user/header.html
 var UserHeader string
 

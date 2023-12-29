@@ -22,7 +22,7 @@ import (
 func HandleRepos(w http.ResponseWriter, r *http.Request) {
 	auth, user, err := goit.Auth(w, r, true)
 	if err != nil {
-		log.Println("[admin/users]", err.Error())
+		log.Println("[admin/repos]", err.Error())
 		goit.HttpError(w, http.StatusInternalServerError)
 		return
 	}
