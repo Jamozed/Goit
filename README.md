@@ -2,6 +2,8 @@
 
 A simple and lightweight Git web server.
 
+Note that at present, compatibility between updates is not guaranteed.
+
 ## Features
 
 - Git Smart HTTP protocol (v2 only)

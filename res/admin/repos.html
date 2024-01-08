@@ -1,31 +1,33 @@
 <!DOCTYPE html>
-<head lang="en-GB">{{template "base/head" .}}</head>
-<body>
-	<header>{{template "admin/header" .}}</header><hr>
-	<main>
-		<table class="highlight-row">
-			<thead>
-				<tr>
-					<td><b>ID</b></td>
-					<td><b>Owner</b></td>
-					<td><b>Name</b></td>
-					<td><b>Visibility</b></td>
-					<td><b>Size</b></td>
-					<td></td>
-				</tr>
-			</thead>
-			<tbody>
-			{{range .Repos}}
-				<tr>
-					<td>{{.Id}}</td>
-					<td><a href="/?u={{.Owner}}">{{.Owner}}</a></td>
-					<td><a href="/{{.Name}}">{{.Name}}</a></td>
-					<td>{{.Visibility}}</td>
-					<td>{{.Size}}</td>
-					<td><a href="/admin/repo/edit?repo={{.Id}}">edit</a></td>
-				</tr>
-			{{end}}
-			</tbody>
-		</table>
-	</main>
-</body>
+<html lang="en">
+	<head>{{template "base/head" .}}</head>
+	<body>
+		<header>{{template "admin/header" .}}</header><hr>
+		<main>
+			<table class="highlight-row">
+				<thead>
+					<tr>
+						<td><b>ID</b></td>
+						<td><b>Owner</b></td>
+						<td><b>Name</b></td>
+						<td><b>Visibility</b></td>
+						<td><b>Size</b></td>
+						<td></td>
+					</tr>
+				</thead>
+				<tbody>
+				{{range .Repos}}
+					<tr>
+						<td>{{.Id}}</td>
+						<td><a href="/?u={{.Owner}}">{{.Owner}}</a></td>
+						<td><a href="/{{.Name}}">{{.Name}}</a></td>
+						<td>{{.Visibility}}</td>
+						<td>{{.Size}}</td>
+						<td><a href="/admin/repo/edit?repo={{.Id}}">edit</a></td>
+					</tr>
+				{{end}}
+				</tbody>
+			</table>
+		</main>
+	</body>
+</html>

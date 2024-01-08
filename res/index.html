@@ -1,55 +1,57 @@
 <!DOCTYPE html>
-<head lang="en-GB">{{template "base/head" .}}</head>
-<body>
-	<header>
-		<table>
-			<tr>
-				<td rowspan="2">
-					<a href="/"><img style="max-height: 24px;" src="/static/favicon.png"></a>
-				</td>
-				<td><h1>{{.Title}}</h1></td>
-			</tr>
-			<tr>
-				<td>
-					<a href="/">Repositories</a>
-					{{if .Auth}}
-						| <a href="/repo/create">Create</a>
-						| <a href="/user/sessions">User</a>
-					{{end}}
-					{{if .Admin}}
-						| <a href="/admin">Admin</a>
-					{{end}}
-					{{if .Auth}}
-						| <a href="/user/logout">Logout</a>{{if .Username}} ({{.Username}}){{end}}
-					{{else}}
-						| <a href="/user/login">Login</a>
-					{{end}}
-				</td>
-			</tr>
-		</table>
-	</header><hr>
-	<main>
-		<table class="highlight-row">
-			<thead>
+<html lang="en">
+	<head>{{template "base/head" .}}</head>
+	<body>
+		<header>
+			<table>
 				<tr>
-					<td><b>Name</b></td>
-					<td><b>Description</b></td>
-					<td><b>Owner</b></td>
-					<td><b>Visibility</b></td>
-					<td><b>Last Commit</b></td>
+					<td rowspan="2">
+						<a href="/"><img style="max-height: 24px;" src="/static/favicon.png"></a>
+					</td>
+					<td><h1>{{.Title}}</h1></td>
 				</tr>
-			</thead>
-			<tbody>
-			{{range .Repos}}
 				<tr>
-					<td><a href="/{{.Name}}/">{{.Name}}</a></td>
-					<td>{{.Description}}</td>
-					<td><a href="/?u={{.Owner}}">{{.Owner}}</a></td>
-					<td>{{.Visibility}}</td>
-					<td>{{.LastCommit}}</td>
+					<td>
+						<a href="/">Repositories</a>
+						{{if .Auth}}
+							| <a href="/repo/create">Create</a>
+							| <a href="/user/sessions">User</a>
+						{{end}}
+						{{if .Admin}}
+							| <a href="/admin">Admin</a>
+						{{end}}
+						{{if .Auth}}
+							| <a href="/user/logout">Logout</a>{{if .Username}} ({{.Username}}){{end}}
+						{{else}}
+							| <a href="/user/login">Login</a>
+						{{end}}
+					</td>
 				</tr>
-			{{end}}
-			</tbody>
-		</table>
-	</main>
-</body>
+			</table>
+		</header><hr>
+		<main>
+			<table class="highlight-row">
+				<thead>
+					<tr>
+						<td><b>Name</b></td>
+						<td><b>Description</b></td>
+						<td><b>Owner</b></td>
+						<td><b>Visibility</b></td>
+						<td><b>Last Commit</b></td>
+					</tr>
+				</thead>
+				<tbody>
+				{{range .Repos}}
+					<tr>
+						<td><a href="/{{.Name}}/">{{.Name}}</a></td>
+						<td>{{.Description}}</td>
+						<td><a href="/?u={{.Owner}}">{{.Owner}}</a></td>
+						<td>{{.Visibility}}</td>
+						<td>{{.LastCommit}}</td>
+					</tr>
+				{{end}}
+				</tbody>
+			</table>
+		</main>
+	</body>
+</html>

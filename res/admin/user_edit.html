@@ -1,28 +1,30 @@
 <!DOCTYPE html>
-<head lang="en-GB">{{template "base/head" .}}</head>
-<body>
-	<header>{{template "admin/header" .}}</header><hr>
-	<main>
-		<h1>{{.Title}}</h1><hr>
-		<form action="/admin/user/edit?user={{.Form.Id}}" method="post">
-			{{.CsrfField}}
-			<table>
-				<tr><td><label for="id">ID</label></td></tr>
-				<tr><td><span>{{.Form.Id}}</span></td></tr>
-				<tr><td><label for="username">Username</label></td></tr>
-				<tr><td><input type="text" name="username" value="{{.Form.Name}}" spellcheck="false"></td></tr>
-				<tr><td><label for="fullname">Full Name</label></td></tr>
-				<tr><td><input type="text" name="fullname" value="{{.Form.FullName}}" spellcheck="false"></td></tr>
-				<tr><td><label for="password">Password</label></td></tr>
-				<tr><td><input type="password" name="password" placeholder="unchanged"></td></tr>
-				<tr><td><label for="admin">Admin</label></td></tr>
-				<tr><td><input type="checkbox" name="admin" value="true" {{if .Form.IsAdmin}}checked{{end}}></td></tr>
-				<tr><td>
-					<input type="submit" name="submit" value="Update">
-					<a href="/admin/users" style="color: inherit;">Cancel</a>
-				</td></tr>
-				<tr><td><span style="color: #AA0000">{{.Message}}</span></td></tr>
-			</table>
-		</form>
-	</main>
-</body>
+<html lang="en">
+	<head>{{template "base/head" .}}</head>
+	<body>
+		<header>{{template "admin/header" .}}</header><hr>
+		<main>
+			<h1>{{.Title}}</h1><hr>
+			<form action="/admin/user/edit?user={{.Form.Id}}" method="post">
+				{{.CsrfField}}
+				<table>
+					<tr><td><label for="id">ID</label></td></tr>
+					<tr><td><span>{{.Form.Id}}</span></td></tr>
+					<tr><td><label for="username">Username</label></td></tr>
+					<tr><td><input type="text" name="username" value="{{.Form.Name}}" spellcheck="false"></td></tr>
+					<tr><td><label for="fullname">Full Name</label></td></tr>
+					<tr><td><input type="text" name="fullname" value="{{.Form.FullName}}" spellcheck="false"></td></tr>
+					<tr><td><label for="password">Password</label></td></tr>
+					<tr><td><input type="password" name="password" placeholder="unchanged"></td></tr>
+					<tr><td><label for="admin">Admin</label></td></tr>
+					<tr><td><input type="checkbox" name="admin" value="true" {{if .Form.IsAdmin}}checked{{end}}></td></tr>
+					<tr><td>
+						<input type="submit" name="submit" value="Update">
+						<a href="/admin/users" style="color: inherit;">Cancel</a>
+					</td></tr>
+					<tr><td><span style="color: #AA0000">{{.Message}}</span></td></tr>
+				</table>
+			</form>
+		</main>
+	</body>
+</html>

@@ -1,50 +1,52 @@
 <!DOCTYPE html>
-<head lang="en-GB">{{template "base/head" .}}</head>
-<body>
-	<header>{{template "repo/header" .}}</header><hr>
-	<main>
-		<table class="highlight-row">
-			<thead>
-				<tr>
-					<td><b>Date</b></td>
-					<td><b>Message</b></td>
-					<td><b>Author</b></td>
-					<td><b>Files</b></td>
-					<td><b>+</b></td>
-					<td><b>-</b></td>
-				</tr>
-			</thead>
-			<tbody>
-				{{if .Commits}}
-					{{range .Commits}}
-						<tr>
-							<td>{{.Date}}</a></td>
-							<td><a href="/{{$.Name}}/commit/{{.Hash}}">{{.Message}}</a></td>
-							<td>{{.Author}}</td>
-							<td style="text-align: right;">{{.Files}}</td>
-							<td style="text-align: right; color: #008800;">{{.Additions}}</td>
-							<td style="text-align: right; color: #AA0000;">{{.Deletions}}</td>
-						</tr>
+<html lang="en">
+	<head>{{template "base/head" .}}</head>
+	<body>
+		<header>{{template "repo/header" .}}</header><hr>
+		<main>
+			<table class="highlight-row">
+				<thead>
+					<tr>
+						<td><b>Date</b></td>
+						<td><b>Message</b></td>
+						<td><b>Author</b></td>
+						<td><b>Files</b></td>
+						<td><b>+</b></td>
+						<td><b>-</b></td>
+					</tr>
+				</thead>
+				<tbody>
+					{{if .Commits}}
+						{{range .Commits}}
+							<tr>
+								<td>{{.Date}}</a></td>
+								<td><a href="/{{$.Name}}/commit/{{.Hash}}">{{.Message}}</a></td>
+								<td>{{.Author}}</td>
+								<td style="text-align: right;">{{.Files}}</td>
+								<td style="text-align: right; color: #008800;">{{.Additions}}</td>
+								<td style="text-align: right; color: #AA0000;">{{.Deletions}}</td>
+							</tr>
+						{{end}}
+					{{else}}
+						<tr><td colspan="6">No commits</td></tr>
 					{{end}}
+				</tbody>
+			</table>
+			<footer>
+				{{if gt .PrevOffset 0}}
+					<a href="/{{$.Name}}/log?o={{.PrevOffset}}">[prev]</a>
+				{{else if eq .PrevOffset 0}}
+					<a href="/{{$.Name}}/log">[prev]</a>
 				{{else}}
-					<tr><td colspan="6">No commits</td></tr>
+					<span>[prev]</span>
 				{{end}}
-			</tbody>
-		</table>
-		<footer>
-			{{if gt .PrevOffset 0}}
-				<a href="/{{$.Name}}/log?o={{.PrevOffset}}">[prev]</a>
-			{{else if eq .PrevOffset 0}}
-				<a href="/{{$.Name}}/log">[prev]</a>
-			{{else}}
-				<span>[prev]</span>
-			{{end}}
-			<span>{{.Page}}</span>
-			{{if gt .NextOffset 0}}
-				<a href="/{{$.Name}}/log?o={{.NextOffset}}">[next]</a>
-			{{else}}
-				<span>[next]</span>
-			{{end}}
-		</footer>
-	</main>
-</body>
+				<span>{{.Page}}</span>
+				{{if gt .NextOffset 0}}
+					<a href="/{{$.Name}}/log?o={{.NextOffset}}">[next]</a>
+				{{else}}
+					<span>[next]</span>
+				{{end}}
+			</footer>
+		</main>
+	</body>
+</html>

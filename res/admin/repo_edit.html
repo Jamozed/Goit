@@ -1,96 +1,98 @@
 <!DOCTYPE html>
-<head lang="en-GB">{{template "base/head" .}}</head>
-<body>
-	<header>{{template "admin/header" .}}</header><hr>
-	<main>
-		<h1>{{.Title}}</h1><hr>
-		<form action="/admin/repo/edit?repo={{.Edit.Id}}" method="post">
-			{{.CsrfField}}
-			<input type="hidden" name="action" value="edit">
-			<table>
-				<tr>
-					<td style="text-align: right;"><span>ID</span></td>
-					<td><span>{{.Edit.Id}}</span></td>
-				</tr>
-				<tr>
-					<td style="text-align: right;"><span>Owner</span></td>
-					<td><span>{{.Edit.Owner}}</span></td>
-				</tr>
-				<tr>
-					<td style="text-align: right;"><label for="reponame">Name</label></td>
-					<td><input type="text" name="reponame" value="{{.Edit.Name}}" spellcheck="false"></td>
-				</tr>
-				<tr>
-					<td style="text-align:right; vertical-align:top;"><label for="description">Description</label></td>
-					<td><textarea name="description" spellcheck="false">{{.Edit.Description}}</textarea></td>
-				</tr>
-				<tr>
-					<td style="text-align: right;"><label for="branch">Default Branch</label></td>
-					<td><input type="text" name="branch" value="{{.Edit.DefaultBranch}}" placeholder="master"></td>
-				</tr>
-				<tr>
-					<td style="text-align: right;"><label for="visibility">Visibility:</label></td>
-					<td>
-						<select name="visibility">
-							<option value="public">Public</option>
-							<option value="private" {{if .Edit.IsPrivate}}selected{{end}}>Private</option>
-						</select>
-					</td>
-				</tr>
-				<tr>
-					<td style="text-align: right;"><label for="upstream">Upstream</label></td>
-					<td><input type="text" name="upstream" value="{{.Edit.Upstream}}" spellcheck="false"></td>
-				</tr>
-				<tr>
-					<td style="text-align: right;"><label for="mirror">Mirror</label></td>
-					<td>
-						<input type="checkbox" name="mirror" value="mirror" {{if .Edit.IsMirror}}checked{{end}}>
-						<span id="mirror-warn">Enabling mirror will replace any existing repository data</span>
-					</td>
-				</tr>
-				<tr>
-					<td></td>
-					<td>
-						<input type="submit" value="Update">
+<html lang="en">
+	<head>{{template "base/head" .}}</head>
+	<body>
+		<header>{{template "admin/header" .}}</header><hr>
+		<main>
+			<h1>{{.Title}}</h1><hr>
+			<form action="/admin/repo/edit?repo={{.Edit.Id}}" method="post">
+				{{.CsrfField}}
+				<input type="hidden" name="action" value="edit">
+				<table>
+					<tr>
+						<td style="text-align: right;"><span>ID</span></td>
+						<td><span>{{.Edit.Id}}</span></td>
+					</tr>
+					<tr>
+						<td style="text-align: right;"><span>Owner</span></td>
+						<td><span>{{.Edit.Owner}}</span></td>
+					</tr>
+					<tr>
+						<td style="text-align: right;"><label for="reponame">Name</label></td>
+						<td><input type="text" name="reponame" value="{{.Edit.Name}}" spellcheck="false"></td>
+					</tr>
+					<tr>
+						<td style="text-align:right; vertical-align:top;"><label for="description">Description</label></td>
+						<td><textarea name="description" spellcheck="false">{{.Edit.Description}}</textarea></td>
+					</tr>
+					<tr>
+						<td style="text-align: right;"><label for="branch">Default Branch</label></td>
+						<td><input type="text" name="branch" value="{{.Edit.DefaultBranch}}" placeholder="master"></td>
+					</tr>
+					<tr>
+						<td style="text-align: right;"><label for="visibility">Visibility:</label></td>
+						<td>
+							<select name="visibility">
+								<option value="public">Public</option>
+								<option value="private" {{if .Edit.IsPrivate}}selected{{end}}>Private</option>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<td style="text-align: right;"><label for="upstream">Upstream</label></td>
+						<td><input type="text" name="upstream" value="{{.Edit.Upstream}}" spellcheck="false"></td>
+					</tr>
+					<tr>
+						<td style="text-align: right;"><label for="mirror">Mirror</label></td>
+						<td>
+							<input type="checkbox" name="mirror" value="mirror" {{if .Edit.IsMirror}}checked{{end}}>
+							<span id="mirror-warn">Enabling mirror will replace any existing repository data</span>
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td>
+							<input type="submit" value="Update">
+							<a href="/admin/repos" style="color: inherit;">Cancel</a>
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td><span style="color: #AA0000">{{.Edit.Message}}</span></td>
+					</tr>
+				</table>
+			</form>
+			<br><h2>Transfer Ownership</h2><hr>
+			<span>- You will lose access to this repository if it is not public.</span><br><br>
+			<form action="/admin/repo/edit?repo={{.Edit.Id}}" method="post">
+				{{.CsrfField}}
+				<input type="hidden" name="action" value="transfer">
+				<table>
+					<tr><td><label for="owner">New Owner</label></td></tr>
+					<tr><td><input type="text" name="owner" value="{{.Transfer.Owner}}" spellcheck="false"></td></tr>
+					<tr><td>
+						<input type="submit" value="Transfer">
 						<a href="/admin/repos" style="color: inherit;">Cancel</a>
-					</td>
-				</tr>
-				<tr>
-					<td></td>
-					<td><span style="color: #AA0000">{{.Edit.Message}}</span></td>
-				</tr>
-			</table>
-		</form>
-		<br><h2>Transfer Ownership</h2><hr>
-		<span>- You will lose access to this repository if it is not public.</span><br><br>
-		<form action="/admin/repo/edit?repo={{.Edit.Id}}" method="post">
-			{{.CsrfField}}
-			<input type="hidden" name="action" value="transfer">
-			<table>
-				<tr><td><label for="owner">New Owner</label></td></tr>
-				<tr><td><input type="text" name="owner" value="{{.Transfer.Owner}}" spellcheck="false"></td></tr>
-				<tr><td>
-					<input type="submit" value="Transfer">
-					<a href="/admin/repos" style="color: inherit;">Cancel</a>
-				</td></tr>
-				<tr><td style="color: #AA0000">{{.Transfer.Message}}</td></tr>
-			</table>
-		</form>
-		<br><h2>Delete Repository</h2><hr>
-		<span>- This operation <b>CANNOT</b> be undone.</span><br>
-		<span>- This operation will permanently delete the {{.Name}} repository and all associated data.</span><br><br>
-		<form action="/admin/repo/edit?repo={{.Edit.Id}}" method="post">
-			{{.CsrfField}}
-			<input type="hidden" name="action" value="delete">
-			<table>
-				<tr><td><label for="reponame">To confirm, type "{{.Name}}" in the box below</label></td></tr>
-				<tr><td><input type="text" name="reponame" spellcheck="false"></td></tr>
-				<tr><td>
-					<input type="submit" value="Delete">
-					<a href="/admin/repos" style="color: inherit;">Cancel</a>
-				</td></tr>
-				<tr><td style="color: #AA0000">{{.Delete.Message}}</td></tr>
-			</table>
-		</form>
-	</main>
-</body>
+					</td></tr>
+					<tr><td style="color: #AA0000">{{.Transfer.Message}}</td></tr>
+				</table>
+			</form>
+			<br><h2>Delete Repository</h2><hr>
+			<span>- This operation <b>CANNOT</b> be undone.</span><br>
+			<span>- This operation will permanently delete the {{.Name}} repository and all associated data.</span><br><br>
+			<form action="/admin/repo/edit?repo={{.Edit.Id}}" method="post">
+				{{.CsrfField}}
+				<input type="hidden" name="action" value="delete">
+				<table>
+					<tr><td><label for="reponame">To confirm, type "{{.Name}}" in the box below</label></td></tr>
+					<tr><td><input type="text" name="reponame" spellcheck="false"></td></tr>
+					<tr><td>
+						<input type="submit" value="Delete">
+						<a href="/admin/repos" style="color: inherit;">Cancel</a>
+					</td></tr>
+					<tr><td style="color: #AA0000">{{.Delete.Message}}</td></tr>
+				</table>
+			</form>
+		</main>
+	</body>
+</html>

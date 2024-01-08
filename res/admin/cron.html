@@ -1,30 +1,32 @@
 <!DOCTYPE html>
-<head lang="en-GB">{{template "base/head" .}}</head>
-<body>
-	<header>{{template "admin/header" .}}</header><hr>
-	<main>
-		<table class="highlight-row">
-			<thead>
-				<tr>
-					<td><b>ID</b></td>
-					<td><b>Repository</b></td>
-					<td><b>Schedule</b></td>
-					<td><b>Next</b></td>
-					<td><b>Last</b></td>
-				</tr>
-			</thead>
-			<tbody>
-				{{range .Jobs}}
-				<tr>
-					<td>{{.Id}}</td>
-					<td><a href="/{{.Repo}}">{{.Repo}}</a></td>
-					<td>{{.Schedule}}</td>
-					<td>{{.Next}}</td>
-					<td>{{.Last}}</td>
-				</tr>
-				{{end}}
-			</tbody>
-		</table><hr>
-		<span>Schedule format is month, day, weekday, hour, minute, second, where an asterisk represents "any".</span>
-	</main>
-</body>
+<html lang="en">
+	<head>{{template "base/head" .}}</head>
+	<body>
+		<header>{{template "admin/header" .}}</header><hr>
+		<main>
+			<table class="highlight-row">
+				<thead>
+					<tr>
+						<td><b>ID</b></td>
+						<td><b>Repository</b></td>
+						<td><b>Schedule</b></td>
+						<td><b>Next</b></td>
+						<td><b>Last</b></td>
+					</tr>
+				</thead>
+				<tbody>
+					{{range .Jobs}}
+					<tr>
+						<td>{{.Id}}</td>
+						<td><a href="/{{.Repo}}">{{.Repo}}</a></td>
+						<td>{{.Schedule}}</td>
+						<td>{{.Next}}</td>
+						<td>{{.Last}}</td>
+					</tr>
+					{{end}}
+				</tbody>
+			</table><hr>
+			<span>Schedule format is month, day, weekday, hour, minute, second, where an asterisk represents "any".</span>
+		</main>
+	</body>
+</html>

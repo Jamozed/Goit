@@ -1,38 +1,40 @@
 <!DOCTYPE html>
-<head lang="en-GB">{{template "base/head" .}}</head>
-<body>
-	<header>{{template "repo/header" .}}</header><hr>
-	<main>
-		<table>
-			<tr><td>Author</td><td>{{.Author}}</td></tr>
-			<tr><td>Date</td><td>{{.Date}}</td></tr>
-			<tr><td>Commit</td><td><a href="/{{.Name}}/commit/{{.Commit}}">{{.Commit}}</a></td></tr>
-			{{range $i, $h := .Parents}}
-				<tr><td>Parent</td><td><a href="/{{$.Name}}/commit/{{$h}}">{{$h}}</a></td></tr>
-			{{end}}
-		</table>
-		<p>{{.MessageSubject}}</p>
-		<p>{{.MessageBody}}</p>
-		<h2>Diffstat</h2>
-		<table>
-			{{range .Stats}}
-				<tr>
-					<td>{{.Status}}</td>
-					<td><a href="/{{$.Name}}/file/{{.Path}}">{{.Name}}</a></td>
-					<td>|</td>
-					{{if .IsBinary}}
-						<td colspan="2">binary</td>
-					{{else}}
-						<td>{{.Num}}</td>
-						<td>
-							<span style="color: #008800;">{{.Plusses}}</span><!--
-							--><span style="color: #AA0000;">{{.Minuses}}</span>
-						</td>
-					{{end}}
-				</tr>
-			{{end}}
-		</table>
-		<p>{{.Summary}}</p>
-		<pre style="tab-size: 4;">{{.Diff}}</pre>
-	</main>
-</body>
+<html lang="en">
+	<head>{{template "base/head" .}}</head>
+	<body>
+		<header>{{template "repo/header" .}}</header><hr>
+		<main>
+			<table>
+				<tr><td>Author</td><td>{{.Author}}</td></tr>
+				<tr><td>Date</td><td>{{.Date}}</td></tr>
+				<tr><td>Commit</td><td><a href="/{{.Name}}/commit/{{.Commit}}">{{.Commit}}</a></td></tr>
+				{{range $i, $h := .Parents}}
+					<tr><td>Parent</td><td><a href="/{{$.Name}}/commit/{{$h}}">{{$h}}</a></td></tr>
+				{{end}}
+			</table>
+			<p>{{.MessageSubject}}</p>
+			<p>{{.MessageBody}}</p>
+			<h2>Diffstat</h2>
+			<table>
+				{{range .Stats}}
+					<tr>
+						<td>{{.Status}}</td>
+						<td><a href="/{{$.Name}}/file/{{.Path}}">{{.Name}}</a></td>
+						<td>|</td>
+						{{if .IsBinary}}
+							<td colspan="2">binary</td>
+						{{else}}
+							<td>{{.Num}}</td>
+							<td>
+								<span style="color: #008800;">{{.Plusses}}</span><!--
+								--><span style="color: #AA0000;">{{.Minuses}}</span>
+							</td>
+						{{end}}
+					</tr>
+				{{end}}
+			</table>
+			<p>{{.Summary}}</p>
+			<pre style="tab-size: 4;">{{.Diff}}</pre>
+		</main>
+	</body>
+</html>

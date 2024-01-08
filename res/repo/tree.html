@@ -1,43 +1,45 @@
 <!DOCTYPE html>
-<head lang="en-GB">{{template "base/head" .}}</head>
-<body>
-	<header>
-		{{template "repo/header" .}}<hr>
-		{{.HtmlPath}} ({{.Size}}) <a href="/{{.Name}}/download/{{.Path}}">download</a>
-	</header><hr>
-	<main>
-		<table class="highlight-row">
-			<thead>
-				<tr>
-					<td><b>Mode</b></td>
-					<td><b>Name</b></td>
-					<td><b>Size</b></td>
-					<td></td>
-				</tr>
-			</thead>
-			<tbody>
-				{{if .Files}}
-					{{range .Files}}
-						<tr>
-							<td>{{.Mode}}</td>
-							<td><a href="/{{$.Name}}/{{.Path}}">{{.Name}}</a></td>
-							<td align="right" {{if .B}}style="padding-right: calc(2ch + 0.4em);"{{end}}>{{.Size}}</td>
-							<td>
-								{{if .RawPath}}
-									<a href="/{{$.Name}}/log/{{.RawPath}}">log</a>
-									{{if .IsFile}}
-										blame
-										<a href="/{{$.Name}}/raw/{{.RawPath}}">raw</a>
+<html lang="en">
+	<head>{{template "base/head" .}}</head>
+	<body>
+		<header>
+			{{template "repo/header" .}}<hr>
+			{{.HtmlPath}} ({{.Size}}) <a href="/{{.Name}}/download/{{.Path}}">download</a>
+		</header><hr>
+		<main>
+			<table class="highlight-row">
+				<thead>
+					<tr>
+						<td><b>Mode</b></td>
+						<td><b>Name</b></td>
+						<td><b>Size</b></td>
+						<td></td>
+					</tr>
+				</thead>
+				<tbody>
+					{{if .Files}}
+						{{range .Files}}
+							<tr>
+								<td>{{.Mode}}</td>
+								<td><a href="/{{$.Name}}/{{.Path}}">{{.Name}}</a></td>
+								<td align="right" {{if .B}}style="padding-right: calc(2ch + 0.4em);"{{end}}>{{.Size}}</td>
+								<td>
+									{{if .RawPath}}
+										<a href="/{{$.Name}}/log/{{.RawPath}}">log</a>
+										{{if .IsFile}}
+											blame
+											<a href="/{{$.Name}}/raw/{{.RawPath}}">raw</a>
+										{{end}}
+										<a href="/{{$.Name}}/download/{{.RawPath}}">download</a>
 									{{end}}
-									<a href="/{{$.Name}}/download/{{.RawPath}}">download</a>
-								{{end}}
-							</td>
-						</tr>
+								</td>
+							</tr>
+						{{end}}
+					{{else}}
+						<tr><td colspan="4">No files</td></tr>
 					{{end}}
-				{{else}}
-					<tr><td colspan="4">No files</td></tr>
-				{{end}}
-			</tbody>
-		</table>
-	</main>
-</body>
+				</tbody>
+			</table>
+		</main>
+	</body>
+</html>

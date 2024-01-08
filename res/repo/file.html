@@ -1,22 +1,24 @@
 <!DOCTYPE html>
-<head lang="en-GB">{{template "base/head" .}}{{.BodyCss}}</head>
-<body>
-	<header>
-		{{template "repo/header" .}}<hr>
-		{{.HtmlPath}} ({{.LineC}}, {{.Size}}) {{.Mode}} <a href="/{{.Name}}/download/{{.Path}}">download</a>
-	</header><hr>
-	<main>
-		<table>
-			{{if .Lines}}
-				<tr>
-					<td class="lnum" style="text-align: right;">
-						<pre>{{range $i, $l := .Lines}}<a id="{{$i}}" href="#{{$i}}">{{$i}}</a>{{end}}</pre>
-					</td>
-					<td class="line">{{.HtmlBody}}</td>
-				</tr>
-			{{else}}
-				<tr><td>Binary file</td></tr>
-			{{end}}
-		</table>
-	</main>
-</body>
+<html lang="en">
+	<head>{{template "base/head" .}}{{.BodyCss}}</head>
+	<body>
+		<header>
+			{{template "repo/header" .}}<hr>
+			{{.HtmlPath}} ({{.LineC}}, {{.Size}}) {{.Mode}} <a href="/{{.Name}}/download/{{.Path}}">download</a>
+		</header><hr>
+		<main>
+			<table>
+				{{if .Lines}}
+					<tr>
+						<td class="lnum" style="text-align: right;">
+							<pre>{{range $i, $l := .Lines}}<a id="{{$i}}" href="#{{$i}}">{{$i}}</a>{{end}}</pre>
+						</td>
+						<td class="line">{{.HtmlBody}}</td>
+					</tr>
+				{{else}}
+					<tr><td>Binary file</td></tr>
+				{{end}}
+			</table>
+		</main>
+	</body>
+</html>

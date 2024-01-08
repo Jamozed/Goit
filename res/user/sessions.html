@@ -1,29 +1,31 @@
 <!DOCTYPE html>
-<head lang="en-GB">{{template "base/head" .}}</head>
-<body>
-	<header>{{template "user/header" .}}</header><hr>
-	<main>
-		<table>
-			<thead>
-				<tr>
-					<td><b>IP</b></td>
-					<td><b>Seen</b></td>
-					<td><b>Expiry</b></td>
-					<td></td>
-					<td></td>
-				</tr>
-			</thead>
-			<tbody>
-			{{range .Sessions}}
-				<tr>
-					<td>{{.Ip}}</a></td>
-					<td>{{.Seen}}</td>
-					<td>{{.Expiry}}</td>
-					<td><a href="/user/sessions?revoke={{.Index}}">revoke</a></td>
-					<td>{{.Current}}</td>
-				</tr>
-			{{end}}
-			</tbody>
-		</table>
-	</main>
-</body>
+<html lang="en">
+	<head>{{template "base/head" .}}</head>
+	<body>
+		<header>{{template "user/header" .}}</header><hr>
+		<main>
+			<table>
+				<thead>
+					<tr>
+						<td><b>IP</b></td>
+						<td><b>Seen</b></td>
+						<td><b>Expiry</b></td>
+						<td></td>
+						<td></td>
+					</tr>
+				</thead>
+				<tbody>
+				{{range .Sessions}}
+					<tr>
+						<td>{{.Ip}}</a></td>
+						<td>{{.Seen}}</td>
+						<td>{{.Expiry}}</td>
+						<td><a href="/user/sessions?revoke={{.Index}}">revoke</a></td>
+						<td>{{.Current}}</td>
+					</tr>
+				{{end}}
+				</tbody>
+			</table>
+		</main>
+	</body>
+</html>
