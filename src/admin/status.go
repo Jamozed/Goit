@@ -13,6 +13,7 @@ import (
 
 	"github.com/Jamozed/Goit/res"
 	"github.com/Jamozed/Goit/src/goit"
+	"github.com/Jamozed/Goit/src/util"
 	"github.com/dustin/go-humanize"
 )
 
@@ -68,19 +69,19 @@ func formatUptime(uptime time.Duration) string {
 
 	var parts []string
 	if weeks > 0 {
-		parts = append(parts, fmt.Sprintf("%d weeks", weeks))
+		parts = append(parts, fmt.Sprintf(util.If(weeks == 1, "%d week", "%d weeks"), weeks))
 	}
 	if days > 0 {
-		parts = append(parts, fmt.Sprintf("%d days", days))
+		parts = append(parts, fmt.Sprintf(util.If(days == 1, "%d day", "%d days"), days))
 	}
 	if hours > 0 {
-		parts = append(parts, fmt.Sprintf("%d hours", hours))
+		parts = append(parts, fmt.Sprintf(util.If(days == 1, "%d hour", "%d hours"), hours))
 	}
 	if minutes > 0 {
-		parts = append(parts, fmt.Sprintf("%d minutes", minutes))
+		parts = append(parts, fmt.Sprintf(util.If(days == 1, "%d minute", "%d minutes"), minutes))
 	}
 	if seconds > 0 {
-		parts = append(parts, fmt.Sprintf("%d seconds", seconds))
+		parts = append(parts, fmt.Sprintf(util.If(days == 1, "%d second", "%d seconds"), seconds))
 	}
 
 	if len(parts) == 0 {
