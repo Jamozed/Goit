@@ -18,21 +18,46 @@ import (
 )
 
 type Repo struct {
-	Id            int64  `json:"id"`
-	OwnerId       int64  `json:"owner_id"`
-	Name          string `json:"name"`
-	Description   string `json:"description"`
-	DefaultBranch string `json:"default_branch"`
-	Upstream      string `json:"upstream"`
-	IsPrivate     bool   `json:"is_private"`
-	IsMirror      bool   `json:"is_mirror"`
+	Id            int64      `json:"id"`
+	OwnerId       int64      `json:"owner_id"`
+	Name          string     `json:"name"`
+	Description   string     `json:"description"`
+	DefaultBranch string     `json:"default_branch"`
+	Upstream      string     `json:"upstream"`
+	Visibility    Visibility `json:"visibility"`
+	IsMirror      bool       `json:"is_mirror"`
+}
+
+type Visibility int32
+
+const (
+	Public  Visibility = 0
+	Private Visibility = 1
+	Limited Visibility = 2
+)
+
+func VisibilityFromString(s string) Visibility {
+	switch strings.ToLower(s) {
+	case "public":
+		return Public
+	case "private":
+		return Private
+	case "limited":
+		return Limited
+	default:
+		return -1
+	}
+}
+
+func (v Visibility) String() string {
+	return [...]string{"public", "private", "limited"}[v]
 }
 
 func GetRepos() ([]Repo, error) {
 	repos := []Repo{}
 
 	rows, err := db.Query(
-		"SELECT id, owner_id, name, description, default_branch, upstream, is_private, is_mirror FROM repos",
+		"SELECT id, owner_id, name, description, default_branch, upstream, visibility, is_mirror FROM repos",
 	)
 	if err != nil {
 		return nil, err
@@ -43,7 +68,7 @@ func GetRepos() ([]Repo, error) {
 	for rows.Next() {
 		r := Repo{}
 		if err := rows.Scan(
-			&r.Id, &r.OwnerId, &r.Name, &r.Description, &r.DefaultBranch, &r.Upstream, &r.IsPrivate, &r.IsMirror,
+			&r.Id, &r.OwnerId, &r.Name, &r.Description, &r.DefaultBranch, &r.Upstream, &r.Visibility, &r.IsMirror,
 		); err != nil {
 			return nil, err
 		}
@@ -62,10 +87,10 @@ func GetRepo(rid int64) (*Repo, error) {
 	r := &Repo{}
 
 	if err := db.QueryRow(
-		`SELECT id, owner_id, name, description, default_branch, upstream, is_private, is_mirror FROM repos
+		`SELECT id, owner_id, name, description, default_branch, upstream, visibility, is_mirror FROM repos
 		WHERE id = ?`, rid,
 	).Scan(
-		&r.Id, &r.OwnerId, &r.Name, &r.Description, &r.DefaultBranch, &r.Upstream, &r.IsPrivate, &r.IsMirror,
+		&r.Id, &r.OwnerId, &r.Name, &r.Description, &r.DefaultBranch, &r.Upstream, &r.Visibility, &r.IsMirror,
 	); err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			return nil, err
@@ -81,10 +106,10 @@ func GetRepoByName(name string) (*Repo, error) {
 	r := &Repo{}
 
 	if err := db.QueryRow(
-		`SELECT id, owner_id, name, description, default_branch, upstream, is_private, is_mirror FROM repos
+		`SELECT id, owner_id, name, description, default_branch, upstream, visibility, is_mirror FROM repos
 		WHERE name = ?`, name,
 	).Scan(
-		&r.Id, &r.OwnerId, &r.Name, &r.Description, &r.DefaultBranch, &r.Upstream, &r.IsPrivate, &r.IsMirror,
+		&r.Id, &r.OwnerId, &r.Name, &r.Description, &r.DefaultBranch, &r.Upstream, &r.Visibility, &r.IsMirror,
 	); err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			return nil, err
@@ -103,9 +128,9 @@ func CreateRepo(repo Repo) (int64, error) {
 	}
 
 	res, err := tx.Exec(
-		`INSERT INTO repos (owner_id, name, name_lower, description, default_branch, upstream, is_private, is_mirror)
+		`INSERT INTO repos (owner_id, name, name_lower, description, default_branch, upstream, visibility, is_mirror)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, repo.OwnerId, repo.Name, strings.ToLower(repo.Name), repo.Description,
-		repo.DefaultBranch, repo.Upstream, repo.IsPrivate, repo.IsMirror,
+		repo.DefaultBranch, repo.Upstream, repo.Visibility, repo.IsMirror,
 	)
 	if err != nil {
 		tx.Rollback()
@@ -193,9 +218,9 @@ func UpdateRepo(rid int64, repo Repo) error {
 	}
 
 	if _, err := tx.Exec(
-		`UPDATE repos SET name = ?, name_lower = ?, description = ?, default_branch = ?, upstream = ?, is_private = ?,
+		`UPDATE repos SET name = ?, name_lower = ?, description = ?, default_branch = ?, upstream = ?, visibility = ?,
 		is_mirror = ? WHERE id = ?`, repo.Name, strings.ToLower(repo.Name), repo.Description, repo.DefaultBranch,
-		repo.Upstream, repo.IsPrivate, repo.IsMirror, rid,
+		repo.Upstream, repo.Visibility, repo.IsMirror, rid,
 	); err != nil {
 		tx.Rollback()
 		return err
@@ -304,4 +329,12 @@ func Pull(rid int64) error {
 	}
 
 	return nil
+}
+
+func IsVisible(repo *Repo, auth bool, user *User) bool {
+	if repo.Visibility == Public || (repo.Visibility == Limited && auth) || (auth && user.Id == repo.OwnerId) {
+		return true
+	}
+
+	return false
 }

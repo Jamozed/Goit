@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Jamozed/Goit/src/util"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 )
@@ -47,7 +46,7 @@ func HandleIndex(w http.ResponseWriter, r *http.Request) {
 
 	rtemp := repos[:0]
 	for _, repo := range repos {
-		if !repo.IsPrivate || (auth && user.Id == repo.OwnerId) {
+		if IsVisible(&repo, auth, user) {
 			rtemp = append(rtemp, repo)
 		}
 	}
@@ -84,7 +83,7 @@ func HandleIndex(w http.ResponseWriter, r *http.Request) {
 
 		data.Repos = append(data.Repos, row{
 			Name: repo.Name, Description: repo.Description, Owner: owner.Name,
-			Visibility: util.If(repo.IsPrivate, "private", "public"), LastCommit: lastCommit,
+			Visibility: repo.Visibility.String(), LastCommit: lastCommit,
 		})
 	}
 

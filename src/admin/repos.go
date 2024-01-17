@@ -58,7 +58,7 @@ func HandleRepos(w http.ResponseWriter, r *http.Request) {
 		}
 
 		data.Repos = append(data.Repos, row{
-			fmt.Sprint(r.Id), u.Name, r.Name, util.If(r.IsPrivate, "private", "public"), humanize.IBytes(size),
+			fmt.Sprint(r.Id), u.Name, r.Name, r.Visibility.String(), humanize.IBytes(size),
 		})
 	}
 
@@ -110,10 +110,10 @@ func HandleRepoEdit(w http.ResponseWriter, r *http.Request) {
 		Title, Name string
 
 		Edit struct {
-			Id, Owner, Name, Description string
-			DefaultBranch, Upstream      string
-			IsPrivate, IsMirror          bool
-			Message                      string
+			Id, Owner, Name, Description        string
+			DefaultBranch, Upstream, Visibility string
+			IsMirror                            bool
+			Message                             string
 		}
 
 		Transfer struct{ Owner, Message string }
@@ -133,7 +133,7 @@ func HandleRepoEdit(w http.ResponseWriter, r *http.Request) {
 	data.Edit.Description = repo.Description
 	data.Edit.DefaultBranch = repo.DefaultBranch
 	data.Edit.Upstream = repo.Upstream
-	data.Edit.IsPrivate = repo.IsPrivate
+	data.Edit.Visibility = repo.Visibility.String()
 	data.Edit.IsMirror = repo.IsMirror
 
 	if r.Method == http.MethodPost {
@@ -143,7 +143,7 @@ func HandleRepoEdit(w http.ResponseWriter, r *http.Request) {
 			data.Edit.Description = r.FormValue("description")
 			data.Edit.DefaultBranch = util.If(r.FormValue("branch") == "", "master", r.FormValue("branch"))
 			data.Edit.Upstream = r.FormValue("upstream")
-			data.Edit.IsPrivate = r.FormValue("visibility") == "private"
+			data.Edit.Visibility = r.FormValue("visibility")
 			data.Edit.IsMirror = r.FormValue("mirror") == "mirror"
 
 			if data.Edit.Name == "" {
@@ -158,9 +158,11 @@ func HandleRepoEdit(w http.ResponseWriter, r *http.Request) {
 				data.Edit.Message = "Name \"" + data.Edit.Name + "\" is taken"
 			} else if len(data.Edit.Description) > 256 {
 				data.Edit.Message = "Description cannot exceed 256 characters"
+			} else if visibility := goit.VisibilityFromString(data.Edit.Visibility); visibility == -1 {
+				data.Edit.Message = "Visibility \"" + data.Edit.Visibility + "\" is invalid"
 			} else if err := goit.UpdateRepo(repo.Id, goit.Repo{
 				Name: data.Edit.Name, Description: data.Edit.Description, DefaultBranch: data.Edit.DefaultBranch,
-				Upstream: data.Edit.Upstream, IsPrivate: data.Edit.IsPrivate, IsMirror: data.Edit.IsMirror,
+				Upstream: data.Edit.Upstream, Visibility: visibility, IsMirror: data.Edit.IsMirror,
 			}); err != nil {
 				log.Println("[/admin/repo/edit]", err.Error())
 				goit.HttpError(w, http.StatusInternalServerError)

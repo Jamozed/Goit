@@ -199,14 +199,18 @@ func Backup() error {
 	rows.Close()
 
 	/* Dump repositories */
-	rows, err = db.Query("SELECT id, owner_id, name, description, is_private FROM repos")
+	rows, err = db.Query(
+		"SELECT id, owner_id, name, description, default_branch, upstream, visibility, is_mirror FROM repos",
+	)
 	if err != nil {
 		return err
 	}
 
 	for rows.Next() {
 		r := Repo{}
-		if err := rows.Scan(&r.Id, &r.OwnerId, &r.Name, &r.Description, &r.IsPrivate); err != nil {
+		if err := rows.Scan(
+			&r.Id, &r.OwnerId, &r.Name, &r.Description, &r.DefaultBranch, &r.Upstream, &r.Visibility, &r.IsMirror,
+		); err != nil {
 			return err
 		}
 

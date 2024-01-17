@@ -29,10 +29,10 @@ func HandleCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := struct {
-		Title, Message      string
-		Name, Description   string
-		DefaultBranch, Url  string
-		IsPrivate, IsMirror bool
+		Title, Message                 string
+		Name, Description              string
+		DefaultBranch, Url, Visibility string
+		IsMirror                       bool
 
 		CsrfField template.HTML
 	}{
@@ -46,7 +46,7 @@ func HandleCreate(w http.ResponseWriter, r *http.Request) {
 		data.Description = r.FormValue("description")
 		data.DefaultBranch = util.If(r.FormValue("branch") == "", "master", r.FormValue("branch"))
 		data.Url = r.FormValue("url")
-		data.IsPrivate = r.FormValue("visibility") == "private"
+		data.Visibility = r.FormValue("visibility")
 		data.IsMirror = r.FormValue("mirror") == "mirror"
 
 		if data.Name == "" {
@@ -59,9 +59,13 @@ func HandleCreate(w http.ResponseWriter, r *http.Request) {
 			return
 		} else if exists {
 			data.Message = "Name \"" + data.Name + "\" is taken"
+		} else if len(data.Description) > 256 {
+			data.Message = "Description cannot exceed 256 characters"
+		} else if visibility := goit.VisibilityFromString(data.Visibility); visibility == -1 {
+			data.Message = "Visibility \"" + data.Visibility + "\" is invalid"
 		} else if rid, err := goit.CreateRepo(goit.Repo{
 			OwnerId: user.Id, Name: data.Name, Description: data.Description, DefaultBranch: data.DefaultBranch,
-			Upstream: data.Url, IsPrivate: data.IsPrivate, IsMirror: data.IsMirror,
+			Upstream: data.Url, Visibility: visibility, IsMirror: data.IsMirror,
 		}); err != nil {
 			log.Println("[/repo/create]", err.Error())
 			goit.HttpError(w, http.StatusInternalServerError)

@@ -31,8 +31,9 @@
 						<td style="text-align: right;"><label for="visibility">Visibility</label></td>
 						<td>
 							<select name="visibility">
-								<option value="public">Public</option>
-								<option value="private" {{if .IsPrivate}}selected{{end}}>Private</option>
+								<option value="public" {{if eq .Visibility "public"}}selected{{end}}>Public</option>
+								<option value="private" {{if eq .Visibility "private"}}selected{{end}}>Private</option>
+								<option value="limited" {{if eq .Visibility "limited"}}selected{{end}}>Limited</option>
 							</select>
 						</td>
 					</tr>

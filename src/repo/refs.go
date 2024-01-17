@@ -30,7 +30,7 @@ func HandleRefs(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		goit.HttpError(w, http.StatusInternalServerError)
 		return
-	} else if repo == nil || (repo.IsPrivate && (!auth || repo.OwnerId != user.Id)) {
+	} else if repo == nil || !goit.IsVisible(repo, auth, user) {
 		goit.HttpError(w, http.StatusNotFound)
 		return
 	}

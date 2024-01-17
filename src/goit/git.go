@@ -103,7 +103,7 @@ func gitHttpBase(w http.ResponseWriter, r *http.Request, service string) *Repo {
 	}
 
 	/* Require authentication other than for public pull */
-	if repo == nil || repo.IsPrivate || service == "git-receive-pack" {
+	if repo == nil || repo.Visibility != Public || service == "git-receive-pack" {
 		username, password, ok := r.BasicAuth()
 		if !ok {
 			w.Header().Set("WWW-Authenticate", "Basic realm=\"git\"")
@@ -125,8 +125,8 @@ func gitHttpBase(w http.ResponseWriter, r *http.Request, service string) *Repo {
 			return nil
 		}
 
-		/* If the repo doesn't exist or isn't owned by the user */
-		if repo == nil || user.Id != repo.OwnerId {
+		/* If the repo doesn't exist or is private and not owned by the user */
+		if repo == nil || (repo.Visibility == Private && user.Id != repo.OwnerId) {
 			w.WriteHeader(http.StatusNotFound)
 			return nil
 		}
