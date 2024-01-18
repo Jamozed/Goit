@@ -1,7 +1,7 @@
 .PHONY: all build image test help
 all: help
 
-MODULE = "github.com/Jamozed/Goit"
+MODULE = "$(shell go list -m)"
 PROGRAM = "goit"
 VERSION ?= "dev"
 
