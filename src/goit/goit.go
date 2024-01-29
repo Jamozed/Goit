@@ -21,34 +21,12 @@ import (
 	"github.com/Jamozed/Goit/res"
 	"github.com/Jamozed/Goit/src/cron"
 	"github.com/Jamozed/Goit/src/util"
-	"github.com/adrg/xdg"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	_ "github.com/mattn/go-sqlite3"
 )
 
-type Config struct {
-	DataPath    string `json:"data_path"`
-	HttpAddr    string `json:"http_addr"`
-	HttpPort    string `json:"http_port"`
-	GitPath     string `json:"git_path"`
-	IpSessions  bool   `json:"ip_sessions"`
-	UsesHttps   bool   `json:"uses_https"`
-	IpForwarded bool   `json:"ip_forwarded"`
-	CsrfSecret  string `json:"csrf_secret"`
-}
-
-var Conf = Config{
-	DataPath:    filepath.Join(xdg.DataHome, "goit"),
-	HttpAddr:    "",
-	HttpPort:    "8080",
-	GitPath:     "git",
-	IpSessions:  true,
-	UsesHttps:   false,
-	IpForwarded: false,
-	CsrfSecret:  "1234567890abcdef1234567890abcdef",
-}
-
+var Conf config
 var db *sql.DB
 var Favicon []byte
 var Cron *cron.Cron
@@ -57,23 +35,18 @@ var Reserved []string = []string{"admin", "repo", "static", "user"}
 
 var StartTime = time.Now()
 
-func Goit(conf string) (err error) {
-	if dat, err := os.ReadFile(conf); err != nil {
-		if !errors.Is(err, os.ErrNotExist) {
-			return fmt.Errorf("[Config] %w", err)
-		}
-	} else if dat != nil {
-		if json.Unmarshal(dat, &Conf); err != nil {
-			return fmt.Errorf("[Config] %w", err)
-		}
+func Goit() error {
+	if conf, err := loadConfig(); err != nil {
+		return err
+	} else {
+		Conf = conf
 	}
 
-	logPath, err := xdg.StateFile(filepath.Join("goit", fmt.Sprint("goit_", time.Now().Unix(), ".log")))
-	if err != nil {
-		log.Fatalln("[log]", err.Error())
+	if err := os.MkdirAll(Conf.LogsPath, 0o777); err != nil {
+		return fmt.Errorf("[config] %w", err)
 	}
 
-	logFile, err := os.Create(logPath)
+	logFile, err := os.Create(filepath.Join(Conf.LogsPath, fmt.Sprint("goit_", time.Now().Unix(), ".log")))
 	if err != nil {
 		log.Fatalln("[log]", err.Error())
 	}
@@ -83,37 +56,37 @@ func Goit(conf string) (err error) {
 
 	log.Println("[Config] using data path:", Conf.DataPath)
 	if err := os.MkdirAll(Conf.DataPath, 0o777); err != nil {
-		return fmt.Errorf("[Config] %w", err)
+		return fmt.Errorf("[config] %w", err)
 	}
 
 	if dat, err := os.ReadFile(filepath.Join(Conf.DataPath, "favicon.png")); err != nil {
-		log.Println("[Favicon]", err.Error())
+		log.Println("[favicon]", err.Error())
 	} else {
 		Favicon = dat
 	}
 
 	if db, err = sql.Open("sqlite3", filepath.Join(Conf.DataPath, "goit.db")); err != nil {
-		return fmt.Errorf("[Database] %w", err)
+		return fmt.Errorf("[database] %w", err)
 	}
 
 	/* Update the database if necessary */
 	if err := dbUpdate(db); err != nil {
-		return fmt.Errorf("[Database] %w", err)
+		return fmt.Errorf("[database] %w", err)
 	}
 
 	/* Create an admin user if one does not exist */
 	if exists, err := UserExists("admin"); err != nil {
-		log.Println("[admin Exists]", err.Error())
+		log.Println("[admin:exists]", err.Error())
 		err = nil /* ignored */
 	} else if !exists {
 		if salt, err := Salt(); err != nil {
-			log.Println("[admin Salt]", err.Error())
+			log.Println("[admin:salt]", err.Error())
 			err = nil /* ignored */
 		} else if _, err = db.Exec(
 			"INSERT INTO users (id, name, name_full, pass, pass_algo, salt, is_admin) VALUES (?, ?, ?, ?, ?, ?, ?)",
 			0, "admin", "Administrator", Hash("admin", salt), "argon2", salt, true,
 		); err != nil {
-			log.Println("[admin INSERT]", err.Error())
+			log.Println("[admin:INSERT]", err.Error())
 			err = nil /* ignored */
 		}
 	}
@@ -146,15 +119,6 @@ func Goit(conf string) (err error) {
 	Cron.Update()
 
 	return nil
-}
-
-func ConfPath() string {
-	if p, err := xdg.SearchConfigFile(filepath.Join("goit", "goit.json")); err != nil {
-		log.Println("[config]", err.Error())
-		return ""
-	} else {
-		return p
-	}
 }
 
 func RepoPath(name string, abs bool) string {

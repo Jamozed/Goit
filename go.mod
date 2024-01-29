@@ -3,7 +3,6 @@ module github.com/Jamozed/Goit
 go 1.21.0
 
 require (
-	github.com/adrg/xdg v0.4.0
 	github.com/alecthomas/chroma v0.10.0
 	github.com/buildkite/terminal-to-html/v3 v3.10.1
 	github.com/dustin/go-humanize v1.0.1

@@ -24,7 +24,6 @@ import (
 	"github.com/Jamozed/Goit/src/repo"
 	"github.com/Jamozed/Goit/src/user"
 	"github.com/Jamozed/Goit/src/util"
-	"github.com/adrg/xdg"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/gorilla/csrf"
@@ -40,7 +39,7 @@ func main() {
 	flag.Parse()
 
 	if backup /* IPC client */ {
-		c, err := net.Dial("unix", filepath.Join(xdg.RuntimeDir, "goit-"+goit.Conf.HttpPort+".sock"))
+		c, err := net.Dial("unix", filepath.Join(goit.Conf.RuntimePath, "goit-"+goit.Conf.HttpPort+".sock"))
 		if err != nil {
 			log.Fatalln(err.Error())
 		}
@@ -77,7 +76,7 @@ func main() {
 	}()
 
 	/* Initialise Goit */
-	if err := goit.Goit(goit.ConfPath()); err != nil {
+	if err := goit.Goit(); err != nil {
 		log.Fatalln(err.Error())
 	}
 
@@ -156,7 +155,7 @@ func main() {
 	// h.Post("/{repo}/git-receive-pack", goit.HandleReceivePack)
 
 	/* Listen for IPC */
-	ipc, err := net.Listen("unix", filepath.Join(xdg.RuntimeDir, "goit-"+goit.Conf.HttpPort+".sock"))
+	ipc, err := net.Listen("unix", filepath.Join(goit.Conf.RuntimePath, "goit-"+goit.Conf.HttpPort+".sock"))
 	if err != nil {
 		log.Fatalln("[sock]", err.Error())
 	}
