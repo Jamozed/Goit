@@ -107,11 +107,13 @@ func Goit() error {
 	for _, r := range repos {
 		if r.IsMirror {
 			util.Debugln("Adding mirror cron job for", r.Name)
+			rid, name := r.Id, r.Name
 			Cron.Add(r.Id, cron.Daily, func() {
-				if err := Pull(r.Id); err != nil {
-					log.Println("[cron:mirror]", err.Error())
+				if err := Pull(rid); err != nil {
+					log.Println("[cron:mirror]", rid, name, err.Error())
+				} else {
+					log.Println("[cron:mirror] updated", rid, name)
 				}
-				log.Println("[cron:mirror] updated", r.Name)
 			})
 		}
 	}

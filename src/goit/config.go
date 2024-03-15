@@ -52,7 +52,7 @@ func loadConfig() (config, error) {
 				return config{}, err
 			}
 		} else if data != nil {
-			if json.Unmarshal(data, &conf); err != nil {
+			if err := json.Unmarshal(data, &conf); err != nil {
 				return config{}, err
 			}
 		}

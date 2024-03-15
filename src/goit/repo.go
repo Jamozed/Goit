@@ -240,13 +240,13 @@ func UpdateRepo(rid int64, repo Repo) error {
 
 	var r *git.Repository
 	if repo.DefaultBranch != old.DefaultBranch {
-		if r == nil {
-			r, err = git.PlainOpen(RepoPath(repo.Name, true))
-			if err != nil {
-				tx.Rollback()
-				return err
-			}
+		// if r == nil {
+		r, err = git.PlainOpen(RepoPath(repo.Name, true))
+		if err != nil {
+			tx.Rollback()
+			return err
 		}
+		// }
 
 		ref := plumbing.NewSymbolicReference(plumbing.HEAD, plumbing.NewBranchReferenceName(repo.DefaultBranch))
 		if err := r.Storer.SetReference(ref); err != nil {

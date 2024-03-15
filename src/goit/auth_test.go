@@ -20,6 +20,7 @@ func TestNewSession(t *testing.T) {
 	var uid int64 = 1
 	var session = goit.Session{Ip: "127.0.0.1", Expiry: time.Unix(0, 0)}
 
+	goit.Conf.IpSessions = true
 	s, err := goit.NewSession(uid, session.Ip, session.Expiry)
 	if err != nil {
 		t.Fatal(err.Error())
