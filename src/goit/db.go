@@ -72,7 +72,7 @@ func dbUpdate(db *sql.DB) error {
 				description TEXT NOT NULL,
 				default_branch TEXT NOT NULL,
 				upstream TEXT NOT NULL,
-				is_private BOOLEAN NOT NULL,
+				visibility INTEGER NOT NULL,
 				is_mirror BOOLEAN NOT NULL
 			)`,
 		); err != nil {
